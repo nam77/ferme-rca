@@ -1,1 +1,56 @@
-{"mcpServers":{}}
+{
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:TON_MOT_DE_PASSE@localhost:5432/ferme_rca"
+      ],
+      "description": "Accès direct à la base PostgreSQL ferme_rca. Explorer le schéma, vérifier les données de seed, déboguer les relations entre tables."
+    },
+
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "description": "Accès étendu aux fichiers du projet pour lecture, création et modification de fichiers."
+    },
+
+    "context7": {
+      "command": "npx",
+      "args": ["@context7/mcp-server"],
+      "description": "Documentation officielle à jour : React Native, Expo SDK 50, Prisma 5, Express, @dnd-kit, Victory Native. Utiliser quand on a un doute sur une API ou une version."
+    },
+
+    "exa-search": {
+      "command": "npx",
+      "args": [
+        "exa-mcp-server",
+        "--key=TON_API_KEY_EXA"
+      ],
+      "description": "Recherche web intelligente pour : solutions d'erreurs React Native, bonnes pratiques pisciculture Afrique centrale, prix matériaux RCA, conseils élevage tropical."
+    }
+  },
+
+  "exemples_utilisation": {
+    "postgresql": [
+      "Combien de taches sont en statut a_faire pour la filiere pisciculture ?",
+      "Montre-moi toutes les zones avec statut operationnel",
+      "Quel est le total du budget prevu pour la phase 1 ?"
+    ],
+    "context7": [
+      "use context7 to get @dnd-kit/core docs for drag and drop sortable",
+      "use context7 to get Expo SDK 50 docs for AsyncStorage",
+      "use context7 to get Prisma 5 docs for transactions",
+      "use context7 to get Victory Native docs for bar charts"
+    ],
+    "exa-search": [
+      "Cherche avec Exa : erreur React Native [COLLER ERREUR] solution",
+      "Cherche avec Exa : pisciculture Tilapia bassin Centrafrique temperature oxygene",
+      "Cherche avec Exa : prix construction poulailler Centrafrique 2024",
+      "Cherche avec Exa : calendrier cultural RCA saison pluies maïs manioc"
+    ]
+  }
+}

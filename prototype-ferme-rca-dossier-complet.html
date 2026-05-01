@@ -1,0 +1,1069 @@
+
+Tous les projets
+YimYonaBuild
+construire un outil de pilotage et de cordination de projet de construction de ferme agropastorale en circuit fermé piloter depuis la France et réaliser à Centrafrique
+Afficher plus
+
+
+
+Comment puis-je vous aider ?
+
+Création d'outil interactif pour la ferme
+Dernier message il y a 14 minutes
+Instructions
+1. Présentation du projet Ferme agropastorale intégrée de 8 hectares en République Centrafricaine, combinant pisciculture, aviculture, élevage de porcs, de caprins et d'ovins, et cultures. Le modèle repose sur une économie circulaire : les déchets de chaque filière nourrissent les autres. un local qui sert d'habitat et de stock 🐟 Pisciculture 5 bassins — 2 opérationnels en juin. Tilapia + Clarias+silure ou poisson chats. Alimentation par fientes. 🐓 Aviculture 1 poulailler — 2000 poulets au démarrage. Fientes valorisées pour les bassins. 🐷 Porcins 2 mâles + 10 femelles. Déchets transformés en compost pour les champs. 🐐 Caprins & Ovins 2M+10F cabris. 1M+2F moutons. Fumier enrichit le compost. 🌾 Cultures 8 ha : maïs, manioc, légumes, fourragères. Irrigués par eaux résiduelles traitées. ♻️ Économie circulaire Fientes → bassins → eaux résiduelles + déchets → compost → champs. 2. Objectifs de l'outil de pilotage Kanban board avec drag & drop — 3 colonnes (À faire / En cours / Terminé) Dashboard de suivi en temps réel avec KPIs et alertes Planification et budget par phase avec comparaison prévu/réel Présentation interactive de la ferme — plan cliquable avec fiches par zone App mobile React Native + Expo (iOS, Android, Web) Base PostgreSQL robuste, multi-utilisateurs 3. Fonctionnalités — Kanban Board Fonctionnalité Description Priorité 3 colonnes À faire / En cours / Terminé P1 Drag & Drop Déplacer les cartes entre colonnes avec @dnd-kit P1 Cartes de tâche Titre, description, filière (couleur), responsable, date, priorité P1 Filtres Par filière : pisciculture, aviculture, porcins, caprins, cultures P2 Sous-tâches Checklist dans chaque carte de tâche P3 4. Budget prévisionnel (estimation) Catégorie Phase 1 — Infrastructure Phase 2 — Lancement Phase 3 — Exploitation Construction bâtiments Porcherie, poulailler, bureaux Finitions, clôtures Extensions Bassins piscicoles Terrassement + étanchéité (5 bassins) Équipements pompes — Animaux — Achat du cheptel initial Renouvellement Équipements Matériel agricole, outillage Matériel d'élevage Maintenance Intrants Semences, engrais départ Aliments bétail, vaccins Récurrent Main d'oeuvre Construction Recrutement Salaires mensuels 5. Architecture technique Composant Technologie Rôle Frontend Mobile React Native + Expo SDK 50 App iOS & Android Frontend Web React Native Web Dashboard navigateur Backend API Node.js 20 + Express API REST Base de données PostgreSQL 15 Données persistantes ORM Prisma 5 Accès base de données type-safe Auth JWT + bcrypt Authentification multi-rôles Drag & Drop @dnd-kit/core Kanban interactif Graphiques Victory Native Visualisations dashboard State Zustand État global de l'app 6. Rôles utilisateurs Admin : accès total, gestion utilisateurs et budget Responsable filière : gestion des tâches de sa filière Ouvrier : consultation + mise à jour de ses tâches assignées Investisseur : lecture seule (dashboard + budget) 7. Contraintes spécifiques RCA Mode offline partiel — connectivité limitée sur le terrain Interface simple — gros boutons, texte lisible, icônes visuelles Multilingue — Français principal + Sango prévu Légèreté — optimisé pour réseaux 2G/3G Lisibilité soleil — contraste élevé pour usage en extérieur 02 Conseils Agronome — Centrafrique 🌍 Contexte climatique RCA : Climat soudano-guinéen. Deux saisons des pluies (mars-mai et août-novembre). Températures 24-32°C. Sol argilo-sableux fertile. Humidité 60-85%. Pisciculture — Bassins et espèces Espèces recommandées : Tilapia du Nil (Oreochromis niloticus) + Clarias (poisson-chat). Résistants à la chaleur, croissance rapide, très appréciés sur les marchés locaux. Taille des bassins : Minimum 500 m² par bassin pour rentabilité. Profondeur 1,2 à 1,5 m. Talus bétonné ou en terre compactée avec géomembrane. Calendrier : Mise en eau avril (début saison des pluies), empoissonnement mai. Démarrage 2 bassins en juin = timing parfait. Fientes de poulailler : Fertilise le bassin (développe le phytoplancton = nourriture naturelle du Tilapia). Dosage : 200-300 kg/ha/mois. Pré-composter 15 jours les 3 premiers mois pour éviter l'eutrophisation. Eaux résiduelles : Riches en azote et phosphore. Laisser décanter 48h avant irrigation des cultures. Aviculture — 200 poulets démarrage Race : Souche Cobb 500 pour la chair, ou race locale améliorée pour la rusticité face aux maladies. Bâtiment : Orientation est-ouest, ventilation naturelle traversante. Surface : 1 m²/poulet minimum. Litière copeaux de bois renouvelée hebdomadairement. Alimentation : Maïs (autocultivé dès an 2) + tourteau de soja + compléments minéraux. Eau fraîche permanente. Production fientes : 100 poulets = ~5 kg fientes/jour = 150 kg/mois pour les bassins. Vaccinations obligatoires : Newcastle (J7 + J21), Bronchite infectieuse, Gumboro. Sans ça, risque de mortalité massive. Élevage porcin — 2M + 10F Race : Large White croisé race locale (meilleure résistance chaleur et maladies tropicales). Bâtiment : Sol bétonné incliné 2% pour drainage. Abreuvoir automatique. Ombre obligatoire (porcs très sensibles à la chaleur >32°C). Alimentation : Déchets cuisine + son de manioc + maïs + drèche de brasserie locale. Complément minéral mensuel. Production : 10 femelles x 2 portées/an x 8-10 porcelets = ~90-100 porcelets/an. Sevrage à 28 jours. Valorisation lisier : 1 porc = ~2 kg lisier/jour. Compostage 45 jours avec paille → engrais riche en NPK. Caprins (2M + 10F) et Ovins (1M + 2F) Races : Chèvre naine d'Afrique de l'Ouest (rustique, s'adapte à tout). Mouton Djallonké (résistant à la trypanosomose — maladie du sommeil). Conduite : Pâturage rotatif sur les 8 ha (herbes fourragères Brachiaria). Parc de nuit fermé obligatoire (hyènes, chacals). Reproduction cabris : 10 femelles = ~15 chevreaux/an. Atteinte du poids de marché (20 kg) en 8-10 mois. Déparasitage : Ivermectine tous les 3 mois. Sans ça, les parasites internes déciment le troupeau en saison des pluies. Calendrier cultural sur 8 ha Culture Surface Plantation Récolte Destination Maïs+arachide 2 ha Mars-avril Juillet-août Alimentation animaux + vente excédent Manioc 2 ha Avril-mai Toute l'année Alimentation humaine + son pour porcs Légumes (tomate, gombo, poivron, melon,) 1 ha Août-sept Nov-déc Vente marché local — revenus rapides Brachiaria (fourragères) 2 ha Début pluies Continu Pâturage caprins/ovins Bananiers + papayers 0,5 ha Toute l'année Continu Alimentation + vente Jachère/biodiversité 0,5 ha Rotation — Régénération sol
+
+Fichiers
+2 % de la capacité du projet utilisée
+
+yyb_mcp.json
+59 lignes
+
+json
+
+
+
+yyB_CLAUDE.md
+111 lignes
+
+md
+
+
+
+skills3.md
+67 lignes
+
+md
+
+
+
+skills2.md
+63 lignes
+
+md
+
+
+
+skill1.md
+85 lignes
+
+md
+
+
+
+settings.json
+27 lignes
+
+json
+
+
+
+ferme-rca-dossier-complet.html
+998 lignes
+
+html
+
+
+
+ferme-rca-dossier-complet.html
+44.54 Ko •998 lignes
+•
+Le formatage peut être différent de la source
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferme Agropastorale RCA — Dossier Complet</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root{--soil:#2d1f0e;--earth:#5c3d1e;--clay:#8b5e3c;--straw:#c9a96e;--wheat:#e8d5a3;--cream:#faf6ee;--leaf:#2d5a27;--mint:#4a8c3f;--sprout:#7bc67a;--water:#1a6b8a;--sky:#3a9dc4;--border:rgba(92,61,30,0.15);--shadow:rgba(45,31,14,0.1);--mono:'DM Mono',monospace;--serif:'Fraunces',serif;--sans:'DM Sans',sans-serif}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--cream);color:var(--soil);font-family:var(--sans);font-size:15px;line-height:1.75}
+  .hero{background:linear-gradient(160deg,var(--soil) 0%,var(--earth) 60%,var(--leaf) 100%);padding:70px 48px 80px;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;bottom:-2px;left:0;right:0;height:60px;background:var(--cream);clip-path:ellipse(55% 100% at 50% 100%)}
+  .hero-tag{display:inline-block;background:rgba(201,169,110,0.2);border:1px solid rgba(201,169,110,0.4);color:var(--straw);font-family:var(--mono);font-size:11px;padding:4px 14px;border-radius:20px;letter-spacing:0.1em;margin-bottom:22px}
+  .hero h1{font-family:var(--serif);font-size:48px;font-weight:700;color:var(--cream);line-height:1.1;margin-bottom:14px}
+  .hero h1 em{color:var(--straw);font-style:italic}
+  .hero p{color:rgba(250,246,238,0.75);font-size:16px;max-width:580px}
+  .hero-pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+  .pill{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:var(--wheat);font-family:var(--mono);font-size:11px;padding:5px 13px;border-radius:20px}
+  .nav{position:sticky;top:0;z-index:100;background:var(--cream);border-bottom:2px solid var(--border);padding:0 48px;overflow-x:auto;white-space:nowrap;box-shadow:0 2px 12px var(--shadow)}
+  .nav-inner{display:inline-flex;gap:0}
+  .nav button{display:inline-block;padding:15px 18px;font-family:var(--mono);font-size:11px;color:var(--clay);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all 0.2s;letter-spacing:0.05em;margin-bottom:-2px}
+  .nav button:hover{color:var(--leaf);border-bottom-color:var(--leaf)}
+  .nav button.active{color:var(--leaf);border-bottom-color:var(--leaf);font-weight:500}
+  .content{max-width:960px;margin:0 auto;padding:56px 48px}
+  .section{margin-bottom:72px;scroll-margin-top:56px}
+  .sec-head{display:flex;align-items:center;gap:14px;margin-bottom:32px;padding-bottom:18px;border-bottom:2px solid var(--border)}
+  .sec-num{font-family:var(--mono);font-size:11px;color:var(--mint);background:rgba(74,140,63,0.1);border:1px solid rgba(74,140,63,0.3);padding:4px 10px;border-radius:4px}
+  .section h2{font-family:var(--serif);font-size:28px;font-weight:600;color:var(--soil)}
+  h3{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--earth);margin:28px 0 10px}
+  p{color:#4a3520;margin-bottom:12px}
+  ul,ol{color:#4a3520;padding-left:22px;margin-bottom:14px}
+  ul li,ol li{margin-bottom:6px;font-size:14px}
+  li strong{color:var(--soil)}
+  .code{background:var(--soil);border-radius:10px;padding:20px 24px;margin:16px 0;overflow-x:auto}
+  .code-label{font-family:var(--mono);font-size:10px;color:var(--straw);letter-spacing:0.1em;margin-bottom:10px;display:block;opacity:0.7}
+  .code code{font-family:var(--mono);font-size:12px;color:var(--wheat);white-space:pre;line-height:1.7}
+  .callout{border-radius:8px;padding:16px 20px;margin:18px 0;display:flex;gap:12px;font-size:13.5px}
+  .callout.green{background:rgba(74,140,63,0.08);border:1px solid rgba(74,140,63,0.25)}
+  .callout.amber{background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.35)}
+  .callout.blue{background:rgba(26,107,138,0.08);border:1px solid rgba(26,107,138,0.25)}
+  .callout-icon{font-size:18px;flex-shrink:0}
+  .callout p{margin:0;color:var(--soil)}
+  .table-wrap{overflow-x:auto;margin:18px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{background:var(--earth);color:var(--cream);font-family:var(--mono);font-size:11px;padding:11px 16px;text-align:left;letter-spacing:0.06em}
+  td{padding:10px 16px;border-bottom:1px solid var(--border);color:#4a3520;vertical-align:top}
+  td:first-child{color:var(--soil);font-weight:500}
+  tr:nth-child(even) td{background:rgba(201,169,110,0.05)}
+  tr:last-child td{border-bottom:none}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:20px 0}
+  .card{background:white;border:1px solid var(--border);border-radius:10px;padding:18px;box-shadow:0 2px 8px var(--shadow)}
+  .card-icon{font-size:26px;margin-bottom:10px;display:block}
+  .card h4{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:6px;color:var(--soil)}
+  .card p{font-size:12.5px;color:var(--clay);margin:0;line-height:1.5}
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:4px;margin:2px}
+  .tag.green{background:rgba(74,140,63,0.12);color:var(--leaf);border:1px solid rgba(74,140,63,0.3)}
+  .tag.blue{background:rgba(26,107,138,0.1);color:var(--water);border:1px solid rgba(26,107,138,0.3)}
+  .tag.amber{background:rgba(201,169,110,0.15);color:var(--earth);border:1px solid rgba(201,169,110,0.4)}
+  .hl{font-family:var(--mono);font-size:12px;color:var(--leaf);background:rgba(74,140,63,0.08);padding:1px 6px;border-radius:3px}
+  .sep{height:1px;background:var(--border);margin:48px 0}
+  footer{background:var(--soil);color:rgba(250,246,238,0.5);text-align:center;padding:28px;font-family:var(--mono);font-size:12px}
+  @media(max-width:600px){.hero{padding:40px 24px 60px}.hero h1{font-size:30px}.content{padding:36px 24px}.nav{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">// DOSSIER PROJET COMPLET</div>
+  <h1>Ferme Agropastorale<br><em>Centrafrique</em></h1>
+  <p>Cahier des charges, conseils agronome, prompts, CLAUDE.md, SKILL.md et MCP.json pour construire l'outil de pilotage complet.</p>
+  <div class="hero-pills">
+    <span class="pill">🌾 8 hectares</span>
+    <span class="pill">🐟 5 bassins piscicoles</span>
+    <span class="pill">🐓 200 poulets</span>
+    <span class="pill">🐷 2M + 10F porcs</span>
+    <span class="pill">🐐 Caprins &amp; Ovins</span>
+    <span class="pill">♻️ Économie circulaire</span>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <button onclick="goTo('cdc')">📋 Cahier des charges</button>
+    <button onclick="goTo('agro')">🌱 Conseils agronome</button>
+    <button onclick="goTo('prompt-outil')">💬 Prompt création outil</button>
+    <button onclick="goTo('claude-md')">📄 CLAUDE.md</button>
+    <button onclick="goTo('skill')">🔧 SKILL.md</button>
+    <button onclick="goTo('mcp')">🔌 MCP.json</button>
+  </div>
+</nav>
+
+<div class="content">
+
+  <!-- CDC -->
+  <div class="section" id="cdc">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Cahier des Charges</h2></div>
+
+    <h3>1. Présentation du projet</h3>
+    <p>Ferme agropastorale intégrée de <strong>8 hectares</strong> en République Centrafricaine, combinant pisciculture, aviculture, élevage de porcs, de caprins et d'ovins, et cultures. Le modèle repose sur une <strong>économie circulaire</strong> : les déchets de chaque filière nourrissent les autres.</p>
+
+    <div class="cards">
+      <div class="card"><span class="card-icon">🐟</span><h4>Pisciculture</h4><p>5 bassins — 2 opérationnels en juin. Tilapia + Clarias. Alimentation par fientes.</p></div>
+      <div class="card"><span class="card-icon">🐓</span><h4>Aviculture</h4><p>1 poulailler — 200 poulets au démarrage. Fientes valorisées pour les bassins.</p></div>
+      <div class="card"><span class="card-icon">🐷</span><h4>Porcins</h4><p>2 mâles + 10 femelles. Déchets transformés en compost pour les champs.</p></div>
+      <div class="card"><span class="card-icon">🐐</span><h4>Caprins &amp; Ovins</h4><p>2M+10F cabris. 1M+2F moutons. Fumier enrichit le compost.</p></div>
+      <div class="card"><span class="card-icon">🌾</span><h4>Cultures</h4><p>8 ha : maïs, manioc, légumes, fourragères. Irrigués par eaux résiduelles traitées.</p></div>
+      <div class="card"><span class="card-icon">♻️</span><h4>Économie circulaire</h4><p>Fientes → bassins → eaux résiduelles + déchets → compost → champs.</p></div>
+    </div>
+
+    <h3>2. Objectifs de l'outil de pilotage</h3>
+    <ul>
+      <li><strong>Kanban board</strong> avec drag &amp; drop — 3 colonnes (À faire / En cours / Terminé)</li>
+      <li><strong>Dashboard de suivi</strong> en temps réel avec KPIs et alertes</li>
+      <li><strong>Planification et budget</strong> par phase avec comparaison prévu/réel</li>
+      <li><strong>Présentation interactive</strong> de la ferme — plan cliquable avec fiches par zone</li>
+      <li><strong>App mobile</strong> React Native + Expo (iOS, Android, Web)</li>
+      <li><strong>Base PostgreSQL</strong> robuste, multi-utilisateurs</li>
+    </ul>
+
+    <h3>3. Fonctionnalités — Kanban Board</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Fonctionnalité</th><th>Description</th><th>Priorité</th></tr></thead>
+      <tbody>
+        <tr><td>3 colonnes</td><td>À faire / En cours / Terminé</td><td><span class="tag green">P1</span></td></tr>
+        <tr><td>Drag &amp; Drop</td><td>Déplacer les cartes entre colonnes avec @dnd-kit</td><td><span class="tag green">P1</span></td></tr>
+        <tr><td>Cartes de tâche</td><td>Titre, description, filière (couleur), responsable, date, priorité</td><td><span class="tag green">P1</span></td></tr>
+        <tr><td>Filtres</td><td>Par filière : pisciculture, aviculture, porcins, caprins, cultures</td><td><span class="tag amber">P2</span></td></tr>
+        <tr><td>Sous-tâches</td><td>Checklist dans chaque carte de tâche</td><td><span class="tag blue">P3</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>4. Budget prévisionnel (estimation)</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Catégorie</th><th>Phase 1 — Infrastructure</th><th>Phase 2 — Lancement</th><th>Phase 3 — Exploitation</th></tr></thead>
+      <tbody>
+        <tr><td>Construction bâtiments</td><td>Porcherie, poulailler, bureaux</td><td>Finitions, clôtures</td><td>Extensions</td></tr>
+        <tr><td>Bassins piscicoles</td><td>Terrassement + étanchéité (5 bassins)</td><td>Équipements pompes</td><td>—</td></tr>
+        <tr><td>Animaux</td><td>—</td><td>Achat du cheptel initial</td><td>Renouvellement</td></tr>
+        <tr><td>Équipements</td><td>Matériel agricole, outillage</td><td>Matériel d'élevage</td><td>Maintenance</td></tr>
+        <tr><td>Intrants</td><td>Semences, engrais départ</td><td>Aliments bétail, vaccins</td><td>Récurrent</td></tr>
+        <tr><td>Main d'oeuvre</td><td>Construction</td><td>Recrutement</td><td>Salaires mensuels</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>5. Architecture technique</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Composant</th><th>Technologie</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>Frontend Mobile</td><td>React Native + Expo SDK 50</td><td>App iOS &amp; Android</td></tr>
+        <tr><td>Frontend Web</td><td>React Native Web</td><td>Dashboard navigateur</td></tr>
+        <tr><td>Backend API</td><td>Node.js 20 + Express</td><td>API REST</td></tr>
+        <tr><td>Base de données</td><td>PostgreSQL 15</td><td>Données persistantes</td></tr>
+        <tr><td>ORM</td><td>Prisma 5</td><td>Accès base de données type-safe</td></tr>
+        <tr><td>Auth</td><td>JWT + bcrypt</td><td>Authentification multi-rôles</td></tr>
+        <tr><td>Drag &amp; Drop</td><td>@dnd-kit/core</td><td>Kanban interactif</td></tr>
+        <tr><td>Graphiques</td><td>Victory Native</td><td>Visualisations dashboard</td></tr>
+        <tr><td>State</td><td>Zustand</td><td>État global de l'app</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>6. Rôles utilisateurs</h3>
+    <ul>
+      <li><strong>Admin</strong> : accès total, gestion utilisateurs et budget</li>
+      <li><strong>Responsable filière</strong> : gestion des tâches de sa filière</li>
+      <li><strong>Ouvrier</strong> : consultation + mise à jour de ses tâches assignées</li>
+      <li><strong>Investisseur</strong> : lecture seule (dashboard + budget)</li>
+    </ul>
+
+    <h3>7. Contraintes spécifiques RCA</h3>
+    <ul>
+      <li><strong>Mode offline partiel</strong> — connectivité limitée sur le terrain</li>
+      <li><strong>Interface simple</strong> — gros boutons, texte lisible, icônes visuelles</li>
+      <li><strong>Multilingue</strong> — Français principal + Sango prévu</li>
+      <li><strong>Légèreté</strong> — optimisé pour réseaux 2G/3G</li>
+      <li><strong>Lisibilité soleil</strong> — contraste élevé pour usage en extérieur</li>
+    </ul>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- AGRONOME -->
+  <div class="section" id="agro">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Conseils Agronome — Centrafrique</h2></div>
+
+    <div class="callout green">
+      <span class="callout-icon">🌍</span>
+      <p><strong>Contexte climatique RCA :</strong> Climat soudano-guinéen. Deux saisons des pluies (mars-mai et août-novembre). Températures 24-32°C. Sol argilo-sableux fertile. Humidité 60-85%.</p>
+    </div>
+
+    <h3>Pisciculture — Bassins et espèces</h3>
+    <ul>
+      <li><strong>Espèces recommandées :</strong> Tilapia du Nil (Oreochromis niloticus) + Clarias (poisson-chat). Résistants à la chaleur, croissance rapide, très appréciés sur les marchés locaux.</li>
+      <li><strong>Taille des bassins :</strong> Minimum 500 m² par bassin pour rentabilité. Profondeur 1,2 à 1,5 m. Talus bétonné ou en terre compactée avec géomembrane.</li>
+      <li><strong>Calendrier :</strong> Mise en eau avril (début saison des pluies), empoissonnement mai. Démarrage 2 bassins en juin = timing parfait.</li>
+      <li><strong>Fientes de poulailler :</strong> Fertilise le bassin (développe le phytoplancton = nourriture naturelle du Tilapia). Dosage : 200-300 kg/ha/mois. Pré-composter 15 jours les 3 premiers mois pour éviter l'eutrophisation.</li>
+      <li><strong>Eaux résiduelles :</strong> Riches en azote et phosphore. Laisser décanter 48h avant irrigation des cultures.</li>
+    </ul>
+
+    <h3>Aviculture — 200 poulets démarrage</h3>
+    <ul>
+      <li><strong>Race :</strong> Souche Cobb 500 pour la chair, ou race locale améliorée pour la rusticité face aux maladies.</li>
+      <li><strong>Bâtiment :</strong> Orientation est-ouest, ventilation naturelle traversante. Surface : 1 m²/poulet minimum. Litière copeaux de bois renouvelée hebdomadairement.</li>
+      <li><strong>Alimentation :</strong> Maïs (autocultivé dès an 2) + tourteau de soja + compléments minéraux. Eau fraîche permanente.</li>
+      <li><strong>Production fientes :</strong> 100 poulets = ~5 kg fientes/jour = 150 kg/mois pour les bassins.</li>
+      <li><strong>Vaccinations obligatoires :</strong> Newcastle (J7 + J21), Bronchite infectieuse, Gumboro. Sans ça, risque de mortalité massive.</li>
+    </ul>
+
+    <h3>Élevage porcin — 2M + 10F</h3>
+    <ul>
+      <li><strong>Race :</strong> Large White croisé race locale (meilleure résistance chaleur et maladies tropicales).</li>
+      <li><strong>Bâtiment :</strong> Sol bétonné incliné 2% pour drainage. Abreuvoir automatique. Ombre obligatoire (porcs très sensibles à la chaleur &gt;32°C).</li>
+      <li><strong>Alimentation :</strong> Déchets cuisine + son de manioc + maïs + drèche de brasserie locale. Complément minéral mensuel.</li>
+      <li><strong>Production :</strong> 10 femelles x 2 portées/an x 8-10 porcelets = ~90-100 porcelets/an. Sevrage à 28 jours.</li>
+      <li><strong>Valorisation lisier :</strong> 1 porc = ~2 kg lisier/jour. Compostage 45 jours avec paille → engrais riche en NPK.</li>
+    </ul>
+
+    <h3>Caprins (2M + 10F) et Ovins (1M + 2F)</h3>
+    <ul>
+      <li><strong>Races :</strong> Chèvre naine d'Afrique de l'Ouest (rustique, s'adapte à tout). Mouton Djallonké (résistant à la trypanosomose — maladie du sommeil).</li>
+      <li><strong>Conduite :</strong> Pâturage rotatif sur les 8 ha (herbes fourragères Brachiaria). Parc de nuit fermé obligatoire (hyènes, chacals).</li>
+      <li><strong>Reproduction cabris :</strong> 10 femelles = ~15 chevreaux/an. Atteinte du poids de marché (20 kg) en 8-10 mois.</li>
+      <li><strong>Déparasitage :</strong> Ivermectine tous les 3 mois. Sans ça, les parasites internes déciment le troupeau en saison des pluies.</li>
+    </ul>
+
+    <h3>Calendrier cultural sur 8 ha</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Culture</th><th>Surface</th><th>Plantation</th><th>Récolte</th><th>Destination</th></tr></thead>
+      <tbody>
+        <tr><td>Maïs</td><td>2 ha</td><td>Mars-avril</td><td>Juillet-août</td><td>Alimentation animaux + vente excédent</td></tr>
+        <tr><td>Manioc</td><td>2 ha</td><td>Avril-mai</td><td>Toute l'année</td><td>Alimentation humaine + son pour porcs</td></tr>
+        <tr><td>Légumes (tomate, gombo, aubergine)</td><td>1 ha</td><td>Août-sept</td><td>Nov-déc</td><td>Vente marché local — revenus rapides</td></tr>
+        <tr><td>Brachiaria (fourragères)</td><td>2 ha</td><td>Début pluies</td><td>Continu</td><td>Pâturage caprins/ovins</td></tr>
+        <tr><td>Bananiers + papayers</td><td>0,5 ha</td><td>Toute l'année</td><td>Continu</td><td>Alimentation + vente</td></tr>
+        <tr><td>Jachère/biodiversité</td><td>0,5 ha</td><td>Rotation</td><td>—</td><td>Régénération sol</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Schéma d'économie circulaire de la ferme</h3>
+    <div class="code"><code>
+  POULAILLER (200 poulets)
+       |
+       |--- Fientes (5 kg/jour) ----------> BASSINS PISCICOLES (5)
+       |    [phytoplancton => nourriture]         |
+       |                                          |-- Eaux résiduelles (N, P, K)
+       |                                          |   [décantation 48h]
+       v                                          v
+  CULTURES 8 ha  &lt;--- Compost enrichi &lt;--- PORCS + CABRIS + OVINS
+  (maïs, manioc,      [lisier + fumier +         |
+   légumes)            déchets bassins]           |
+       |                                          |
+       |------- Maïs + Son de manioc ------------&gt;|
+                    (alimentation animaux)
+    </code></div>
+
+    <div class="callout amber">
+      <span class="callout-icon">⚠️</span>
+      <p><strong>Vigilance clé :</strong> Trop de fientes directes dans les bassins = eutrophisation (manque d'oxygène = mortalité des poissons). Commencer prudemment : 100 kg/ha/mois les 2 premiers mois, puis augmenter progressivement selon la couleur de l'eau (vert clair = bon, vert foncé = trop).</p>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- PROMPT OUTIL -->
+  <div class="section" id="prompt-outil">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Prompt — Création de l'Outil</h2></div>
+    <p>Colle ce prompt dans Claude Code après avoir initialisé ton projet et créé le repository GitHub.</p>
+
+    <div class="code">
+      <span class="code-label">PROMPT COMPLET — À COLLER DANS CLAUDE CODE</span>
+      <code>
+Tu es un développeur senior full-stack React Native et PostgreSQL.
+Je veux créer un outil de pilotage d'une ferme agropastorale en Centrafrique.
+
+## Stack technique obligatoire
+- Frontend : React Native + Expo SDK 50
+- Navigation : React Navigation v6
+- Drag and Drop Kanban : @dnd-kit/core
+- Graphiques : Victory Native
+- Backend : Node.js 20 + Express + Prisma 5
+- Base de données : PostgreSQL 15
+- Auth : JWT + bcrypt
+- State management : Zustand
+- Offline storage : AsyncStorage
+
+## Contexte de la ferme
+- 5 bassins piscicoles (Tilapia + Clarias), 2 opérationnels en juin
+- 1 poulailler : 200 poulets de démarrage
+- 1 porcherie : 2 mâles + 10 femelles (Large White x race locale)
+- Parc caprins : 2 mâles + 10 femelles (chèvre naine)
+- Ovins : 1 mâle + 2 femelles (mouton Djallonké)
+- 8 ha de cultures : maïs (2ha), manioc (2ha), légumes (1ha),
+  fourragères Brachiaria (2ha), bananiers (0,5ha), jachère (0,5ha)
+- Economie circulaire : fientes poulailler -> fertilisation bassins,
+  eaux résiduelles bassins + déchets porcs/cabris -> compost -> irrigation
+
+## Page 1 : Kanban Board (route /kanban)
+Crée un Kanban avec @dnd-kit/core :
+- 3 colonnes : "A faire" | "En cours" | "Termine"
+- Drag and drop des cartes entre colonnes
+- Chaque carte contient : titre, description, filiere (couleur codée),
+  responsable, date limite, priorite (haute/moyenne/basse)
+- Filtres par filiere en haut du board avec icones :
+  pisciculture (bleu), aviculture (orange), porcins (rose),
+  caprins (kaki), cultures (vert), infrastructure (gris)
+- Bouton "Nouvelle tache" -> modal de creation
+- Mise a jour optimiste : le state local change immédiatement,
+  l'API est appelée en arrière-plan
+- Si pas de connexion : stocker l'action dans AsyncStorage
+  et synchroniser au reconnect (listener NetInfo)
+
+## Page 2 : Dashboard de suivi (route /dashboard)
+- 4 KPI cards en grille : taches totales, taches en retard,
+  % avancement global, budget consomme vs prevu
+- Graphique a barres par filiere (Victory Native) : avancement %
+- Liste scrollable des 5 taches les plus urgentes avec badge de retard
+- Section alertes : taches en retard avec badge rouge
+- Données chargées depuis GET /api/dashboard/kpis
+
+## Page 3 : Planification et Budget (route /budget)
+- 3 onglets de phases :
+  Phase 1 : Infrastructure (mois 1-3) - bassins, bâtiments
+  Phase 2 : Lancement élevages (mois 4-6) - achat animaux, équipements
+  Phase 3 : Exploitation (mois 7-12) - fonctionnement, salaires
+- Pour chaque phase : tableau avec colonnes
+  Categorie | Prevu (FCFA) | Reel (FCFA) | Ecart | Statut
+- Bouton "Ajouter dépense" -> formulaire modal (Zod validation)
+- Barre de progression budget global en bas
+- Total prevu, total reel, solde restant
+
+## Page 4 : Présentation de la ferme (route /ferme)
+- Plan SVG schématique de la ferme (8 ha rectangulaire)
+- Zones cliquables sur le plan SVG :
+  Bassin 1, Bassin 2, Bassin 3, Bassin 4, Bassin 5
+  Poulailler, Porcherie, Parc caprins/ovins
+  Champs maïs, Champs manioc, Zone légumes
+  Zone compost, Habitation/Bureau
+- Clic sur une zone -> modal avec :
+  Nom de la zone, Description détaillée, Animaux/cultures présents,
+  Superficie (m²), Statut (en construction / opérationnel / planifie),
+  Galerie photos swipeable
+- Couleur des zones selon leur statut sur le plan SVG
+
+## Schéma Prisma PostgreSQL à créer
+
+model Utilisateur {
+  id          String   @id @default(cuid())
+  nom         String
+  email       String   @unique
+  motDePasse  String
+  role        String   @default("ouvrier")
+  taches      Tache[]  @relation("ResponsableTache")
+  createdAt   DateTime @default(now())
+}
+
+model Tache {
+  id           String   @id @default(cuid())
+  titre        String
+  description  String?
+  statut       String   @default("a_faire")
+  priorite     String   @default("moyenne")
+  filiere      String
+  responsableId String?
+  responsable  Utilisateur? @relation("ResponsableTache", fields: [responsableId], references: [id])
+  dateFin      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model BudgetLigne {
+  id            String   @id @default(cuid())
+  categorie     String
+  phase         String
+  montantPrevu  Float
+  montantReel   Float    @default(0)
+  description   String?
+  date          DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model Zone {
+  id          String   @id @default(cuid())
+  nom         String
+  type        String
+  description String?
+  superficie  Float?
+  statut      String   @default("planifie")
+  animaux     String?
+  positionX   Float?
+  positionY   Float?
+  largeur     Float?
+  hauteur     Float?
+  photos      Photo[]
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  zoneId    String
+  zone      Zone     @relation(fields: [zoneId], references: [id])
+  url       String
+  legende   String?
+  createdAt DateTime @default(now())
+}
+
+## Routes API à créer
+POST   /api/auth/connexion
+GET    /api/taches
+POST   /api/taches
+PATCH  /api/taches/:id/statut     <- pour le Kanban drag and drop
+PUT    /api/taches/:id
+DELETE /api/taches/:id
+GET    /api/budget
+POST   /api/budget
+PUT    /api/budget/:id
+GET    /api/zones
+GET    /api/zones/:id
+GET    /api/dashboard/kpis
+
+## Données de seed à créer
+- 4 utilisateurs : admin / responsable / ouvrier / investisseur
+- 15 taches réparties : 6 a_faire, 5 en_cours, 4 terminees
+- Budget prévisionnel complet sur les 3 phases (20 lignes minimum)
+- Les 13 zones de la ferme avec descriptions réalistes RCA
+- Quelques taches en retard pour tester les alertes
+
+## Structure du projet à créer
+/ferme-rca
+  /backend
+    /src/routes/
+    /src/middleware/
+    /src/lib/prisma.ts
+    /prisma/schema.prisma
+    /prisma/seed.ts
+    package.json
+    .env.example
+  /mobile
+    /src/screens/
+    /src/components/
+    /src/hooks/
+    /src/store/
+    /src/api/
+    /src/types/
+    /src/constants/couleurs.ts
+    package.json
+    app.json
+
+## Règles de développement
+1. Tout le code et les commentaires en FRANÇAIS
+2. TypeScript strict - pas de "any"
+3. Commit après chaque page terminée et fonctionnelle
+4. Lire .claude/skills/ avant de créer chaque partie
+5. Gros boutons (height 48px min) - interface utilisée sur terrain
+6. Contraste élevé - lisible en plein soleil RCA
+
+Commence par créer la structure complète du projet et
+le schéma Prisma. Montre-moi le plan avant d'exécuter.
+      </code>
+    </div>
+
+    <div class="callout blue">
+      <span class="callout-icon">ℹ️</span>
+      <p><strong>Comment utiliser :</strong> Initialise ton dossier projet, crée le repository GitHub, lance <span class="hl">claude</span> dans le terminal depuis ce dossier, active le <strong>Plan Mode (Shift+Tab)</strong>, puis colle ce prompt. Claude planifiera, tu valides, et il construit étape par étape.</p>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- CLAUDE.MD -->
+  <div class="section" id="claude-md">
+    <div class="sec-head"><span class="sec-num">04</span><h2>CLAUDE.md</h2></div>
+    <p>Crée ce fichier à la racine de ton projet : <span class="hl">/ferme-rca/CLAUDE.md</span></p>
+
+    <div class="code">
+      <span class="code-label">CLAUDE.md — RACINE DU PROJET</span>
+      <code>
+# Ferme Agropastorale RCA — Outil de Pilotage
+
+## Contexte du projet
+Application mobile et web de pilotage d'une ferme agropastorale
+de 8 hectares en République Centrafricaine (RCA).
+
+## Composition de la ferme
+- 5 bassins piscicoles Tilapia + Clarias (2 opérationnels en juin)
+- 1 poulailler : 200 poulets au démarrage (race Cobb 500 ou locale)
+- 1 porcherie : 2 mâles + 10 femelles (Large White x race locale)
+- Parc caprins : 2 mâles + 10 femelles (chèvre naine Afrique Ouest)
+- Ovins : 1 mâle + 2 femelles (mouton Djallonké)
+- 8 ha : maïs (2ha), manioc (2ha), légumes (1ha),
+         Brachiaria fourragère (2ha), bananiers (0,5ha), jachère (0,5ha)
+
+## Modèle économique circulaire
+  Fientes poulailler -> fertilisation phytoplancton bassins
+  Eaux résiduelles bassins + lisier porcs + fumier cabris
+  -> compostage 45 jours -> irrigation et fertilisation champs
+  Maïs et manioc autocultivés -> alimentation animaux (dès an 2)
+
+## Stack technique
+  Frontend : React Native 0.73 + Expo SDK 50
+  Navigation : React Navigation v6
+  Drag and Drop : @dnd-kit/core (web/tablet) + gesture handler (mobile)
+  Graphiques : Victory Native
+  Backend : Node.js 20 + Express 4
+  ORM : Prisma 5
+  Base de données : PostgreSQL 15
+  Auth : JWT (jsonwebtoken) + bcrypt
+  State : Zustand
+  Offline : AsyncStorage + NetInfo
+
+## Structure des dossiers
+  /ferme-rca
+    /backend
+      /src/routes/      -- routes Express (auth, taches, budget, zones, dashboard)
+      /src/middleware/  -- auth JWT, validation Zod
+      /src/lib/         -- prisma.ts singleton, helpers
+      /prisma/
+        schema.prisma
+        seed.ts
+      .env.example
+    /mobile
+      /src/screens/     -- KanbanScreen, DashboardScreen, BudgetScreen, FermeScreen
+      /src/components/  -- CarteTache, ColonneKanban, KPICard, ZoneModal...
+      /src/hooks/       -- useTaches, useBudget, useZones, useDashboard
+      /src/store/       -- Zustand stores (tachesStore, authStore)
+      /src/api/         -- appels axios (taches.api.ts, budget.api.ts...)
+      /src/types/       -- types TypeScript (Tache, Zone, BudgetLigne...)
+      /src/constants/
+        couleurs.ts     -- couleurs par filière (NE PAS MODIFIER)
+
+## Couleurs par filière (CONSTANTES IMMUABLES)
+  Pisciculture  : #1a6b8a  (bleu eau)
+  Aviculture    : #e8943a  (orange poulet)
+  Porcins       : #d4548a  (rose)
+  Caprins/Ovins : #7b6e3e  (kaki terre)
+  Cultures      : #4a8c3f  (vert feuille)
+  Infrastructure: #6b6b6b  (gris béton)
+
+## Statuts des tâches
+  "a_faire"  -> colonne gauche Kanban (rouge)
+  "en_cours" -> colonne centrale Kanban (orange)
+  "termine"  -> colonne droite Kanban (vert)
+
+## Rôles utilisateurs
+  "admin"        -- accès total
+  "responsable"  -- gestion tâches de sa filière uniquement
+  "ouvrier"      -- consultation + mise à jour de ses tâches
+  "investisseur" -- lecture seule (dashboard + budget)
+
+## Conventions obligatoires
+  - Tout le code en FRANÇAIS (variables, fonctions, commentaires, labels)
+  - TypeScript strict - JAMAIS de "any"
+  - Composants React Native : arrow functions
+  - Styles : StyleSheet.create() uniquement, pas d'inline
+  - Un composant = un fichier
+  - Tester le build Expo avant chaque commit
+
+## Accessibilité (critique pour l'usage terrain RCA)
+  - Taille police minimum : 16px pour le contenu
+  - Taille boutons minimum : height 48px, padding horizontal 20px
+  - Contraste élevé (utilisation en plein soleil)
+  - accessibilityLabel sur tous les boutons et cartes interactives
+
+## Mode offline Kanban
+  - AsyncStorage clé : "kanban_queue_actions"
+  - Format action : { type, tacheId, nouveauStatut, timestamp }
+  - Synchronisation automatique au retour de connexion (NetInfo)
+  - Toast informatif quand l'action est mise en file d'attente
+
+## Scripts de développement
+  cd backend && npm run dev        -- API sur port 3001
+  cd mobile && npx expo start      -- App sur port 8081
+  cd backend && npx prisma studio  -- Interface base de données
+  cd backend && npm run seed       -- Données initiales (reset + peuple)
+  cd backend && npx prisma migrate dev -- Appliquer nouvelles migrations
+
+## Skills disponibles (lire avant de coder)
+  .claude/skills/react-native.md -- Patterns composants et écrans
+  .claude/skills/api-express.md  -- Routes API et validation
+  .claude/skills/kanban.md       -- Kanban drag and drop
+
+## JAMAIS toucher sans validation explicite
+  /backend/prisma/migrations/     -- Migrations existantes
+  /mobile/src/constants/couleurs.ts -- Système couleurs défini
+  .env et .env.example            -- Variables d'environnement
+      </code>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- SKILL.MD -->
+  <div class="section" id="skill">
+    <div class="sec-head"><span class="sec-num">05</span><h2>SKILL.md — 3 fichiers de compétences</h2></div>
+    <p>Crée ces fichiers dans <span class="hl">.claude/skills/</span> à la racine du projet.</p>
+
+    <h3>Skill 1 — React Native</h3>
+    <div class="code">
+      <span class="code-label">.claude/skills/react-native.md</span>
+      <code>
+# Skill : React Native — Ferme RCA
+
+## Structure obligatoire d'un écran
+import React, { useState, useEffect } from 'react'
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native'
+import { COULEURS } from '../constants/couleurs'
+
+export const MonEcran = () => {
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState(null)
+  const [donnees, setDonnees] = useState([])
+
+  useEffect(() => {
+    chargerDonnees()
+  }, [])
+
+  if (chargement) return (
+    &lt;View style={styles.centré}&gt;
+      &lt;ActivityIndicator size="large" color={COULEURS.vert} /&gt;
+    &lt;/View&gt;
+  )
+
+  if (erreur) return (
+    &lt;View style={styles.centré}&gt;
+      &lt;Text style={styles.erreur}&gt;{erreur}&lt;/Text&gt;
+    &lt;/View&gt;
+  )
+
+  return (
+    &lt;SafeAreaView style={styles.conteneur}&gt;
+      {/* contenu */}
+    &lt;/SafeAreaView&gt;
+  )
+}
+
+const styles = StyleSheet.create({
+  conteneur: { flex: 1, backgroundColor: COULEURS.fond },
+  centré: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  erreur: { color: '#e74c3c', fontSize: 16, textAlign: 'center', padding: 20 }
+})
+
+## Composants réutilisables à créer
+- BoutonPrincipal : vert, height 52px, icône optionnelle, gros texte
+- CarteTache : bordure gauche colorée par filière, info complète
+- BadgePriorite : rouge/orange/vert selon priorité
+- BadgeFiliere : icône emoji + couleur de fond
+- ModalCreation : modal plein écran avec formulaire de tâche
+- KPICard : chiffre grand + label + couleur d'accent
+- GaleriePhotos : FlatList horizontal avec images swipeables
+
+## Gestion erreur API standard
+try {
+  const rep = await api.getTaches()
+  setDonnees(rep.data.donnees)
+} catch (err) {
+  setErreur('Impossible de charger. Vérifiez la connexion.')
+} finally {
+  setChargement(false)
+}
+
+## Mode offline Kanban
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import NetInfo from '@react-native-community/netinfo'
+
+// Sauvegarder action offline
+const sauvegarderActionOffline = async (action) => {
+  const queue = JSON.parse(await AsyncStorage.getItem('kanban_queue') || '[]')
+  queue.push({ ...action, timestamp: Date.now() })
+  await AsyncStorage.setItem('kanban_queue', JSON.stringify(queue))
+}
+
+// Synchroniser au retour de connexion
+NetInfo.addEventListener(state => {
+  if (state.isConnected) synchroniserActionsOffline()
+})
+
+## Règles d'accessibilité terrain RCA
+- Font size minimum 16 pour les contenus
+- Boutons : height 48px minimum, padding horizontal 20px
+- Contraste élevé (ratio > 4.5:1) - lisible en plein soleil
+- accessibilityLabel sur tout élément interactif
+- Pas d'animations complexes (performance sur vieux téléphones)
+      </code>
+    </div>
+
+    <h3>Skill 2 — API Express + Prisma</h3>
+    <div class="code">
+      <span class="code-label">.claude/skills/api-express.md</span>
+      <code>
+# Skill : API Express + Prisma — Ferme RCA
+
+## Structure standard d'une route
+import { Router } from 'express'
+import { prisma } from '../lib/prisma'
+import { verifierAuth } from '../middleware/auth'
+import { z } from 'zod'
+
+const routeur = Router()
+
+routeur.get('/', verifierAuth, async (req, res) => {
+  try {
+    const donnees = await prisma.tache.findMany({
+      include: { responsable: { select: { nom: true } } },
+      orderBy: { createdAt: 'desc' }
+    })
+    res.json({ succes: true, donnees })
+  } catch (erreur) {
+    console.error('Erreur:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+## Format de réponse uniforme
+// Succès
+res.json({ succes: true, donnees: [...], message: 'OK' })
+// Erreur validation
+res.status(400).json({ succes: false, message: 'Données invalides' })
+// Non autorisé
+res.status(401).json({ succes: false, message: 'Non autorisé' })
+// Erreur serveur
+res.status(500).json({ succes: false, message: 'Erreur serveur' })
+
+## Validation Zod obligatoire sur tous les POST/PUT
+const schemaTache = z.object({
+  titre: z.string().min(3).max(100),
+  filiere: z.enum(['pisciculture','aviculture','porcins','caprins','cultures','infrastructure']),
+  priorite: z.enum(['haute','moyenne','basse']),
+  statut: z.enum(['a_faire','en_cours','termine']),
+  dateFin: z.string().datetime().optional()
+})
+
+## Middleware JWT
+export const verifierAuth = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1]
+  if (!token) return res.status(401).json({ succes: false, message: 'Token manquant' })
+  try {
+    req.utilisateur = jwt.verify(token, process.env.JWT_SECRET)
+    next()
+  } catch {
+    res.status(401).json({ succes: false, message: 'Token invalide ou expiré' })
+  }
+}
+
+## Bonnes pratiques Prisma
+- Singleton : export const prisma = new PrismaClient() dans /lib/prisma.ts
+- Toujours inclure les relations nécessaires (include: {})
+- Transactions pour opérations multiples
+- Logs Prisma en dev uniquement (log: ['query', 'error'])
+      </code>
+    </div>
+
+    <h3>Skill 3 — Kanban Drag and Drop</h3>
+    <div class="code">
+      <span class="code-label">.claude/skills/kanban.md</span>
+      <code>
+# Skill : Kanban Board — Ferme RCA
+
+## Colonnes et configuration
+const COLONNES = {
+  a_faire:  { titre: 'À faire',   couleur: '#e74c3c', icone: '📋' },
+  en_cours: { titre: 'En cours',  couleur: '#f39c12', icone: '⚙️' },
+  termine:  { titre: 'Terminé',   couleur: '#27ae60', icone: '✅' }
+}
+
+## Implémentation @dnd-kit/core
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+
+const KanbanBoard = () => {
+  const [tacheActive, setTacheActive] = useState(null)
+  const sensors = useSensors(useSensor(PointerSensor))
+
+  const handleDragEnd = async ({ active, over }) => {
+    if (!over) return
+    const nouveauStatut = over.id
+    const tacheId = active.id
+    // 1. Mise à jour optimiste immédiate
+    deplacerTacheLocalement(tacheId, nouveauStatut)
+    // 2. Appel API en arrière-plan
+    try {
+      await api.changerStatut(tacheId, nouveauStatut)
+    } catch {
+      // 3. Annuler si erreur
+      annulerDeplacementLocal(tacheId)
+      Toast.show('Erreur: synchronisation impossible')
+    }
+  }
+
+  return (
+    &lt;DndContext sensors={sensors} onDragEnd={handleDragEnd}
+      onDragStart={({ active }) => setTacheActive(active.id)}&gt;
+      {Object.entries(COLONNES).map(([statut, config]) => (
+        &lt;ColonneKanban key={statut} statut={statut} config={config}
+          taches={tachesFiltrees.filter(t => t.statut === statut)} /&gt;
+      ))}
+      &lt;DragOverlay&gt;
+        {tacheActive &amp;&amp; &lt;CarteTache tache={trouverTache(tacheActive)} survol /&gt;}
+      &lt;/DragOverlay&gt;
+    &lt;/DndContext&gt;
+  )
+}
+
+## Carte de tâche — contenu
+Structure visuelle de CarteTache :
+- Bordure gauche 4px : couleur de la filière
+- En-tête : [Icône filière] [Titre] [Badge priorité couleur]
+- Corps : Description tronquée à 2 lignes (numberOfLines={2})
+- Pied : [Avatar initiales responsable] [Date limite] [Jours restants]
+- Ombre légère et border-radius 8px
+
+## Filtres par filière
+const [filtreActif, setFiltreActif] = useState('tous')
+const tachesFiltrees = filtreActif === 'tous'
+  ? toutes les taches
+  : taches.filter(t => t.filiere === filtreActif)
+
+Boutons filtres : ScrollView horizontal, bouton par filière
++ bouton "Tout". Fond coloré si filtre actif.
+      </code>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- MCP -->
+  <div class="section" id="mcp">
+    <div class="sec-head"><span class="sec-num">06</span><h2>MCP — Configuration des Serveurs</h2></div>
+    <p>Crée ce fichier dans <span class="hl">.claude/mcp.json</span> à la racine du projet.</p>
+
+    <div class="code">
+      <span class="code-label">.claude/mcp.json</span>
+      <code>
+{
+  "mcpServers": {
+    "postgresql": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:TON_MOT_DE_PASSE@localhost:5432/ferme_rca"
+      ],
+      "description": "Accès direct à la base PostgreSQL ferme_rca. Explorer le schéma, vérifier les données de seed, déboguer les relations entre tables."
+    },
+
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "."
+      ],
+      "description": "Accès étendu aux fichiers du projet pour lecture, création et modification de fichiers."
+    },
+
+    "context7": {
+      "command": "npx",
+      "args": ["@context7/mcp-server"],
+      "description": "Documentation officielle à jour : React Native, Expo SDK 50, Prisma 5, Express, @dnd-kit, Victory Native. Utiliser quand on a un doute sur une API ou une version."
+    },
+
+    "exa-search": {
+      "command": "npx",
+      "args": [
+        "exa-mcp-server",
+        "--key=TON_API_KEY_EXA"
+      ],
+      "description": "Recherche web intelligente pour : solutions d'erreurs React Native, bonnes pratiques pisciculture Afrique centrale, prix matériaux RCA, conseils élevage tropical."
+    }
+  },
+
+  "exemples_utilisation": {
+    "postgresql": [
+      "Combien de taches sont en statut a_faire pour la filiere pisciculture ?",
+      "Montre-moi toutes les zones avec statut operationnel",
+      "Quel est le total du budget prevu pour la phase 1 ?"
+    ],
+    "context7": [
+      "use context7 to get @dnd-kit/core docs for drag and drop sortable",
+      "use context7 to get Expo SDK 50 docs for AsyncStorage",
+      "use context7 to get Prisma 5 docs for transactions",
+      "use context7 to get Victory Native docs for bar charts"
+    ],
+    "exa-search": [
+      "Cherche avec Exa : erreur React Native [COLLER ERREUR] solution",
+      "Cherche avec Exa : pisciculture Tilapia bassin Centrafrique temperature oxygene",
+      "Cherche avec Exa : prix construction poulailler Centrafrique 2024",
+      "Cherche avec Exa : calendrier cultural RCA saison pluies maïs manioc"
+    ]
+  }
+}
+      </code>
+    </div>
+
+    <h3>Installer les MCPs en une fois</h3>
+    <div class="code">
+      <span class="code-label">TERMINAL — INSTALLATION MCPs</span>
+      <code>
+# PostgreSQL (remplace les credentials)
+claude mcp add postgresql npx @modelcontextprotocol/server-postgres \
+  "postgresql://postgres:MOTDEPASSE@localhost:5432/ferme_rca"
+
+# Filesystem
+claude mcp add filesystem npx @modelcontextprotocol/server-filesystem .
+
+# Context7 (documentation à jour)
+claude mcp add context7 npx @context7/mcp-server
+
+# Exa Search (clé gratuite sur exa.ai)
+claude mcp add exa npx exa-mcp-server --key=TA_CLE_EXA
+
+# Vérifier
+claude mcp list
+      </code>
+    </div>
+
+    <h3>Fichier settings.json recommandé</h3>
+    <div class="code">
+      <span class="code-label">.claude/settings.json</span>
+      <code>
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(cd backend && *)",
+      "Bash(cd mobile && *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(DROP TABLE *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "echo Tache terminee - pense a tester sur emulateur"
+      }]
+    }]
+  }
+}
+      </code>
+    </div>
+
+    <h3>Récapitulatif — Setup complet du projet</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Fichier</th><th>Emplacement</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>CLAUDE.md</td><td>/ferme-rca/CLAUDE.md</td><td>Contexte complet, conventions, scripts</td></tr>
+        <tr><td>skill react-native</td><td>.claude/skills/react-native.md</td><td>Standards composants et écrans mobile</td></tr>
+        <tr><td>skill api-express</td><td>.claude/skills/api-express.md</td><td>Standards routes API et validation</td></tr>
+        <tr><td>skill kanban</td><td>.claude/skills/kanban.md</td><td>Kanban drag and drop @dnd-kit</td></tr>
+        <tr><td>mcp.json</td><td>.claude/mcp.json</td><td>PostgreSQL, Context7, Exa, Filesystem</td></tr>
+        <tr><td>settings.json</td><td>.claude/settings.json</td><td>Permissions et hooks automatiques</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="callout green">
+      <span class="callout-icon">🚀</span>
+      <p><strong>Ordre de démarrage recommandé :</strong> 1) Crée le dossier + repository GitHub, 2) Copie les 4 fichiers de config (.claude/), 3) Lance <span class="hl">claude</span> en Plan Mode, 4) Colle le grand prompt de la section 03, 5) Valide le plan, 6) Claude construit le projet étape par étape.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Ferme Agropastorale — République Centrafricaine &nbsp;·&nbsp; Dossier projet complet
+</footer>
+
+<script>
+  function goTo(id) {
+    var target = document.getElementById(id);
+    if (!target) return;
+    var navH = document.querySelector('.nav').offsetHeight;
+    var top = target.getBoundingClientRect().top + window.scrollY - navH - 12;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  }
+
+  var sections = ['cdc','agro','prompt-outil','claude-md','skill','mcp'];
+  var allBtns = document.querySelectorAll('.nav button');
+
+  function updateActive() {
+    var navH = document.querySelector('.nav').offsetHeight + 20;
+    var current = sections[0];
+    sections.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= navH) current = id;
+    });
+    allBtns.forEach(function(btn) {
+      var id = btn.getAttribute('onclick').replace("goTo('","").replace("')","");
+      btn.classList.toggle('active', id === current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+</script>
+</body>
+</html>

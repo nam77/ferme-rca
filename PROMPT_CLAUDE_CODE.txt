@@ -1,0 +1,15 @@
+Lis attentivement le CLAUDE.md à la racine, puis tous les fichiers
+.claude/skills/*.md, et regarde le prototype.html pour comprendre
+le résultat visuel attendu.
+
+Le contexte : tout va tourner en local. PostgreSQL est déjà installé
+avec une base "ferme_rca", utilisateur "ferme_user", mot de passe
+"ferme_dev_2026" sur localhost:5432. Node 20 est installé.
+
+Propose-moi un plan détaillé pour construire ce projet de zéro,
+en parallèle backend (Node + Express + Prisma + PostgreSQL) ET
+mobile (React Native + Expo). Découpe en jalons numérotés où je
+peux tester quelque chose à la fin de chaque jalon.
+
+Ne crée encore aucun fichier — montre-moi seulement le plan,
+étape par étape, et explique ce que je pourrai tester à chaque jalon.

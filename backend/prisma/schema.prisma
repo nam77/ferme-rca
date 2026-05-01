@@ -1,0 +1,156 @@
+// Schéma Prisma — Ferme Agropastorale RCA
+// Modèles initiaux : utilisateurs, tâches, zones, budget, photos, mouvements.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  responsable
+  ouvrier
+  investisseur
+}
+
+enum Filiere {
+  pisciculture
+  aviculture
+  porcins
+  caprins
+  cultures
+  infrastructure
+}
+
+enum Statut {
+  a_faire
+  en_cours
+  termine
+}
+
+enum Priorite {
+  haute
+  moyenne
+  basse
+}
+
+enum Phase {
+  phase_1_infrastructure
+  phase_2_lancement
+  phase_3_exploitation
+}
+
+enum StatutZone {
+  operationnel
+  en_construction
+  planifie
+}
+
+model Utilisateur {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  motDePasseHash  String
+  prenom          String
+  nom             String
+  role            Role     @default(ouvrier)
+  filiere         Filiere?
+  actif           Boolean  @default(true)
+  creeLe          DateTime @default(now())
+  modifieLe       DateTime @updatedAt
+
+  tachesAssignees Tache[]      @relation("TacheResponsable")
+  tachesCreees    Tache[]      @relation("TacheCreateur")
+  mouvements      Mouvement[]
+  photosTelechargees Photo[]   @relation("PhotoUploader")
+}
+
+model Tache {
+  id            String   @id @default(cuid())
+  titre         String
+  description   String?
+  filiere       Filiere
+  priorite      Priorite @default(moyenne)
+  statut        Statut   @default(a_faire)
+  dateLimite    DateTime?
+  dateDebut     DateTime?
+  dateFinReelle DateTime?
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+
+  responsableId String?
+  responsable   Utilisateur? @relation("TacheResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+
+  createurId    String
+  createur      Utilisateur  @relation("TacheCreateur", fields: [createurId], references: [id])
+
+  zoneId        String?
+  zone          Zone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+
+  mouvements    Mouvement[]
+
+  @@index([statut])
+  @@index([filiere])
+  @@index([responsableId])
+}
+
+model Zone {
+  id           String     @id @default(cuid())
+  nom          String
+  filiere      Filiere
+  surface      Float?     // en m²
+  description  String?
+  positionX    Float      @default(50) // % sur le plan
+  positionY    Float      @default(50) // % sur le plan
+  statut       StatutZone @default(operationnel)
+  creeLe       DateTime   @default(now())
+  modifieLe    DateTime   @updatedAt
+
+  taches       Tache[]
+  photos       Photo[]
+}
+
+model BudgetLigne {
+  id            String   @id @default(cuid())
+  phase         Phase
+  categorie     String
+  description   String?
+  montantPrevu  Decimal  @db.Decimal(12, 2)
+  montantReel   Decimal  @default(0) @db.Decimal(12, 2)
+  devise        String   @default("XAF") // Franc CFA d'Afrique centrale
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+
+  @@index([phase])
+}
+
+model Photo {
+  id         String   @id @default(cuid())
+  url        String
+  legende    String?
+  creeLe     DateTime @default(now())
+
+  zoneId     String?
+  zone       Zone?    @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  uploaderId String?
+  uploader   Utilisateur? @relation("PhotoUploader", fields: [uploaderId], references: [id], onDelete: SetNull)
+}
+
+model Mouvement {
+  id           String   @id @default(cuid())
+  ancienStatut Statut
+  nouveauStatut Statut
+  creeLe       DateTime @default(now())
+
+  tacheId      String
+  tache        Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+
+  auteurId     String
+  auteur       Utilisateur @relation(fields: [auteurId], references: [id])
+
+  @@index([tacheId])
+}

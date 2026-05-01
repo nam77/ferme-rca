@@ -1,1 +1,25 @@
-{"permissions":{"allow":[],"deny":[]}}
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(cd backend && *)",
+      "Bash(cd mobile && *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(DROP TABLE *)"
+    ]
+  },
+  "hooks": {
+    "Stop": [{
+      "hooks": [{
+        "type": "command",
+        "command": "echo Tache terminee - pense a tester sur emulateur"
+      }]
+    }]
+  }
+}
+      
