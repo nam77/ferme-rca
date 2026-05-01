@@ -7,8 +7,6 @@ import {
   SexeAnimal,
   CategorieAge,
   TypeMouvementAnimal,
-  Filiere,
-  Role,
 } from '../generated/prisma/enums.js'
 
 export const routeurLots = Router()
@@ -52,34 +50,6 @@ const TYPES_SORTIE: TypeMouvementAnimal[] = [
   TypeMouvementAnimal.reforme,
   TypeMouvementAnimal.transfert_sortie,
 ]
-
-const filierePourEspece = (espece: Espece): Filiere => {
-  switch (espece) {
-    case Espece.poulet:
-      return Filiere.aviculture
-    case Espece.porc:
-      return Filiere.porcins
-    case Espece.caprin:
-    case Espece.ovin:
-      return Filiere.caprins
-    case Espece.tilapia:
-    case Espece.clarias:
-      return Filiere.pisciculture
-  }
-}
-
-const peutEcrireSurEspece = (
-  role: Role,
-  filiereUtilisateur: Filiere | null,
-  espece: Espece,
-): boolean => {
-  if (role === Role.admin) return true
-  if (role === Role.investisseur) return false
-  const filiereCible = filierePourEspece(espece)
-  if (role === Role.responsable) return filiereUtilisateur === filiereCible
-  // Ouvriers : lecture seulement (pour cette première itération)
-  return false
-}
 
 const calculerEffectif = (
   mouvements: { type: TypeMouvementAnimal; quantite: number }[],
@@ -184,14 +154,6 @@ routeurLots.post('/', async (req: Request, res: Response) => {
     return
   }
   try {
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { role: true, filiere: true },
-    })
-    if (!auteur || !peutEcrireSurEspece(auteur.role, auteur.filiere, parsed.data.espece as Espece)) {
-      res.status(403).json({ succes: false, message: 'Création interdite pour ce rôle ou cette filière' })
-      return
-    }
     const cree = await prisma.lotAnimaux.create({
       data: {
         nom: parsed.data.nom,
@@ -222,14 +184,6 @@ routeurLots.patch('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ succes: false, message: 'Lot introuvable' })
       return
     }
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { role: true, filiere: true },
-    })
-    if (!auteur || !peutEcrireSurEspece(auteur.role, auteur.filiere, lot.espece)) {
-      res.status(403).json({ succes: false, message: 'Édition interdite' })
-      return
-    }
     const data: Record<string, unknown> = {}
     if (parsed.data.nom !== undefined) data.nom = parsed.data.nom
     if (parsed.data.sexe !== undefined) data.sexe = parsed.data.sexe ?? null
@@ -257,10 +211,6 @@ routeurLots.patch('/:id', async (req: Request, res: Response) => {
 })
 
 routeurLots.delete('/:id', async (req: Request, res: Response) => {
-  if (req.utilisateur!.role !== Role.admin) {
-    res.status(403).json({ succes: false, message: 'Suppression réservée à admin' })
-    return
-  }
   try {
     await prisma.lotAnimaux.delete({ where: { id: req.params.id } })
     res.json({ succes: true, message: 'Lot supprimé' })
@@ -287,14 +237,6 @@ routeurLots.post('/:id/mouvements', async (req: Request, res: Response) => {
     })
     if (!lot) {
       res.status(404).json({ succes: false, message: 'Lot introuvable' })
-      return
-    }
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { role: true, filiere: true },
-    })
-    if (!auteur || !peutEcrireSurEspece(auteur.role, auteur.filiere, lot.espece)) {
-      res.status(403).json({ succes: false, message: 'Action interdite pour ce rôle ou cette filière' })
       return
     }
 
@@ -345,10 +287,6 @@ routeurLots.post('/:id/mouvements', async (req: Request, res: Response) => {
 })
 
 routeurLots.delete('/:id/mouvements/:mouvementId', async (req: Request, res: Response) => {
-  if (req.utilisateur!.role !== Role.admin) {
-    res.status(403).json({ succes: false, message: 'Annulation réservée à admin' })
-    return
-  }
   try {
     const mouvement = await prisma.mouvementAnimal.findUnique({
       where: { id: req.params.mouvementId },

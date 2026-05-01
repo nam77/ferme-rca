@@ -11,7 +11,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useLot } from '../hooks/useLots'
-import { useAuthStore } from '../store/authStore'
 import { ModalAjoutMouvement } from '../components/ModalAjoutMouvement'
 import { COULEURS, COULEURS_FILIERES } from '../constants/couleurs'
 import {
@@ -41,19 +40,8 @@ const formatMontant = (montant: string | null): string | null => {
 export const EcranDetailLot = () => {
   const router = useRouter()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const utilisateur = useAuthStore((s) => s.utilisateur)
   const { lot, enChargement, erreur, recharger, enregistrerMouvement } = useLot(id ?? null)
   const [modalOuverte, setModalOuverte] = useState(false)
-
-  const peutEcrire = (() => {
-    if (!utilisateur || !lot) return false
-    if (utilisateur.role === 'admin') return true
-    if (utilisateur.role === 'investisseur') return false
-    if (utilisateur.role === 'responsable') {
-      return utilisateur.filiere === FILIERE_PAR_ESPECE[lot.espece]
-    }
-    return false
-  })()
 
   if (enChargement && !lot) {
     return (
@@ -103,22 +91,18 @@ export const EcranDetailLot = () => {
           <Text style={styles.retourTexte}>‹</Text>
         </Pressable>
         <Text style={styles.titreEntete} numberOfLines={1}>{lot.nom}</Text>
-        {peutEcrire ? (
-          <Pressable
-            onPress={() => setModalOuverte(true)}
-            accessibilityLabel="Nouveau mouvement"
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.boutonAjout,
-              { backgroundColor: couleur },
-              pressed && styles.boutonPresse,
-            ]}
-          >
-            <Text style={styles.boutonAjoutTexte}>+</Text>
-          </Pressable>
-        ) : (
-          <View style={styles.placeholderBouton} />
-        )}
+        <Pressable
+          onPress={() => setModalOuverte(true)}
+          accessibilityLabel="Nouveau mouvement"
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.boutonAjout,
+            { backgroundColor: couleur },
+            pressed && styles.boutonPresse,
+          ]}
+        >
+          <Text style={styles.boutonAjoutTexte}>+</Text>
+        </Pressable>
       </View>
 
       {erreur ? (
@@ -173,8 +157,7 @@ export const EcranDetailLot = () => {
         {lot.mouvements.length === 0 ? (
           <View style={styles.vide}>
             <Text style={styles.videTexte}>
-              Aucun mouvement enregistré.
-              {peutEcrire ? '\nCommencez par un achat ou une naissance.' : ''}
+              Aucun mouvement enregistré.{'\n'}Commencez par un achat ou une naissance.
             </Text>
           </View>
         ) : (
