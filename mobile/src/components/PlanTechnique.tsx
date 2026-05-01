@@ -1,7 +1,9 @@
-// Plan technique — vue en blocs étiquetés (équivalent du panel droit de
-// presentation-de-la-ferme.png), avec hotspots cliquables pour ouvrir une zone.
+// Plan technique — schéma rectangulaire structuré de la ferme.
+// Reproduit le panel droit de presentation-de-la-ferme.png : un grand rectangle
+// avec lignes pointillées, subdivisé en zones étiquetées par filière.
 
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import Svg, { Rect, Line, G } from 'react-native-svg'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../constants/theme'
 import {
   COULEURS_FILIERES,
@@ -21,49 +23,114 @@ const formatSurface = (m2: number | null): string => {
   return `${m2.toLocaleString('fr-FR')} m²`
 }
 
+// Layout en grille technique : positions et tailles des blocs sur 100×100
+type Mise = { x: number; y: number; w: number; h: number }
+
+const fallbackMise = (idx: number, total: number): Mise => {
+  const cols = Math.ceil(Math.sqrt(total))
+  const rows = Math.ceil(total / cols)
+  const w = 96 / cols
+  const h = 92 / rows
+  const c = idx % cols
+  const r = Math.floor(idx / cols)
+  return { x: 2 + c * w, y: 4 + r * h, w: w - 1, h: h - 1 }
+}
+
 export const PlanTechnique = ({ zones, onZonePress }: Props) => {
   return (
     <View style={styles.canvas}>
-      <View style={styles.bordure}>
-        {zones.map((z) => {
-          const couleur = COULEURS_FILIERES[z.filiere as FiliereCouleur]
-          const icone = ICONES_FILIERES[z.filiere as FiliereCouleur]
-          // Position en % du canvas, taille fixe pour lisibilité
-          const left = `${Math.max(2, Math.min(z.positionX - 8, 86))}%`
-          const top = `${Math.max(2, Math.min(z.positionY - 6, 88))}%`
-          return (
-            <Pressable
-              key={z.id}
-              onPress={() => onZonePress(z)}
-              accessibilityLabel={`Zone ${z.nom}`}
-              accessibilityRole="button"
-              // @ts-expect-error : RN Web supporte string %
-              style={({ pressed }) => [
-                styles.bloc,
-                {
-                  left,
-                  top,
-                  backgroundColor: couleur + '12',
-                  borderColor: couleur,
-                },
-                pressed && styles.blocPresse,
-              ]}
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        style={StyleSheet.absoluteFill}
+      >
+        {/* Cadre extérieur (limite de la ferme) */}
+        <Rect
+          x="1"
+          y="1"
+          width="98"
+          height="98"
+          fill={COULEURS_TOKEN.cream}
+          stroke={COULEURS_TOKEN.clay}
+          strokeWidth="0.4"
+          strokeDasharray="2,1"
+          rx="1"
+        />
+        {/* Grille technique */}
+        <G opacity="0.35">
+          {[20, 40, 60, 80].map((p) => (
+            <Line
+              key={`v${p}`}
+              x1={p}
+              y1="1"
+              x2={p}
+              y2="99"
+              stroke={COULEURS_TOKEN.clay}
+              strokeWidth="0.15"
+              strokeDasharray="0.6,0.6"
+            />
+          ))}
+          {[20, 40, 60, 80].map((p) => (
+            <Line
+              key={`h${p}`}
+              x1="1"
+              y1={p}
+              x2="99"
+              y2={p}
+              stroke={COULEURS_TOKEN.clay}
+              strokeWidth="0.15"
+              strokeDasharray="0.6,0.6"
+            />
+          ))}
+        </G>
+      </Svg>
+
+      {/* Blocs zones positionnés en absolute (RN web traduit les % en CSS) */}
+      {zones.map((z, idx) => {
+        const couleur = COULEURS_FILIERES[z.filiere as FiliereCouleur]
+        const icone = ICONES_FILIERES[z.filiere as FiliereCouleur]
+        const m = fallbackMise(idx, zones.length)
+        const styleAbs = {
+          left: `${m.x}%`,
+          top: `${m.y}%`,
+          width: `${m.w}%`,
+          height: `${m.h}%`,
+        } as unknown as Record<string, string | number>
+        return (
+          <Pressable
+            key={z.id}
+            onPress={() => onZonePress(z)}
+            accessibilityLabel={`Zone ${z.nom}`}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.bloc,
+              styleAbs,
+              {
+                backgroundColor: couleur + '15',
+                borderColor: couleur,
+              },
+              pressed && styles.blocPresse,
+            ]}
+          >
+            <Text style={styles.blocIcone}>{icone}</Text>
+            <Text
+              style={[styles.blocLibelle, { color: couleur }]}
+              numberOfLines={2}
             >
-              <View style={styles.blocLigne}>
-                <Text style={styles.blocIcone}>{icone}</Text>
-                <Text style={[styles.blocLibelle, { color: couleur }]} numberOfLines={2}>
-                  {z.nom}
-                </Text>
-              </View>
-              {z.surface ? (
-                <Text style={styles.blocSurface}>{formatSurface(z.surface)}</Text>
-              ) : null}
-            </Pressable>
-          )
-        })}
-        <View style={styles.compteurZones}>
-          <Text style={styles.compteurZonesTexte}>{zones.length}</Text>
-        </View>
+              {z.nom}
+            </Text>
+            {z.surface ? (
+              <Text style={styles.blocSurface}>{formatSurface(z.surface)}</Text>
+            ) : null}
+          </Pressable>
+        )
+      })}
+
+      {/* Compteur en bas à droite */}
+      <View style={styles.compteurZones}>
+        <Text style={styles.compteurZonesTexte}>{zones.length}</Text>
       </View>
     </View>
   )
@@ -80,29 +147,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  bordure: {
-    flex: 1,
-    margin: ESPACEMENTS.s,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: COULEURS_TOKEN.clay + '60',
-    borderRadius: RAYONS.moyen,
-    position: 'relative',
-  },
   bloc: {
     position: 'absolute',
     paddingHorizontal: ESPACEMENTS.s,
-    paddingVertical: 6,
+    paddingVertical: ESPACEMENTS.s - 2,
     borderRadius: RAYONS.petit,
     borderWidth: 1.5,
-    minWidth: 110,
-    maxWidth: 160,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    margin: 2,
   },
   blocPresse: { opacity: 0.85 },
-  blocLigne: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  blocIcone: { fontSize: 14 },
+  blocIcone: { fontSize: 14, marginBottom: 2 },
   blocLibelle: {
-    flex: 1,
     fontFamily: POLICES.sansBold,
     fontSize: 11,
     lineHeight: 14,
@@ -118,9 +175,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     right: 8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: COULEURS_TOKEN.rouge,
     justifyContent: 'center',
     alignItems: 'center',
@@ -128,6 +185,6 @@ const styles = StyleSheet.create({
   compteurZonesTexte: {
     fontFamily: POLICES.sansBold,
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
   },
 })

@@ -23,8 +23,6 @@ import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../constants/theme
 import type { Filiere } from '../types/auth.types'
 import type { ZoneListe } from '../types/zone.types'
 
-type ModeVue = 'illustree' | 'technique'
-
 const FILIERES_LEGENDE: Filiere[] = [
   'pisciculture',
   'aviculture',
@@ -38,7 +36,6 @@ const FILIERES_LEGENDE: Filiere[] = [
 export const EcranFerme = () => {
   const { zones, enChargement, erreur } = useZones()
   const [zoneSelectionnee, setZoneSelectionnee] = useState<ZoneListe | null>(null)
-  const [modeVue, setModeVue] = useState<ModeVue>('illustree')
 
   const surfaceTotale = useMemo(
     () => zones.reduce((s, z) => s + (z.surface ?? 0), 0),
@@ -67,52 +64,6 @@ export const EcranFerme = () => {
             </Text>
           </View>
 
-          <View style={styles.toggleVue}>
-            <Pressable
-              onPress={() => setModeVue('illustree')}
-              accessibilityLabel="Vue illustrée"
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.toggleBouton,
-                modeVue === 'illustree' && styles.toggleBoutonActif,
-                pressed && styles.boutonPresse,
-              ]}
-            >
-              <Ionicons
-                name="image"
-                size={13}
-                color={modeVue === 'illustree' ? COULEURS_TOKEN.cream : COULEURS_TOKEN.earth}
-              />
-              <Text style={[
-                styles.toggleTexte,
-                modeVue === 'illustree' && styles.toggleTexteActif,
-              ]}>
-                Vue illustrée
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setModeVue('technique')}
-              accessibilityLabel="Plan technique"
-              accessibilityRole="button"
-              style={({ pressed }) => [
-                styles.toggleBouton,
-                modeVue === 'technique' && styles.toggleBoutonActif,
-                pressed && styles.boutonPresse,
-              ]}
-            >
-              <Ionicons
-                name="map"
-                size={13}
-                color={modeVue === 'technique' ? COULEURS_TOKEN.cream : COULEURS_TOKEN.earth}
-              />
-              <Text style={[
-                styles.toggleTexte,
-                modeVue === 'technique' && styles.toggleTexteActif,
-              ]}>
-                Plan technique
-              </Text>
-            </Pressable>
-          </View>
         </View>
 
         {erreur ? (
@@ -121,29 +72,36 @@ export const EcranFerme = () => {
           </View>
         ) : null}
 
-        <View style={styles.cartePlan}>
-          <View style={styles.carteEntete}>
-            <View style={styles.carteEnteteIcone}>
-              <Ionicons
-                name={modeVue === 'illustree' ? 'image-outline' : 'map-outline'}
-                size={14}
-                color={COULEURS_TOKEN.mint}
-              />
+        <View style={styles.deuxColonnes}>
+          <View style={styles.cartePlan}>
+            <View style={styles.carteEntete}>
+              <View style={styles.carteEnteteIcone}>
+                <Ionicons name="image-outline" size={14} color={COULEURS_TOKEN.mint} />
+              </View>
+              <Text style={styles.carteEnteteTitre}>Vue illustrée</Text>
+              <View style={styles.carteEntetePastille}>
+                <Text style={styles.carteEntetePastilleTexte}>
+                  {(surfaceTotale / 10000).toFixed(1)} ha
+                </Text>
+              </View>
             </View>
-            <Text style={styles.carteEnteteTitre}>
-              {modeVue === 'illustree' ? 'Vue illustrée' : 'Plan technique'}
-            </Text>
-            <View style={styles.carteEntetePastille}>
-              <Text style={styles.carteEntetePastilleTexte}>
-                {(surfaceTotale / 10000).toFixed(1)} ha
-              </Text>
-            </View>
-          </View>
-          {modeVue === 'illustree' ? (
             <PlanFerme zones={zones} onZonePress={setZoneSelectionnee} />
-          ) : (
+          </View>
+
+          <View style={styles.cartePlan}>
+            <View style={styles.carteEntete}>
+              <View style={styles.carteEnteteIcone}>
+                <Ionicons name="map-outline" size={14} color={COULEURS_TOKEN.mint} />
+              </View>
+              <Text style={styles.carteEnteteTitre}>Plan technique</Text>
+              <View style={styles.carteEntetePastille}>
+                <Text style={styles.carteEntetePastilleTexte}>
+                  {zones.length} zones
+                </Text>
+              </View>
+            </View>
             <PlanTechnique zones={zones} onZonePress={setZoneSelectionnee} />
-          )}
+          </View>
         </View>
 
         <View style={styles.legende}>
@@ -238,32 +196,12 @@ const styles = StyleSheet.create({
     color: COULEURS_TOKEN.earth,
     marginTop: 4,
   },
-  toggleVue: {
+  deuxColonnes: {
     flexDirection: 'row',
-    backgroundColor: COULEURS_TOKEN.carte,
-    borderRadius: RAYONS.moyen,
-    borderWidth: 1,
-    borderColor: COULEURS_TOKEN.bordure,
-    padding: 3,
-  },
-  toggleBouton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: ESPACEMENTS.m,
-    paddingVertical: 7,
-    borderRadius: RAYONS.petit,
-  },
-  toggleBoutonActif: {
-    backgroundColor: COULEURS_TOKEN.leaf,
-  },
-  toggleTexte: {
-    fontFamily: POLICES.sansMedium,
-    fontSize: 12,
-    color: COULEURS_TOKEN.earth,
-  },
-  toggleTexteActif: {
-    color: COULEURS_TOKEN.cream,
+    flexWrap: 'wrap',
+    gap: ESPACEMENTS.l,
+    paddingHorizontal: ESPACEMENTS.xl,
+    marginTop: ESPACEMENTS.s,
   },
   boutonPresse: { opacity: 0.85 },
   bandeauErreur: {
@@ -281,12 +219,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   cartePlan: {
+    flex: 1,
+    minWidth: 320,
     backgroundColor: COULEURS_TOKEN.carte,
     borderRadius: RAYONS.grand,
     borderWidth: 1,
     borderColor: COULEURS_TOKEN.bordure,
-    marginHorizontal: ESPACEMENTS.xl,
-    marginTop: ESPACEMENTS.s,
     overflow: 'hidden',
   },
   carteEntete: {
