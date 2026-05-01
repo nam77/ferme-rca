@@ -28,6 +28,7 @@ const FILIERES: Filiere[] = [
   'caprins',
   'cultures',
   'infrastructure',
+  'habitat',
 ]
 
 const PRIORITES: { valeur: Priorite; libelle: string }[] = [

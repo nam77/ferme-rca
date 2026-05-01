@@ -13,9 +13,9 @@ import { Ionicons } from '@expo/vector-icons'
 import { useTaches } from '../hooks/useTaches'
 import {
   basculerSousTache,
-  ajouterSousTache as ajouterSousTacheAPI,
   changerStatutTache,
 } from '../api/taches.api'
+import { ModalCreationTache } from '../components/ModalCreationTache'
 import { useToastStore } from '../store/toastStore'
 import {
   COULEURS_FILIERES,
@@ -230,11 +230,12 @@ const CarteActivite = ({
 }
 
 export const EcranActivite = () => {
-  const { taches, enChargement, recharger, deplacer, supprimer } = useTaches()
+  const { taches, enChargement, recharger, deplacer, supprimer, ajouter } = useTaches()
   const afficherToast = useToastStore((s) => s.afficher)
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>('tous')
   const [filtreFiliere, setFiltreFiliere] = useState<FiltreFiliere>('toutes')
   const [recherche, setRecherche] = useState('')
+  const [modalCreationOuverte, setModalCreationOuverte] = useState(false)
 
   const tachesFiltrees = useMemo(() => {
     return taches.filter((t) => {
@@ -312,6 +313,16 @@ export const EcranActivite = () => {
               Procédures détaillées par activité avec sous-tâches à cocher.
             </Text>
           </View>
+
+          <Pressable
+            onPress={() => setModalCreationOuverte(true)}
+            accessibilityLabel="Nouvelle activité"
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.boutonNouvelle, pressed && styles.boutonPresse]}
+          >
+            <Ionicons name="add" size={16} color="#fff" />
+            <Text style={styles.boutonNouvelleTexte}>Nouvelle activité</Text>
+          </Pressable>
         </View>
 
         <View style={styles.barreFiltres}>
@@ -380,6 +391,14 @@ export const EcranActivite = () => {
           )}
         </View>
       </ScrollView>
+
+      <ModalCreationTache
+        visible={modalCreationOuverte}
+        onFermer={() => setModalCreationOuverte(false)}
+        onCreer={async (entree) => {
+          await ajouter(entree)
+        }}
+      />
     </SafeAreaView>
   )
 }
@@ -394,11 +413,30 @@ const styles = StyleSheet.create({
   },
   contenu: { paddingBottom: ESPACEMENTS.xxl },
   entete: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     paddingHorizontal: ESPACEMENTS.xl,
     paddingTop: ESPACEMENTS.l,
     paddingBottom: ESPACEMENTS.m,
+    gap: ESPACEMENTS.l,
+    flexWrap: 'wrap',
   },
-  entetegauche: { flex: 1 },
+  entetegauche: { flex: 1, minWidth: 280 },
+  boutonNouvelle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COULEURS_TOKEN.leaf,
+    paddingHorizontal: ESPACEMENTS.l,
+    height: 38,
+    borderRadius: RAYONS.moyen,
+  },
+  boutonNouvelleTexte: {
+    color: '#fff',
+    fontFamily: POLICES.sansMedium,
+    fontSize: 14,
+  },
   titre: {
     fontFamily: POLICES.serifSemi,
     fontSize: 28,
@@ -523,7 +561,8 @@ const styles = StyleSheet.create({
   actionsCrud: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
+    flexShrink: 0,
   },
   boutonCrud: {
     width: 26,
@@ -661,4 +700,3 @@ const styles = StyleSheet.create({
   },
 })
 
-void ajouterSousTacheAPI // import gardé pour usage futur (création sous-tâche)

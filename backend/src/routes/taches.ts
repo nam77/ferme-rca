@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { verifierAuth } from '../middleware/auth.js'
-import { Filiere, Priorite, Role, Statut } from '../generated/prisma/enums.js'
+import { Filiere, Priorite, Statut } from '../generated/prisma/enums.js'
 
 export const routeurTaches = Router()
 
@@ -33,23 +33,6 @@ const inclureRelations = {
   sousTaches: { orderBy: { ordre: 'asc' as const } },
 } as const
 
-const peutModifierTache = (
-  utilisateurRole: Role,
-  utilisateurId: string,
-  tache: { responsableId: string | null; createurId: string; filiere: Filiere },
-  utilisateurFiliere: Filiere | null,
-): boolean => {
-  if (utilisateurRole === Role.admin) return true
-  if (utilisateurRole === Role.investisseur) return false
-  if (utilisateurRole === Role.responsable) {
-    return utilisateurFiliere === tache.filiere
-  }
-  if (utilisateurRole === Role.ouvrier) {
-    return tache.responsableId === utilisateurId || tache.createurId === utilisateurId
-  }
-  return false
-}
-
 routeurTaches.use(verifierAuth)
 
 routeurTaches.get('/', async (req: Request, res: Response) => {
@@ -73,28 +56,12 @@ routeurTaches.get('/', async (req: Request, res: Response) => {
 })
 
 routeurTaches.post('/', async (req: Request, res: Response) => {
-  if (req.utilisateur!.role === Role.investisseur) {
-    res.status(403).json({ succes: false, message: 'Lecture seule pour investisseur' })
-    return
-  }
   const parsed = schemaCreation.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ succes: false, message: 'Données invalides', details: parsed.error.issues })
     return
   }
   try {
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { filiere: true, role: true },
-    })
-    if (!auteur) {
-      res.status(401).json({ succes: false, message: 'Utilisateur introuvable' })
-      return
-    }
-    if (auteur.role === Role.responsable && auteur.filiere !== parsed.data.filiere) {
-      res.status(403).json({ succes: false, message: 'Filière non autorisée pour ce responsable' })
-      return
-    }
     const cree = await prisma.tache.create({
       data: {
         titre: parsed.data.titre,
@@ -127,14 +94,6 @@ routeurTaches.patch('/:id/statut', async (req: Request, res: Response) => {
     const tache = await prisma.tache.findUnique({ where: { id } })
     if (!tache) {
       res.status(404).json({ succes: false, message: 'Tâche introuvable' })
-      return
-    }
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { filiere: true, role: true },
-    })
-    if (!auteur || !peutModifierTache(auteur.role, req.utilisateur!.utilisateurId, tache, auteur.filiere)) {
-      res.status(403).json({ succes: false, message: 'Action interdite' })
       return
     }
     const nouveauStatut = parsed.data.nouveauStatut as Statut
@@ -182,14 +141,6 @@ routeurTaches.patch('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ succes: false, message: 'Tâche introuvable' })
       return
     }
-    const auteur = await prisma.utilisateur.findUnique({
-      where: { id: req.utilisateur!.utilisateurId },
-      select: { filiere: true, role: true },
-    })
-    if (!auteur || !peutModifierTache(auteur.role, req.utilisateur!.utilisateurId, tache, auteur.filiere)) {
-      res.status(403).json({ succes: false, message: 'Action interdite' })
-      return
-    }
     const data: Record<string, unknown> = {}
     if (parsed.data.titre !== undefined) data.titre = parsed.data.titre
     if (parsed.data.description !== undefined) data.description = parsed.data.description
@@ -215,27 +166,12 @@ routeurTaches.patch('/:id', async (req: Request, res: Response) => {
 })
 
 routeurTaches.delete('/:id', async (req: Request, res: Response) => {
-  const role = req.utilisateur!.role
-  if (role !== Role.admin && role !== Role.responsable) {
-    res.status(403).json({ succes: false, message: 'Suppression réservée à admin/responsable' })
-    return
-  }
   const { id } = req.params
   try {
     const tache = await prisma.tache.findUnique({ where: { id } })
     if (!tache) {
       res.status(404).json({ succes: false, message: 'Tâche introuvable' })
       return
-    }
-    if (req.utilisateur!.role === Role.responsable) {
-      const auteur = await prisma.utilisateur.findUnique({
-        where: { id: req.utilisateur!.utilisateurId },
-        select: { filiere: true },
-      })
-      if (auteur?.filiere !== tache.filiere) {
-        res.status(403).json({ succes: false, message: 'Filière non autorisée' })
-        return
-      }
     }
     await prisma.tache.delete({ where: { id } })
     res.json({ succes: true, message: 'Tâche supprimée' })
