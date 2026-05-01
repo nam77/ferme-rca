@@ -8,35 +8,32 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '../store/authStore'
 import { useTaches } from '../hooks/useTaches'
 import { MenuActionsTache } from '../components/MenuActionsTache'
 import { ModalCreationTache } from '../components/ModalCreationTache'
 import { ZoneKanbanDnd } from '../components/dnd/ZoneKanbanDnd'
 import {
-  COULEURS,
   COULEURS_FILIERES,
   ICONES_FILIERES,
-  LIBELLES_FILIERES,
-  type Filiere as FiliereCouleur,
 } from '../constants/couleurs'
+import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../constants/theme'
 import type { Filiere } from '../types/auth.types'
 import type { Tache } from '../types/tache.types'
 
-const FILIERES_TOUTES: (Filiere | 'tous')[] = [
-  'tous',
-  'pisciculture',
-  'aviculture',
-  'porcins',
-  'caprins',
-  'cultures',
-  'infrastructure',
+const FILIERES_TOUTES: { cle: Filiere | 'tous'; libelle: string; icone: string; couleur: string }[] = [
+  { cle: 'tous', libelle: 'Tout', icone: '🌍', couleur: COULEURS_TOKEN.mint },
+  { cle: 'pisciculture', libelle: 'Pisciculture', icone: ICONES_FILIERES.pisciculture, couleur: COULEURS_FILIERES.pisciculture },
+  { cle: 'aviculture', libelle: 'Aviculture', icone: ICONES_FILIERES.aviculture, couleur: COULEURS_FILIERES.aviculture },
+  { cle: 'porcins', libelle: 'Porcins', icone: ICONES_FILIERES.porcins, couleur: COULEURS_FILIERES.porcins },
+  { cle: 'caprins', libelle: 'Caprins/Ovins', icone: ICONES_FILIERES.caprins, couleur: COULEURS_FILIERES.caprins },
+  { cle: 'cultures', libelle: 'Cultures', icone: ICONES_FILIERES.cultures, couleur: COULEURS_FILIERES.cultures },
+  { cle: 'infrastructure', libelle: 'Infra', icone: ICONES_FILIERES.infrastructure, couleur: COULEURS_FILIERES.infrastructure },
 ]
 
 export const EcranKanban = () => {
   const utilisateur = useAuthStore((s) => s.utilisateur)
-  const router = useRouter()
   const { taches, enChargement, erreur, recharger, deplacer, ajouter, supprimer, enSynchronisation } =
     useTaches()
 
@@ -59,44 +56,42 @@ export const EcranKanban = () => {
   if (enChargement && taches.length === 0) {
     return (
       <View style={styles.chargement}>
-        <ActivityIndicator size="large" color={COULEURS.vert} />
+        <ActivityIndicator size="large" color={COULEURS_TOKEN.mint} />
       </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.conteneur} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
       <View style={styles.entete}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityLabel="Retour"
-          accessibilityRole="button"
-          hitSlop={10}
-          style={styles.retour}
-        >
-          <Text style={styles.retourTexte}>‹</Text>
-        </Pressable>
-        <Text style={styles.titre}>Kanban des tâches</Text>
-        <View style={styles.actionsEntete}>
+        <View style={styles.entetegauche}>
+          <Text style={styles.numeroSection}>02 — OPÉRATIONS</Text>
+          <Text style={styles.titre}>
+            Kanban <Text style={styles.titreItalique}>— Tâches & opérations</Text>
+          </Text>
+          <Text style={styles.sousTitre}>
+            Trois colonnes glisser-déposer. Filtrer par filière pour isoler une équipe.
+          </Text>
+        </View>
+
+        <View style={styles.entetedroite}>
           <Pressable
             onPress={recharger}
             accessibilityLabel="Actualiser"
             accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.boutonRefresh,
-              pressed && styles.boutonAjoutPresse,
-            ]}
+            style={({ pressed }) => [styles.boutonIcone, pressed && styles.boutonPresse]}
           >
-            <Text style={styles.boutonRefreshTexte}>↻</Text>
+            <Ionicons name="refresh" size={18} color={COULEURS_TOKEN.earth} />
           </Pressable>
           {peutCreer ? (
             <Pressable
               onPress={() => setModalCreationOuverte(true)}
-              accessibilityLabel="Créer une tâche"
+              accessibilityLabel="Nouvelle tâche"
               accessibilityRole="button"
-              style={({ pressed }) => [styles.boutonAjout, pressed && styles.boutonAjoutPresse]}
+              style={({ pressed }) => [styles.boutonNouvelle, pressed && styles.boutonPresse]}
             >
-              <Text style={styles.boutonAjoutTexte}>+</Text>
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={styles.boutonNouvelleTexte}>Nouvelle tâche</Text>
             </Pressable>
           ) : null}
         </View>
@@ -108,25 +103,22 @@ export const EcranKanban = () => {
         contentContainerStyle={styles.filtres}
       >
         {FILIERES_TOUTES.map((f) => {
-          const actif = filtre === f
-          const couleur = f === 'tous' ? COULEURS.vert : COULEURS_FILIERES[f as FiliereCouleur]
-          const libelle = f === 'tous' ? 'Tout' : LIBELLES_FILIERES[f as FiliereCouleur]
-          const icone = f === 'tous' ? '🌍' : ICONES_FILIERES[f as FiliereCouleur]
+          const actif = filtre === f.cle
           return (
             <Pressable
-              key={f}
-              onPress={() => setFiltre(f)}
-              accessibilityLabel={`Filtrer ${libelle}`}
+              key={f.cle}
+              onPress={() => setFiltre(f.cle)}
+              accessibilityLabel={`Filtrer ${f.libelle}`}
               accessibilityRole="button"
               style={[
                 styles.filtre,
-                { borderColor: couleur },
-                actif && { backgroundColor: couleur },
+                { borderColor: f.couleur + (actif ? 'FF' : '60') },
+                actif && { backgroundColor: f.couleur },
               ]}
             >
-              <Text style={styles.filtreIcone}>{icone}</Text>
-              <Text style={[styles.filtreTexte, actif && styles.filtreTexteActif]}>
-                {libelle}
+              <Text style={styles.filtreIcone}>{f.icone}</Text>
+              <Text style={[styles.filtreTexte, actif ? styles.filtreTexteActif : { color: f.couleur }]}>
+                {f.libelle}
               </Text>
             </Pressable>
           )
@@ -177,84 +169,124 @@ export const EcranKanban = () => {
 }
 
 const styles = StyleSheet.create({
-  conteneur: { flex: 1, backgroundColor: COULEURS.fond },
+  conteneur: { flex: 1, backgroundColor: COULEURS_TOKEN.cream },
   chargement: {
     flex: 1,
-    backgroundColor: COULEURS.fond,
+    backgroundColor: COULEURS_TOKEN.cream,
     justifyContent: 'center',
     alignItems: 'center',
   },
   entete: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COULEURS.bordure,
+    paddingHorizontal: ESPACEMENTS.xl,
+    paddingTop: ESPACEMENTS.l,
+    paddingBottom: ESPACEMENTS.m,
+    gap: ESPACEMENTS.l,
+    flexWrap: 'wrap',
   },
-  retour: {
+  entetegauche: { flex: 1, minWidth: 280 },
+  entetedroite: { flexDirection: 'row', gap: ESPACEMENTS.s, alignItems: 'center' },
+  numeroSection: {
+    fontFamily: POLICES.mono,
+    fontSize: 11,
+    color: COULEURS_TOKEN.mint,
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
+  titre: {
+    fontFamily: POLICES.serifSemi,
+    fontSize: 28,
+    color: COULEURS_TOKEN.soil,
+    lineHeight: 34,
+  },
+  titreItalique: {
+    fontFamily: POLICES.serifItalique,
+    color: COULEURS_TOKEN.clay,
+    fontSize: 24,
+  },
+  sousTitre: {
+    fontFamily: POLICES.sans,
+    fontSize: 13,
+    color: COULEURS_TOKEN.earth,
+    marginTop: 4,
+  },
+  boutonIcone: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(92,61,30,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
   },
-  retourTexte: { fontSize: 28, color: COULEURS.texte, lineHeight: 30 },
-  titre: { fontSize: 18, fontWeight: '700', color: COULEURS.texte },
-  boutonAjout: {
-    width: 40,
+  boutonNouvelle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COULEURS_TOKEN.mint,
+    paddingHorizontal: ESPACEMENTS.l,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: COULEURS.vert,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: RAYONS.moyen,
   },
-  boutonAjoutPresse: { opacity: 0.85 },
-  boutonAjoutTexte: { color: '#fff', fontSize: 22, fontWeight: '700', lineHeight: 24 },
-  actionsEntete: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  boutonRefresh: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  boutonNouvelleTexte: {
+    color: '#fff',
+    fontFamily: POLICES.sansMedium,
+    fontSize: 14,
   },
-  boutonRefreshTexte: { color: COULEURS.texte, fontSize: 22, lineHeight: 24, fontWeight: '600' },
+  boutonPresse: { opacity: 0.85 },
   filtres: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: ESPACEMENTS.xl,
+    paddingVertical: ESPACEMENTS.m,
+    gap: ESPACEMENTS.s,
   },
   filtre: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: ESPACEMENTS.m,
     paddingVertical: 8,
-    borderRadius: 18,
-    borderWidth: 1,
-    backgroundColor: COULEURS.carte,
+    borderRadius: RAYONS.pastille,
+    borderWidth: 1.5,
+    backgroundColor: COULEURS_TOKEN.carte,
     minHeight: 36,
   },
   filtreIcone: { fontSize: 14 },
-  filtreTexte: { fontSize: 13, fontWeight: '600', color: COULEURS.texte },
+  filtreTexte: {
+    fontFamily: POLICES.monoMedium,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
   filtreTexteActif: { color: '#fff' },
   bandeauErreur: {
-    backgroundColor: 'rgba(231,76,60,0.1)',
+    backgroundColor: 'rgba(231,76,60,0.10)',
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(231,76,60,0.3)',
-    padding: 10,
+    borderColor: 'rgba(231,76,60,0.30)',
+    padding: ESPACEMENTS.s,
   },
-  bandeauErreurTexte: { color: COULEURS.rouge, fontSize: 13, textAlign: 'center' },
+  bandeauErreurTexte: {
+    color: COULEURS_TOKEN.rouge,
+    fontFamily: POLICES.sans,
+    fontSize: 13,
+    textAlign: 'center',
+  },
   bandeauSync: {
-    backgroundColor: 'rgba(26,107,138,0.12)',
+    backgroundColor: 'rgba(26,107,138,0.10)',
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(26,107,138,0.3)',
-    padding: 8,
+    borderColor: 'rgba(26,107,138,0.25)',
+    padding: ESPACEMENTS.s,
   },
-  bandeauSyncTexte: { color: '#1a6b8a', fontSize: 12, textAlign: 'center', fontWeight: '600' },
+  bandeauSyncTexte: {
+    color: COULEURS_TOKEN.water,
+    fontFamily: POLICES.mono,
+    fontSize: 11,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
 })

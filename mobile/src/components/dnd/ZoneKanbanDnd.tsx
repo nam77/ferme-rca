@@ -14,12 +14,12 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { CarteTache } from '../CarteTache'
+import { CarteTacheIso } from '../CarteTacheIso'
 import {
-  COULEURS,
   COULEURS_STATUTS,
   LIBELLES_STATUTS,
 } from '../../constants/couleurs'
+import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../../constants/theme'
 import type { Statut, Tache } from '../../types/tache.types'
 import { ICONES_STATUT, STATUTS_ORDRE, type ProprietesZoneKanban } from './types'
 
@@ -46,7 +46,7 @@ const CarteDraggable = ({ tache, onPress }: ProprietesCarteDraggable) => {
       {...(listeners as object)}
       style={styleWrapper}
     >
-      <CarteTache tache={tache} onPress={onPress} />
+      <CarteTacheIso tache={tache} onPress={onPress} />
     </View>
   )
 }
@@ -70,14 +70,17 @@ const ColonneDroppable = ({
       ref={setNodeRef as unknown as React.Ref<View>}
       style={[
         styles.colonne,
-        isOver && { backgroundColor: couleur + '15', borderColor: couleur },
+        isOver && { backgroundColor: couleur + '10', borderColor: couleur + '60' },
       ]}
     >
-      <View style={[styles.entete, { borderTopColor: couleur }]}>
-        <Text style={styles.titre}>
-          {ICONES_STATUT[statut]} {LIBELLES_STATUTS[statut]}
-        </Text>
-        <View style={[styles.compteur, { backgroundColor: couleur }]}>
+      <View style={styles.entete}>
+        <View style={styles.entetePuce}>
+          <View style={[styles.entetePuceDot, { backgroundColor: couleur }]} />
+          <Text style={styles.entetTitre}>
+            {LIBELLES_STATUTS[statut]}
+          </Text>
+        </View>
+        <View style={styles.compteur}>
           <Text style={styles.compteurTexte}>{taches.length}</Text>
         </View>
       </View>
@@ -88,7 +91,9 @@ const ColonneDroppable = ({
       >
         {taches.length === 0 ? (
           <View style={styles.vide}>
-            <Text style={styles.videTexte}>Aucune tâche — glissez-en ici</Text>
+            <Text style={styles.videTexte}>
+              {ICONES_STATUT[statut]}  Aucune tâche{'\n'}Glissez-en une ici
+            </Text>
           </View>
         ) : (
           taches.map((t) => (
@@ -156,7 +161,7 @@ export const ZoneKanbanDnd = ({
       <DragOverlay>
         {tacheActive ? (
           <View style={styles.apercu}>
-            <CarteTache tache={tacheActive} />
+            <CarteTacheIso tache={tacheActive} />
           </View>
         ) : null}
       </DragOverlay>
@@ -166,49 +171,61 @@ export const ZoneKanbanDnd = ({
 
 const styles = StyleSheet.create({
   zone: { flex: 1 },
-  zoneContenu: { padding: 12 },
+  zoneContenu: { padding: ESPACEMENTS.l, gap: ESPACEMENTS.m },
   colonne: {
     width: 320,
-    marginRight: 12,
-    backgroundColor: 'rgba(0,0,0,0.025)',
-    borderRadius: 12,
+    marginRight: ESPACEMENTS.m,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    borderRadius: RAYONS.grand,
     overflow: 'hidden',
-    minHeight: 480,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    minHeight: 520,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
   },
   entete: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: COULEURS.carte,
-    borderTopWidth: 3,
+    paddingHorizontal: ESPACEMENTS.l,
+    paddingVertical: ESPACEMENTS.m,
+    backgroundColor: COULEURS_TOKEN.carte,
     borderBottomWidth: 1,
-    borderBottomColor: COULEURS.bordure,
+    borderBottomColor: COULEURS_TOKEN.bordure,
   },
-  titre: { fontSize: 16, fontWeight: '700', color: COULEURS.texte },
+  entetePuce: { flexDirection: 'row', alignItems: 'center', gap: ESPACEMENTS.s },
+  entetePuceDot: { width: 8, height: 8, borderRadius: 4 },
+  entetTitre: {
+    fontFamily: POLICES.serifSemi,
+    fontSize: 15,
+    color: COULEURS_TOKEN.soil,
+  },
   compteur: {
-    minWidth: 28,
-    height: 28,
-    borderRadius: 14,
+    minWidth: 24,
+    height: 22,
+    borderRadius: 11,
     paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(92,61,30,0.10)',
   },
-  compteurTexte: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  compteurTexte: {
+    fontFamily: POLICES.monoMedium,
+    color: COULEURS_TOKEN.earth,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
   liste: { flex: 1 },
-  listeContenu: { padding: 10, paddingBottom: 24 },
-  vide: { padding: 24, alignItems: 'center' },
+  listeContenu: { padding: ESPACEMENTS.m, paddingBottom: ESPACEMENTS.xl },
+  vide: { padding: ESPACEMENTS.xl, alignItems: 'center' },
   videTexte: {
-    fontSize: 13,
-    color: COULEURS.texteSecondaire,
-    fontStyle: 'italic',
+    fontFamily: POLICES.sans,
+    fontSize: 12.5,
+    color: COULEURS_TOKEN.clay,
     textAlign: 'center',
+    lineHeight: 18,
   },
   apercu: {
-    width: 320,
+    width: 300,
     opacity: 0.95,
     transform: [{ rotate: '2deg' }],
   },

@@ -9,6 +9,7 @@ import { useAuthStore } from '@src/store/authStore'
 import { COULEURS } from '@src/constants/couleurs'
 import { Toaster } from '@src/components/Toaster'
 import { BandeauReseau } from '@src/components/BandeauReseau'
+import { BarreNavigation } from '@src/components/ui'
 import { usePolices } from '@src/hooks/usePolices'
 
 export default function LayoutRoot() {
@@ -41,11 +42,15 @@ export default function LayoutRoot() {
     )
   }
 
+  const surConnexion = segments[0] === 'connexion'
+  const afficherNav = utilisateur && !surConnexion
+
   return (
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
         <View style={styles.colonne}>
           <BandeauReseau />
+          {afficherNav ? <BarreNavigation /> : null}
           <View style={styles.flex}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
