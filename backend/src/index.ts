@@ -8,6 +8,7 @@ import { routeurDashboard } from './routes/dashboard.js'
 import { routeurBudget } from './routes/budget.js'
 import { routeurZones } from './routes/zones.js'
 import { routeurLots } from './routes/lots.js'
+import { routeurParcelles } from './routes/parcelles.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
@@ -54,6 +55,7 @@ app.use('/api/dashboard', routeurDashboard)
 app.use('/api/budget', routeurBudget)
 app.use('/api/zones', routeurZones)
 app.use('/api/lots', routeurLots)
+app.use('/api/parcelles', routeurParcelles)
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ succes: false, message: 'Route inconnue' })

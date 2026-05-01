@@ -83,6 +83,36 @@ enum TypeMouvementAnimal {
   transfert_sortie
 }
 
+enum TypeCulture {
+  mais
+  manioc
+  arachide
+  legumes
+  brachiaria
+  bananier
+  jachere
+}
+
+enum StatutParcelle {
+  preparation
+  semis
+  croissance
+  recolte
+  jachere
+  abandonnee
+}
+
+enum TypeEvenementCulture {
+  preparation_sol
+  semis
+  fertilisation
+  irrigation
+  traitement
+  desherbage
+  recolte
+  observation
+}
+
 model Utilisateur {
   id              String   @id @default(cuid())
   email           String   @unique
@@ -100,6 +130,7 @@ model Utilisateur {
   mouvements      Mouvement[]
   photosTelechargees Photo[]   @relation("PhotoUploader")
   mouvementsAnimauxCrees MouvementAnimal[] @relation("AuteurMouvementAnimal")
+  evenementsCultureCrees EvenementCulture[] @relation("AuteurEvenementCulture")
 }
 
 model Tache {
@@ -146,6 +177,7 @@ model Zone {
   taches       Tache[]
   photos       Photo[]
   lots         LotAnimaux[]
+  parcelles    Parcelle[]
 }
 
 model LotAnimaux {
@@ -194,6 +226,53 @@ model MouvementAnimal {
 
   @@index([lotId])
   @@index([dateMouvement])
+  @@index([type])
+}
+
+model Parcelle {
+  id                String         @id @default(cuid())
+  nom               String
+  typeCulture       TypeCulture
+  surfaceHa         Float
+  dateSemis         DateTime?
+  dateRecoltePrev   DateTime?
+  rendementPrevuKg  Float?
+  rendementReelKg   Float?
+  statut            StatutParcelle @default(preparation)
+  notes             String?
+  actif             Boolean        @default(true)
+  creeLe            DateTime       @default(now())
+  modifieLe         DateTime       @updatedAt
+
+  zoneId            String?
+  zone              Zone?          @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+
+  evenements        EvenementCulture[]
+
+  @@index([typeCulture])
+  @@index([statut])
+  @@index([zoneId])
+}
+
+model EvenementCulture {
+  id            String                @id @default(cuid())
+  type          TypeEvenementCulture
+  dateEvenement DateTime              @default(now())
+  description   String?
+  coutTotal     Decimal?              @db.Decimal(12, 2)
+  devise        String                @default("XAF")
+  quantiteKg    Float?
+  notes         String?
+  creeLe        DateTime              @default(now())
+
+  parcelleId    String
+  parcelle      Parcelle              @relation(fields: [parcelleId], references: [id], onDelete: Cascade)
+
+  auteurId      String
+  auteur        Utilisateur           @relation("AuteurEvenementCulture", fields: [auteurId], references: [id])
+
+  @@index([parcelleId])
+  @@index([dateEvenement])
   @@index([type])
 }
 

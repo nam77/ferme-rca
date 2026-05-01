@@ -10,6 +10,9 @@ import {
   SexeAnimal,
   CategorieAge,
   TypeMouvementAnimal,
+  TypeCulture,
+  StatutParcelle,
+  TypeEvenementCulture,
 } from '../src/generated/prisma/enums.js'
 
 type GraineUtilisateur = {
@@ -502,6 +505,127 @@ const lots: GraineLot[] = [
   },
 ]
 
+type GraineEvenement = {
+  type: TypeEvenementCulture
+  joursDansLePasse: number
+  description?: string
+  coutTotal?: number
+  quantiteKg?: number
+}
+
+type GraineParcelle = {
+  nom: string
+  typeCulture: TypeCulture
+  surfaceHa: number
+  zoneNomContient?: string
+  zoneFiliere: Filiere
+  joursAvantSemis: number | null    // négatif = semé il y a X jours, null = pas encore prévu
+  joursAvantRecolte: number | null
+  rendementPrevuKg: number | null
+  rendementReelKg: number | null
+  statut: StatutParcelle
+  notes?: string
+  evenements: GraineEvenement[]
+}
+
+const parcelles: GraineParcelle[] = [
+  {
+    nom: 'Maïs + arachide — Champ Nord',
+    typeCulture: TypeCulture.mais,
+    surfaceHa: 2,
+    zoneFiliere: Filiere.cultures,
+    zoneNomContient: 'maïs',
+    joursAvantSemis: -25,    // semis il y a 25 jours
+    joursAvantRecolte: 90,   // récolte dans 3 mois
+    rendementPrevuKg: 4000,
+    rendementReelKg: null,
+    statut: StatutParcelle.croissance,
+    notes: 'Culture associée maïs + arachide. Profite des premières pluies. Destination principale : alimentation animaux + vente excédent.',
+    evenements: [
+      { type: TypeEvenementCulture.preparation_sol, joursDansLePasse: 35, description: 'Labour et hersage à la traction animale.', coutTotal: 80_000 },
+      { type: TypeEvenementCulture.semis, joursDansLePasse: 25, description: 'Semis maïs (60 kg/ha) + arachide (40 kg/ha).', coutTotal: 220_000 },
+      { type: TypeEvenementCulture.fertilisation, joursDansLePasse: 10, description: 'Apport de compost (3 t/ha) issu du composteur des bassins.', coutTotal: 0 },
+      { type: TypeEvenementCulture.desherbage, joursDansLePasse: 4, description: 'Premier sarclage manuel.', coutTotal: 35_000 },
+    ],
+  },
+  {
+    nom: 'Manioc — Champ Centre',
+    typeCulture: TypeCulture.manioc,
+    surfaceHa: 2,
+    zoneFiliere: Filiere.cultures,
+    zoneNomContient: 'manioc',
+    joursAvantSemis: -20,
+    joursAvantRecolte: 300,
+    rendementPrevuKg: 18_000,
+    rendementReelKg: null,
+    statut: StatutParcelle.croissance,
+    notes: 'Manioc à cycle long (~10 mois). Tubercules pour consommation humaine, son pour les porcs.',
+    evenements: [
+      { type: TypeEvenementCulture.preparation_sol, joursDansLePasse: 30, description: 'Buttage des planches.', coutTotal: 60_000 },
+      { type: TypeEvenementCulture.semis, joursDansLePasse: 20, description: 'Plantation de boutures (10 000 boutures).', coutTotal: 100_000 },
+    ],
+  },
+  {
+    nom: 'Légumes — Tomate, gombo, poivron',
+    typeCulture: TypeCulture.legumes,
+    surfaceHa: 1,
+    zoneFiliere: Filiere.cultures,
+    zoneNomContient: 'légumes',
+    joursAvantSemis: 90,    // semis prévu dans 3 mois (août-sept)
+    joursAvantRecolte: 200,
+    rendementPrevuKg: 8_000,
+    rendementReelKg: null,
+    statut: StatutParcelle.preparation,
+    notes: 'Plantation août-septembre, récolte nov-déc. Vente directe au marché local — revenus rapides.',
+    evenements: [],
+  },
+  {
+    nom: 'Brachiaria — Pâturage rotatif',
+    typeCulture: TypeCulture.brachiaria,
+    surfaceHa: 2,
+    zoneFiliere: Filiere.cultures,
+    joursAvantSemis: -45,
+    joursAvantRecolte: null,    // fourrage permanent
+    rendementPrevuKg: null,
+    rendementReelKg: null,
+    statut: StatutParcelle.croissance,
+    notes: 'Fourragère pérenne. Rotation 4 zones × 21 jours pour les caprins/ovins. Première coupe foin prévue saison sèche.',
+    evenements: [
+      { type: TypeEvenementCulture.preparation_sol, joursDansLePasse: 55, description: 'Préparation et amendement compost.', coutTotal: 40_000 },
+      { type: TypeEvenementCulture.semis, joursDansLePasse: 45, description: 'Semis Brachiaria ruziziensis (5 kg/ha).', coutTotal: 80_000 },
+    ],
+  },
+  {
+    nom: 'Bananiers — Bordure',
+    typeCulture: TypeCulture.bananier,
+    surfaceHa: 0.5,
+    zoneFiliere: Filiere.cultures,
+    joursAvantSemis: -180,
+    joursAvantRecolte: 60,
+    rendementPrevuKg: 3_000,
+    rendementReelKg: null,
+    statut: StatutParcelle.croissance,
+    notes: 'Variété Cavendish. Plantation en bordure des bassins (ombre + bénéficient de l\'humidité). Production étalée.',
+    evenements: [
+      { type: TypeEvenementCulture.semis, joursDansLePasse: 180, description: 'Plantation de 200 rejets.', coutTotal: 150_000 },
+      { type: TypeEvenementCulture.fertilisation, joursDansLePasse: 90, description: 'Apport NPK + bouse.', coutTotal: 25_000 },
+    ],
+  },
+  {
+    nom: 'Jachère — Sud',
+    typeCulture: TypeCulture.jachere,
+    surfaceHa: 0.5,
+    zoneFiliere: Filiere.cultures,
+    joursAvantSemis: null,
+    joursAvantRecolte: null,
+    rendementPrevuKg: null,
+    rendementReelKg: null,
+    statut: StatutParcelle.jachere,
+    notes: 'Au repos pour régénération. Rotation prévue pour saison 2027.',
+    evenements: [],
+  },
+]
+
 const main = async () => {
   console.log('🌱 Seed démarré...')
 
@@ -642,8 +766,57 @@ const main = async () => {
     console.log(`  🐾 ${l.espece.padEnd(8)} ${l.nom} (${l.mouvements.length} mvts)`)
   }
 
+  // Reset parcelles et événements
+  await prisma.evenementCulture.deleteMany({})
+  await prisma.parcelle.deleteMany({})
+
+  let totalEvenements = 0
+  for (const p of parcelles) {
+    const zoneId = trouverZoneId(p.zoneFiliere, p.zoneNomContient)
+    const dateSemis = p.joursAvantSemis === null
+      ? null
+      : new Date(maintenant.getTime() + p.joursAvantSemis * 24 * 60 * 60 * 1000)
+    const dateRecoltePrev = p.joursAvantRecolte === null
+      ? null
+      : new Date(maintenant.getTime() + p.joursAvantRecolte * 24 * 60 * 60 * 1000)
+
+    const parcelleCree = await prisma.parcelle.create({
+      data: {
+        nom: p.nom,
+        typeCulture: p.typeCulture,
+        surfaceHa: p.surfaceHa,
+        dateSemis,
+        dateRecoltePrev,
+        rendementPrevuKg: p.rendementPrevuKg,
+        rendementReelKg: p.rendementReelKg,
+        statut: p.statut,
+        notes: p.notes,
+        zoneId,
+      },
+    })
+
+    for (const e of p.evenements) {
+      const dateEvenement = new Date(maintenant.getTime() - e.joursDansLePasse * 24 * 60 * 60 * 1000)
+      await prisma.evenementCulture.create({
+        data: {
+          parcelleId: parcelleCree.id,
+          type: e.type,
+          dateEvenement,
+          description: e.description ?? null,
+          coutTotal: e.coutTotal ?? null,
+          quantiteKg: e.quantiteKg ?? null,
+          auteurId: idAdmin,
+        },
+      })
+      totalEvenements += 1
+    }
+    console.log(
+      `  🌾 ${p.typeCulture.padEnd(11)} ${p.nom.padEnd(40)} ${p.surfaceHa} ha · ${p.statut} · ${p.evenements.length} événements`,
+    )
+  }
+
   console.log(
-    `✅ Seed terminé : ${utilisateurs.length} utilisateurs, ${taches.length} tâches, ${zones.length} zones, ${lignesBudget.length} lignes budget, ${lots.length} lots animaux, ${totalMouvements} mouvements.`,
+    `✅ Seed terminé : ${utilisateurs.length} utilisateurs, ${taches.length} tâches, ${zones.length} zones, ${lignesBudget.length} lignes budget, ${lots.length} lots animaux, ${totalMouvements} mouvements, ${parcelles.length} parcelles, ${totalEvenements} événements culture.`,
   )
 }
 
