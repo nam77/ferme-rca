@@ -83,9 +83,19 @@ type CarteActiviteProps = {
   tache: Tache
   onCompleter: () => void
   onBasculerSous: (sousId: string, faite: boolean) => void
+  onCyclerStatut: () => void
+  onEditer: () => void
+  onSupprimer: () => void
 }
 
-const CarteActivite = ({ tache, onCompleter, onBasculerSous }: CarteActiviteProps) => {
+const CarteActivite = ({
+  tache,
+  onCompleter,
+  onBasculerSous,
+  onCyclerStatut,
+  onEditer,
+  onSupprimer,
+}: CarteActiviteProps) => {
   const couleurFiliere = COULEURS_FILIERES[tache.filiere as FiliereCouleur]
   const iconeFiliere = ICONES_FILIERES[tache.filiere as FiliereCouleur]
   const libelleFiliere = LIBELLES_FILIERES[tache.filiere as FiliereCouleur]
@@ -98,26 +108,58 @@ const CarteActivite = ({ tache, onCompleter, onBasculerSous }: CarteActiviteProp
   return (
     <View style={styles.carteActivite}>
       <View style={styles.carteHaut}>
-        <View
-          style={[
-            styles.tagFiliere,
-            { backgroundColor: couleurFiliere + '15', borderColor: couleurFiliere + '60' },
-          ]}
-        >
-          <Text style={styles.tagFiliereIcone}>{iconeFiliere}</Text>
-          <Text style={[styles.tagFiliereTexte, { color: couleurFiliere }]}>
-            {libelleFiliere.toUpperCase()}
-          </Text>
+        <View style={styles.carteHautGauche}>
+          <View
+            style={[
+              styles.tagFiliere,
+              { backgroundColor: couleurFiliere + '15', borderColor: couleurFiliere + '60' },
+            ]}
+          >
+            <Text style={styles.tagFiliereIcone}>{iconeFiliere}</Text>
+            <Text style={[styles.tagFiliereTexte, { color: couleurFiliere }]}>
+              {libelleFiliere.toUpperCase()}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.tagStatut,
+              { backgroundColor: statutEtiq.fond, borderColor: statutEtiq.bordure },
+            ]}
+          >
+            <Text style={[styles.tagStatutTexte, { color: statutEtiq.texteCouleur }]}>
+              {statutEtiq.texte}
+            </Text>
+          </View>
         </View>
-        <View
-          style={[
-            styles.tagStatut,
-            { backgroundColor: statutEtiq.fond, borderColor: statutEtiq.bordure },
-          ]}
-        >
-          <Text style={[styles.tagStatutTexte, { color: statutEtiq.texteCouleur }]}>
-            {statutEtiq.texte}
-          </Text>
+
+        <View style={styles.actionsCrud}>
+          <Pressable
+            onPress={onCyclerStatut}
+            accessibilityLabel="Changer de statut"
+            accessibilityRole="button"
+            hitSlop={6}
+            style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+          >
+            <Ionicons name="swap-horizontal" size={13} color={COULEURS_TOKEN.earth} />
+          </Pressable>
+          <Pressable
+            onPress={onEditer}
+            accessibilityLabel="Éditer"
+            accessibilityRole="button"
+            hitSlop={6}
+            style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+          >
+            <Ionicons name="pencil" size={12} color={COULEURS_TOKEN.earth} />
+          </Pressable>
+          <Pressable
+            onPress={onSupprimer}
+            accessibilityLabel="Supprimer"
+            accessibilityRole="button"
+            hitSlop={6}
+            style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+          >
+            <Ionicons name="close" size={14} color={COULEURS_TOKEN.earth} />
+          </Pressable>
         </View>
       </View>
 
@@ -188,7 +230,7 @@ const CarteActivite = ({ tache, onCompleter, onBasculerSous }: CarteActiviteProp
 }
 
 export const EcranActivite = () => {
-  const { taches, enChargement, recharger } = useTaches()
+  const { taches, enChargement, recharger, deplacer, supprimer } = useTaches()
   const afficherToast = useToastStore((s) => s.afficher)
   const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>('tous')
   const [filtreFiliere, setFiltreFiliere] = useState<FiltreFiliere>('toutes')
@@ -230,6 +272,21 @@ export const EcranActivite = () => {
         'erreur',
       )
     }
+  }
+
+  const cyclerStatut = (tache: Tache) => {
+    const ordre: Statut[] = ['a_faire', 'en_cours', 'termine']
+    const idx = ordre.indexOf(tache.statut)
+    const suivant = ordre[(idx + 1) % ordre.length]
+    deplacer(tache.id, suivant)
+  }
+
+  const editer = (_tache: Tache) => {
+    afficherToast('Édition de l\'activité — bientôt disponible.', 'avertissement')
+  }
+
+  const supprimerTache = (tache: Tache) => {
+    supprimer(tache.id)
   }
 
   if (enChargement && taches.length === 0) {
@@ -315,6 +372,9 @@ export const EcranActivite = () => {
                 tache={t}
                 onCompleter={() => completer(t)}
                 onBasculerSous={(sousId, faite) => basculerSous(t.id, sousId, faite)}
+                onCyclerStatut={() => cyclerStatut(t)}
+                onEditer={() => editer(t)}
+                onSupprimer={() => supprimerTache(t)}
               />
             ))
           )}
@@ -453,6 +513,29 @@ const styles = StyleSheet.create({
     gap: ESPACEMENTS.s,
     marginBottom: ESPACEMENTS.m,
   },
+  carteHautGauche: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ESPACEMENTS.s,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+  },
+  actionsCrud: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  boutonCrud: {
+    width: 26,
+    height: 26,
+    borderRadius: RAYONS.petit,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  boutonCrudPresse: { opacity: 0.6, backgroundColor: 'rgba(92,61,30,0.08)' },
   tagFiliere: {
     flexDirection: 'row',
     alignItems: 'center',
