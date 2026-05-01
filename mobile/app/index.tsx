@@ -1,15 +1,15 @@
-
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useAuthStore } from '@src/store/authStore'
+import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '@src/constants/theme'
 import {
-  COULEURS,
   COULEURS_FILIERES,
   ICONES_FILIERES,
   LIBELLES_FILIERES,
   type Filiere,
 } from '@src/constants/couleurs'
+import { Hero, Pastille, Card, Bouton, Tag } from '@src/components/ui'
 
 const LIBELLES_ROLES = {
   admin: 'Administrateur',
@@ -24,50 +24,55 @@ type Module = {
   description: string
   icone: string
   couleur: string
-  route?: string
-  jalon?: string
+  route: string
+  tag: string
 }
 
 const MODULES: Module[] = [
   {
     id: 'kanban',
     titre: 'Kanban',
-    description: 'Suivi des tâches par filière',
+    description: 'Suivi des tâches par filière, glisser-déposer entre colonnes.',
     icone: '📋',
-    couleur: COULEURS.vert,
+    couleur: COULEURS_TOKEN.mint,
     route: '/kanban',
+    tag: 'Opérations',
   },
   {
     id: 'tableau',
     titre: 'Tableau de bord',
-    description: 'KPI et alertes en temps réel',
+    description: 'Indicateurs de progression, échéances, activité récente.',
     icone: '📊',
-    couleur: '#1a6b8a',
+    couleur: COULEURS_TOKEN.water,
     route: '/dashboard',
+    tag: 'Pilotage',
   },
   {
     id: 'budget',
     titre: 'Budget',
-    description: 'Prévu vs réel par phase',
+    description: 'Prévu vs réel, par phase. Investissement et exploitation.',
     icone: '💰',
-    couleur: '#e8943a',
+    couleur: COULEURS_TOKEN.aviculture,
     route: '/budget',
+    tag: 'Finance',
   },
   {
     id: 'ferme',
     titre: 'Plan de la ferme',
-    description: '8 zones interactives',
+    description: '8 zones interactives sur les 8 hectares.',
     icone: '🗺️',
-    couleur: '#7b6e3e',
+    couleur: COULEURS_TOKEN.caprins,
     route: '/ferme',
+    tag: 'Spatial',
   },
   {
     id: 'cheptel',
     titre: 'Cheptel',
-    description: 'Effectifs et mouvements d\'animaux',
+    description: 'Effectifs et mouvements par espèce. Naissances, ventes, mortalités.',
     icone: '🐾',
-    couleur: '#d4548a',
+    couleur: COULEURS_TOKEN.porcins,
     route: '/cheptel',
+    tag: 'Animaux',
   },
 ]
 
@@ -82,155 +87,151 @@ export default function EcranAccueil() {
 
   const filiereCouleur = utilisateur.filiere
     ? COULEURS_FILIERES[utilisateur.filiere as Filiere]
-    : COULEURS.texteSecondaire
+    : COULEURS_TOKEN.earth
 
   return (
-    <SafeAreaView style={styles.conteneur}>
+    <SafeAreaView style={styles.conteneur} edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.contenu}>
-        <View style={styles.entete}>
-          <Text style={styles.salutation}>Bonjour</Text>
-          <Text style={styles.prenom}>{utilisateur.prenom} {utilisateur.nom}</Text>
-          <View style={styles.metaLigne}>
-            <Text style={styles.meta}>{LIBELLES_ROLES[utilisateur.role]}</Text>
+        <Hero
+          tag="AGROPASTORALE RCA · 8 HECTARES"
+          titre="Bonjour"
+          titreEmphase={utilisateur.prenom}
+          sousTitre={"Pilotage en temps réel de la ferme : tâches, cheptel, budget et plan d’aménagement."}
+        >
+          <View style={styles.metaHero}>
+            <Pastille variante="paille">{LIBELLES_ROLES[utilisateur.role]}</Pastille>
             {utilisateur.filiere ? (
-              <View style={[styles.pastille, { backgroundColor: filiereCouleur + '22', borderColor: filiereCouleur }]}>
-                <Text style={[styles.pastilleTexte, { color: filiereCouleur }]}>
-                  {ICONES_FILIERES[utilisateur.filiere as Filiere]} {LIBELLES_FILIERES[utilisateur.filiere as Filiere]}
-                </Text>
-              </View>
+              <Pastille
+                couleurPersonnalisee={{
+                  fond: filiereCouleur + '22',
+                  bordure: filiereCouleur,
+                  texte: filiereCouleur,
+                }}
+              >
+                {`${ICONES_FILIERES[utilisateur.filiere as Filiere]} ${LIBELLES_FILIERES[utilisateur.filiere as Filiere]}`}
+              </Pastille>
             ) : null}
           </View>
-        </View>
+        </Hero>
 
-        <Text style={styles.section}>Modules</Text>
-        <View style={styles.grille}>
-          {MODULES.map((m) => {
-            const actif = Boolean(m.route)
-            return (
+        <View style={styles.corps}>
+          <View style={styles.entete}>
+            <Text style={styles.numero}>01 — MODULES</Text>
+            <Text style={styles.titreSection}>
+              <Text style={styles.titreItalique}>Cinq</Text> portes d'entrée
+            </Text>
+          </View>
+
+          <View style={styles.grille}>
+            {MODULES.map((m) => (
               <Pressable
                 key={m.id}
-                onPress={() => m.route && router.push(m.route as never)}
-                disabled={!actif}
+                onPress={() => router.push(m.route as never)}
                 accessibilityLabel={m.titre}
                 accessibilityRole="button"
                 style={({ pressed }) => [
-                  styles.module,
-                  { borderLeftColor: m.couleur },
-                  !actif && styles.moduleDesactive,
-                  pressed && actif && styles.modulePresse,
+                  styles.modulePresseable,
+                  pressed && styles.modulePresse,
                 ]}
               >
-                <Text style={styles.moduleIcone}>{m.icone}</Text>
-                <View style={styles.moduleTexte}>
+                <Card bordureGauche={m.couleur}>
+                  <View style={styles.moduleEntete}>
+                    <Text style={styles.moduleIcone}>{m.icone}</Text>
+                    <Tag variante="amber">{m.tag.toUpperCase()}</Tag>
+                  </View>
                   <Text style={styles.moduleTitre}>{m.titre}</Text>
                   <Text style={styles.moduleDescription}>{m.description}</Text>
-                  {!actif && m.jalon ? (
-                    <Text style={styles.moduleJalon}>À venir · {m.jalon}</Text>
-                  ) : null}
-                </View>
-                {actif ? <Text style={styles.moduleFleche}>›</Text> : null}
+                  <View style={styles.moduleFlecheBloc}>
+                    <Text style={[styles.moduleFleche, { color: m.couleur }]}>Ouvrir →</Text>
+                  </View>
+                </Card>
               </Pressable>
-            )
-          })}
+            ))}
+          </View>
+
+          <View style={styles.basDePage}>
+            <Bouton
+              libelle="Se déconnecter"
+              variante="rouge"
+              onPress={deconnexion}
+              pleinement
+            />
+            <Text style={styles.email}>{utilisateur.email}</Text>
+          </View>
         </View>
-
-        <Pressable
-          onPress={deconnexion}
-          style={({ pressed }) => [styles.bouton, pressed && styles.boutonPresse]}
-          accessibilityLabel="Se déconnecter"
-          accessibilityRole="button"
-        >
-          <Text style={styles.boutonTexte}>Se déconnecter</Text>
-        </Pressable>
-
-        <Text style={styles.email}>{utilisateur.email}</Text>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  conteneur: { flex: 1, backgroundColor: COULEURS.fond },
-  contenu: { padding: 24, paddingTop: 32, paddingBottom: 40 },
-  entete: { marginBottom: 28 },
-  salutation: { fontSize: 18, color: COULEURS.texteSecondaire },
-  prenom: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COULEURS.texte,
-    marginTop: 2,
+  conteneur: { flex: 1, backgroundColor: COULEURS_TOKEN.cream },
+  contenu: { paddingBottom: ESPACEMENTS.xxxl },
+  metaHero: { flexDirection: 'row', flexWrap: 'wrap', gap: ESPACEMENTS.s },
+  corps: {
+    paddingHorizontal: ESPACEMENTS.xl,
+    paddingTop: ESPACEMENTS.xl,
   },
-  metaLigne: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
+  entete: {
+    marginBottom: ESPACEMENTS.l,
   },
-  meta: { fontSize: 14, color: COULEURS.texteSecondaire },
-  pastille: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  pastilleTexte: { fontSize: 12, fontWeight: '600' },
-  section: {
-    fontSize: 12,
-    color: COULEURS.texteSecondaire,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  grille: { gap: 12, marginBottom: 28 },
-  module: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: COULEURS.carte,
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderTopColor: COULEURS.bordure,
-    borderRightColor: COULEURS.bordure,
-    borderBottomColor: COULEURS.bordure,
-    minHeight: 72,
-  },
-  moduleDesactive: { opacity: 0.55 },
-  modulePresse: { opacity: 0.85 },
-  moduleIcone: { fontSize: 32 },
-  moduleTexte: { flex: 1 },
-  moduleTitre: { fontSize: 17, fontWeight: '700', color: COULEURS.texte },
-  moduleDescription: {
-    fontSize: 13,
-    color: COULEURS.texteSecondaire,
-    marginTop: 2,
-  },
-  moduleJalon: {
+  numero: {
+    fontFamily: POLICES.mono,
     fontSize: 11,
-    color: COULEURS.texteSecondaire,
-    marginTop: 4,
-    fontStyle: 'italic',
+    color: COULEURS_TOKEN.mint,
+    letterSpacing: 1.2,
+    marginBottom: ESPACEMENTS.s,
   },
-  moduleFleche: { fontSize: 28, color: COULEURS.texteSecondaire, lineHeight: 30 },
-  bouton: {
-    height: 52,
-    backgroundColor: COULEURS.rouge,
-    borderRadius: 10,
-    justifyContent: 'center',
+  titreSection: {
+    fontFamily: POLICES.serifSemi,
+    fontSize: 26,
+    color: COULEURS_TOKEN.soil,
+    lineHeight: 32,
+  },
+  titreItalique: {
+    fontFamily: POLICES.serifItalique,
+    color: COULEURS_TOKEN.clay,
+  },
+  grille: { gap: ESPACEMENTS.m, marginBottom: ESPACEMENTS.xl },
+  modulePresseable: {},
+  modulePresse: { opacity: 0.85, transform: [{ scale: 0.99 }] },
+  moduleEntete: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
+    marginBottom: ESPACEMENTS.s,
   },
-  boutonPresse: { opacity: 0.85 },
-  boutonTexte: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  email: {
+  moduleIcone: { fontSize: 28 },
+  moduleTitre: {
+    fontFamily: POLICES.serifSemi,
+    fontSize: 18,
+    color: COULEURS_TOKEN.soil,
+    marginBottom: 4,
+  },
+  moduleDescription: {
+    fontFamily: POLICES.sans,
+    fontSize: 13,
+    lineHeight: 19,
+    color: COULEURS_TOKEN.earth,
+  },
+  moduleFlecheBloc: {
+    marginTop: ESPACEMENTS.m,
+    alignItems: 'flex-end',
+  },
+  moduleFleche: {
+    fontFamily: POLICES.monoMedium,
     fontSize: 12,
-    color: COULEURS.texteSecondaire,
+    letterSpacing: 0.5,
+  },
+  basDePage: {
+    marginTop: ESPACEMENTS.l,
+    gap: ESPACEMENTS.m,
+  },
+  email: {
     textAlign: 'center',
-    marginTop: 16,
+    fontFamily: POLICES.mono,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: COULEURS_TOKEN.clay,
   },
 })

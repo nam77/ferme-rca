@@ -9,6 +9,7 @@ import { useAuthStore } from '@src/store/authStore'
 import { COULEURS } from '@src/constants/couleurs'
 import { Toaster } from '@src/components/Toaster'
 import { BandeauReseau } from '@src/components/BandeauReseau'
+import { usePolices } from '@src/hooks/usePolices'
 
 export default function LayoutRoot() {
   const initialiser = useAuthStore((s) => s.initialiser)
@@ -16,6 +17,7 @@ export default function LayoutRoot() {
   const utilisateur = useAuthStore((s) => s.utilisateur)
   const router = useRouter()
   const segments = useSegments()
+  const policesPretes = usePolices()
 
   useEffect(() => {
     initialiser()
@@ -31,7 +33,7 @@ export default function LayoutRoot() {
     }
   }, [pretInitial, utilisateur, segments, router])
 
-  if (!pretInitial) {
+  if (!pretInitial || !policesPretes) {
     return (
       <View style={styles.chargement}>
         <ActivityIndicator size="large" color={COULEURS.vert} />

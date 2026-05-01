@@ -1,0 +1,6 @@
+export { Pastille } from './Pastille'
+export { Tag } from './Tag'
+export { Hero } from './Hero'
+export { Card } from './Card'
+export { EnteteSection } from './EnteteSection'
+export { Bouton } from './Bouton'
