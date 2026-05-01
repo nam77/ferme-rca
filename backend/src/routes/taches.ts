@@ -30,6 +30,7 @@ const inclureRelations = {
   responsable: { select: { id: true, prenom: true, nom: true, email: true } },
   createur: { select: { id: true, prenom: true, nom: true } },
   zone: { select: { id: true, nom: true } },
+  sousTaches: { orderBy: { ordre: 'asc' as const } },
 } as const
 
 const peutModifierTache = (
@@ -240,6 +241,88 @@ routeurTaches.delete('/:id', async (req: Request, res: Response) => {
     res.json({ succes: true, message: 'Tâche supprimée' })
   } catch (erreur) {
     console.error('Erreur DELETE /taches/:id:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+// ─────────────────────── Sous-tâches (checklist) ───────────────────────
+
+const schemaSousTacheCreation = z.object({
+  titre: z.string().min(1).max(200),
+})
+
+const schemaSousTacheMaj = z.object({
+  titre: z.string().min(1).max(200).optional(),
+  faite: z.boolean().optional(),
+  ordre: z.number().int().nonnegative().optional(),
+})
+
+routeurTaches.post('/:id/sous-taches', async (req: Request, res: Response) => {
+  const parsed = schemaSousTacheCreation.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Données invalides' })
+    return
+  }
+  try {
+    const tache = await prisma.tache.findUnique({ where: { id: req.params.id }, select: { id: true } })
+    if (!tache) {
+      res.status(404).json({ succes: false, message: 'Tâche introuvable' })
+      return
+    }
+    const dernier = await prisma.sousTache.findFirst({
+      where: { tacheId: req.params.id },
+      orderBy: { ordre: 'desc' },
+      select: { ordre: true },
+    })
+    const cree = await prisma.sousTache.create({
+      data: {
+        tacheId: req.params.id,
+        titre: parsed.data.titre,
+        ordre: (dernier?.ordre ?? -1) + 1,
+      },
+    })
+    res.status(201).json({ succes: true, donnees: cree })
+  } catch (erreur) {
+    console.error('Erreur POST sous-tache:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+routeurTaches.patch('/:id/sous-taches/:sousId', async (req: Request, res: Response) => {
+  const parsed = schemaSousTacheMaj.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Données invalides' })
+    return
+  }
+  try {
+    const sous = await prisma.sousTache.findUnique({ where: { id: req.params.sousId } })
+    if (!sous || sous.tacheId !== req.params.id) {
+      res.status(404).json({ succes: false, message: 'Sous-tâche introuvable' })
+      return
+    }
+    const data: Record<string, unknown> = {}
+    if (parsed.data.titre !== undefined) data.titre = parsed.data.titre
+    if (parsed.data.faite !== undefined) data.faite = parsed.data.faite
+    if (parsed.data.ordre !== undefined) data.ordre = parsed.data.ordre
+    const misAJour = await prisma.sousTache.update({ where: { id: req.params.sousId }, data })
+    res.json({ succes: true, donnees: misAJour })
+  } catch (erreur) {
+    console.error('Erreur PATCH sous-tache:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+routeurTaches.delete('/:id/sous-taches/:sousId', async (req: Request, res: Response) => {
+  try {
+    const sous = await prisma.sousTache.findUnique({ where: { id: req.params.sousId } })
+    if (!sous || sous.tacheId !== req.params.id) {
+      res.status(404).json({ succes: false, message: 'Sous-tâche introuvable' })
+      return
+    }
+    await prisma.sousTache.delete({ where: { id: req.params.sousId } })
+    res.json({ succes: true, message: 'Sous-tâche supprimée' })
+  } catch (erreur) {
+    console.error('Erreur DELETE sous-tache:', erreur)
     res.status(500).json({ succes: false, message: 'Erreur serveur' })
   }
 })

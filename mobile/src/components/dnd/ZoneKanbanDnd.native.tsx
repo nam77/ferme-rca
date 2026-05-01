@@ -11,7 +11,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated'
-import { CarteTache } from '../CarteTache'
+import { CarteTacheIso } from '../CarteTacheIso'
 import {
   COULEURS,
   COULEURS_STATUTS,
@@ -108,7 +108,7 @@ const CarteDraggableNative = ({
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={styleAnime}>
-        <CarteTache tache={tache} onPress={onPress} />
+        <CarteTacheIso tache={tache} onPress={onPress} />
       </Animated.View>
     </GestureDetector>
   )

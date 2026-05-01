@@ -10,6 +10,16 @@ export type ResponsableMin = {
   email: string
 }
 
+export type SousTache = {
+  id: string
+  tacheId: string
+  titre: string
+  faite: boolean
+  ordre: number
+  creeLe: string
+  modifieLe: string
+}
+
 export type Tache = {
   id: string
   titre: string
@@ -26,6 +36,7 @@ export type Tache = {
   createur: { id: string; prenom: string; nom: string } | null
   zoneId: string | null
   zone: { id: string; nom: string } | null
+  sousTaches?: SousTache[]
   creeLe: string
   modifieLe: string
 }

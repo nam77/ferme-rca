@@ -23,13 +23,14 @@ import type { Filiere } from '../types/auth.types'
 import type { Tache } from '../types/tache.types'
 
 const FILIERES_TOUTES: { cle: Filiere | 'tous'; libelle: string; icone: string; couleur: string }[] = [
-  { cle: 'tous', libelle: 'Tout', icone: '🌍', couleur: COULEURS_TOKEN.mint },
+  { cle: 'tous', libelle: 'Toutes', icone: '', couleur: COULEURS_TOKEN.soil },
   { cle: 'pisciculture', libelle: 'Pisciculture', icone: ICONES_FILIERES.pisciculture, couleur: COULEURS_FILIERES.pisciculture },
   { cle: 'aviculture', libelle: 'Aviculture', icone: ICONES_FILIERES.aviculture, couleur: COULEURS_FILIERES.aviculture },
   { cle: 'porcins', libelle: 'Porcins', icone: ICONES_FILIERES.porcins, couleur: COULEURS_FILIERES.porcins },
   { cle: 'caprins', libelle: 'Caprins/Ovins', icone: ICONES_FILIERES.caprins, couleur: COULEURS_FILIERES.caprins },
   { cle: 'cultures', libelle: 'Cultures', icone: ICONES_FILIERES.cultures, couleur: COULEURS_FILIERES.cultures },
-  { cle: 'infrastructure', libelle: 'Infra', icone: ICONES_FILIERES.infrastructure, couleur: COULEURS_FILIERES.infrastructure },
+  { cle: 'infrastructure', libelle: 'Infrastructure', icone: ICONES_FILIERES.infrastructure, couleur: COULEURS_FILIERES.infrastructure },
+  { cle: 'habitat', libelle: 'Habitat/Stock', icone: ICONES_FILIERES.habitat, couleur: COULEURS_FILIERES.habitat },
 ]
 
 export const EcranKanban = () => {
@@ -65,23 +66,23 @@ export const EcranKanban = () => {
     <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
       <View style={styles.entete}>
         <View style={styles.entetegauche}>
-          <Text style={styles.numeroSection}>02 — OPÉRATIONS</Text>
           <Text style={styles.titre}>
             Kanban <Text style={styles.titreItalique}>— Tâches & opérations</Text>
           </Text>
           <Text style={styles.sousTitre}>
-            Trois colonnes glisser-déposer. Filtrer par filière pour isoler une équipe.
+            Drag &amp; drop entre colonnes. Filtre par filière. Persistance automatique.
           </Text>
         </View>
 
         <View style={styles.entetedroite}>
           <Pressable
             onPress={recharger}
-            accessibilityLabel="Actualiser"
+            accessibilityLabel="Reset"
             accessibilityRole="button"
-            style={({ pressed }) => [styles.boutonIcone, pressed && styles.boutonPresse]}
+            style={({ pressed }) => [styles.boutonReset, pressed && styles.boutonPresse]}
           >
-            <Ionicons name="refresh" size={18} color={COULEURS_TOKEN.earth} />
+            <Ionicons name="refresh-outline" size={14} color={COULEURS_TOKEN.earth} />
+            <Text style={styles.boutonResetTexte}>Reset</Text>
           </Pressable>
           {peutCreer ? (
             <Pressable
@@ -90,40 +91,69 @@ export const EcranKanban = () => {
               accessibilityRole="button"
               style={({ pressed }) => [styles.boutonNouvelle, pressed && styles.boutonPresse]}
             >
-              <Ionicons name="add" size={18} color="#fff" />
+              <Ionicons name="add" size={16} color="#fff" />
               <Text style={styles.boutonNouvelleTexte}>Nouvelle tâche</Text>
             </Pressable>
           ) : null}
         </View>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filtres}
-      >
-        {FILIERES_TOUTES.map((f) => {
-          const actif = filtre === f.cle
-          return (
-            <Pressable
-              key={f.cle}
-              onPress={() => setFiltre(f.cle)}
-              accessibilityLabel={`Filtrer ${f.libelle}`}
-              accessibilityRole="button"
-              style={[
-                styles.filtre,
-                { borderColor: f.couleur + (actif ? 'FF' : '60') },
-                actif && { backgroundColor: f.couleur },
-              ]}
-            >
-              <Text style={styles.filtreIcone}>{f.icone}</Text>
-              <Text style={[styles.filtreTexte, actif ? styles.filtreTexteActif : { color: f.couleur }]}>
-                {f.libelle}
-              </Text>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
+      <View style={styles.barreFiltres}>
+        <Text style={styles.filtrerLabel}>FILTRER</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtres}
+        >
+          {FILIERES_TOUTES.map((f) => {
+            const actif = filtre === f.cle
+            const estTout = f.cle === 'tous'
+            if (estTout) {
+              return (
+                <Pressable
+                  key={f.cle}
+                  onPress={() => setFiltre(f.cle)}
+                  accessibilityLabel="Toutes les filières"
+                  accessibilityRole="button"
+                  style={[
+                    styles.filtre,
+                    actif ? styles.filtreToutesActif : styles.filtreToutesInactif,
+                  ]}
+                >
+                  <Text style={[
+                    styles.filtreTexte,
+                    actif ? styles.filtreToutesActifTexte : styles.filtreToutesInactifTexte,
+                  ]}>
+                    Toutes
+                  </Text>
+                </Pressable>
+              )
+            }
+            return (
+              <Pressable
+                key={f.cle}
+                onPress={() => setFiltre(f.cle)}
+                accessibilityLabel={`Filtrer ${f.libelle}`}
+                accessibilityRole="button"
+                style={[
+                  styles.filtre,
+                  styles.filtreFiliere,
+                  actif && {
+                    backgroundColor: f.couleur + '14',
+                    borderColor: f.couleur,
+                  },
+                ]}
+              >
+                <View style={[styles.filtrePoint, { backgroundColor: f.couleur }]} />
+                <Text style={styles.filtreIcone}>{f.icone}</Text>
+                <Text style={[styles.filtreTexte, { color: COULEURS_TOKEN.soil }]}>
+                  {f.libelle}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+      </View>
 
       {erreur ? (
         <View style={styles.bandeauErreur}>
@@ -141,6 +171,7 @@ export const EcranKanban = () => {
         taches={tachesFiltrees}
         onTachePress={setTacheSelectionnee}
         onDeplacer={deplacer}
+        onSupprimerTache={peutSupprimer ? supprimer : undefined}
       />
 
       <MenuActionsTache
@@ -188,13 +219,6 @@ const styles = StyleSheet.create({
   },
   entetegauche: { flex: 1, minWidth: 280 },
   entetedroite: { flexDirection: 'row', gap: ESPACEMENTS.s, alignItems: 'center' },
-  numeroSection: {
-    fontFamily: POLICES.mono,
-    fontSize: 11,
-    color: COULEURS_TOKEN.mint,
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
   titre: {
     fontFamily: POLICES.serifSemi,
     fontSize: 28,
@@ -203,7 +227,7 @@ const styles = StyleSheet.create({
   },
   titreItalique: {
     fontFamily: POLICES.serifItalique,
-    color: COULEURS_TOKEN.clay,
+    color: COULEURS_TOKEN.mint,
     fontSize: 24,
   },
   sousTitre: {
@@ -212,23 +236,29 @@ const styles = StyleSheet.create({
     color: COULEURS_TOKEN.earth,
     marginTop: 4,
   },
-  boutonIcone: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(92,61,30,0.06)',
-    justifyContent: 'center',
+  boutonReset: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: ESPACEMENTS.m,
+    height: 38,
+    borderRadius: RAYONS.moyen,
+    backgroundColor: COULEURS_TOKEN.carte,
     borderWidth: 1,
     borderColor: COULEURS_TOKEN.bordure,
+  },
+  boutonResetTexte: {
+    fontFamily: POLICES.sansMedium,
+    fontSize: 13,
+    color: COULEURS_TOKEN.earth,
   },
   boutonNouvelle: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COULEURS_TOKEN.mint,
+    backgroundColor: COULEURS_TOKEN.leaf,
     paddingHorizontal: ESPACEMENTS.l,
-    height: 40,
+    height: 38,
     borderRadius: RAYONS.moyen,
   },
   boutonNouvelleTexte: {
@@ -237,30 +267,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   boutonPresse: { opacity: 0.85 },
-  filtres: {
+  barreFiltres: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: ESPACEMENTS.xl,
     paddingVertical: ESPACEMENTS.m,
+    gap: ESPACEMENTS.m,
+    backgroundColor: COULEURS_TOKEN.carte,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
+  },
+  filtrerLabel: {
+    fontFamily: POLICES.mono,
+    fontSize: 10,
+    color: COULEURS_TOKEN.clay,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  filtres: {
     gap: ESPACEMENTS.s,
+    alignItems: 'center',
   },
   filtre: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: ESPACEMENTS.m,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: RAYONS.pastille,
-    borderWidth: 1.5,
+    minHeight: 32,
+  },
+  filtreFiliere: {
     backgroundColor: COULEURS_TOKEN.carte,
-    minHeight: 36,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
   },
-  filtreIcone: { fontSize: 14 },
+  filtreToutesActif: {
+    backgroundColor: COULEURS_TOKEN.soil,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.soil,
+  },
+  filtreToutesInactif: {
+    backgroundColor: COULEURS_TOKEN.carte,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
+  },
+  filtreToutesActifTexte: { color: COULEURS_TOKEN.cream },
+  filtreToutesInactifTexte: { color: COULEURS_TOKEN.soil },
+  filtrePoint: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  filtreIcone: { fontSize: 13 },
   filtreTexte: {
-    fontFamily: POLICES.monoMedium,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
+    fontFamily: POLICES.sansMedium,
+    fontSize: 13,
   },
-  filtreTexteActif: { color: '#fff' },
   bandeauErreur: {
     backgroundColor: 'rgba(231,76,60,0.10)',
     borderTopWidth: 1,

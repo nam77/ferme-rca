@@ -56,6 +56,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="index" />
               <Stack.Screen name="connexion" />
               <Stack.Screen name="kanban" />
+              <Stack.Screen name="activite" />
               <Stack.Screen name="dashboard" />
               <Stack.Screen name="budget" />
               <Stack.Screen name="ferme" />

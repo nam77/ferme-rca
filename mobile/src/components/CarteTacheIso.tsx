@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import {
   COULEURS_FILIERES,
   ICONES_FILIERES,
@@ -88,9 +89,18 @@ const initiales = (prenom: string, nom: string): string =>
 type Props = {
   tache: Tache
   onPress?: () => void
+  onChangerStatut?: () => void
+  onEditer?: () => void
+  onSupprimer?: () => void
 }
 
-export const CarteTacheIso = ({ tache, onPress }: Props) => {
+export const CarteTacheIso = ({
+  tache,
+  onPress,
+  onChangerStatut,
+  onEditer,
+  onSupprimer,
+}: Props) => {
   const couleurFiliere = COULEURS_FILIERES[tache.filiere as FiliereCouleur]
   const iconeFiliere = ICONES_FILIERES[tache.filiere as FiliereCouleur]
   const libelleFiliere = LIBELLES_FILIERES[tache.filiere as FiliereCouleur]
@@ -105,19 +115,66 @@ export const CarteTacheIso = ({ tache, onPress }: Props) => {
       accessibilityRole="button"
       style={({ pressed }) => [styles.carte, pressed && styles.cartePressee]}
     >
-      <View
-        style={[
-          styles.tagFiliere,
-          {
-            backgroundColor: couleurFiliere + '15',
-            borderColor: couleurFiliere + '60',
-          },
-        ]}
-      >
-        <Text style={styles.tagFiliereIcone}>{iconeFiliere}</Text>
-        <Text style={[styles.tagFiliereTexte, { color: couleurFiliere }]}>
-          {libelleFiliere.toUpperCase()}
-        </Text>
+      <View style={styles.haut}>
+        <View
+          style={[
+            styles.tagFiliere,
+            {
+              backgroundColor: couleurFiliere + '15',
+              borderColor: couleurFiliere + '60',
+            },
+          ]}
+        >
+          <Text style={styles.tagFiliereIcone}>{iconeFiliere}</Text>
+          <Text style={[styles.tagFiliereTexte, { color: couleurFiliere }]}>
+            {libelleFiliere.toUpperCase()}
+          </Text>
+        </View>
+
+        <View style={styles.actionsCrud}>
+          {onChangerStatut ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation()
+                onChangerStatut()
+              }}
+              accessibilityLabel="Changer de statut"
+              accessibilityRole="button"
+              hitSlop={6}
+              style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+            >
+              <Ionicons name="swap-horizontal" size={13} color={COULEURS_TOKEN.earth} />
+            </Pressable>
+          ) : null}
+          {onEditer ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation()
+                onEditer()
+              }}
+              accessibilityLabel="Éditer"
+              accessibilityRole="button"
+              hitSlop={6}
+              style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+            >
+              <Ionicons name="pencil" size={12} color={COULEURS_TOKEN.earth} />
+            </Pressable>
+          ) : null}
+          {onSupprimer ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation()
+                onSupprimer()
+              }}
+              accessibilityLabel="Supprimer"
+              accessibilityRole="button"
+              hitSlop={6}
+              style={({ pressed }) => [styles.boutonCrud, pressed && styles.boutonCrudPresse]}
+            >
+              <Ionicons name="close" size={14} color={COULEURS_TOKEN.earth} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <Text style={styles.titre} numberOfLines={2}>
@@ -195,8 +252,14 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   cartePressee: { opacity: 0.85 },
+  haut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: ESPACEMENTS.s,
+    gap: ESPACEMENTS.s,
+  },
   tagFiliere: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -204,8 +267,24 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: RAYONS.petit,
     borderWidth: 1,
-    marginBottom: ESPACEMENTS.s,
+    flexShrink: 1,
   },
+  actionsCrud: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  boutonCrud: {
+    width: 24,
+    height: 24,
+    borderRadius: RAYONS.petit,
+    borderWidth: 1,
+    borderColor: COULEURS_TOKEN.bordure,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  boutonCrudPresse: { opacity: 0.6, backgroundColor: 'rgba(92,61,30,0.08)' },
   tagFiliereIcone: { fontSize: 11 },
   tagFiliereTexte: {
     fontFamily: POLICES.monoMedium,

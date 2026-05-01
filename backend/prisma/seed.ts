@@ -67,6 +67,7 @@ type GraineTache = {
   statut: Statut
   joursAvantEcheance: number | null
   emailResponsable: string | null
+  sousTaches?: { titre: string; faite?: boolean }[]
 }
 
 const taches: GraineTache[] = [
@@ -79,6 +80,13 @@ const taches: GraineTache[] = [
     statut: Statut.en_cours,
     joursAvantEcheance: 5,
     emailResponsable: 'pisciculture@ferme.rca',
+    sousTaches: [
+      { titre: 'Vérifier étanchéité géomembrane', faite: true },
+      { titre: 'Ouvrir vanne d\'admission', faite: true },
+      { titre: 'Mesurer pH et température', faite: false },
+      { titre: 'Apporter 60 kg de fientes pré-compostées', faite: false },
+      { titre: 'Vérifier oxygénation jour 5', faite: false },
+    ],
   },
   {
     titre: 'Empoissonnement bassin 2 — 2 000 alevins Tilapia',
@@ -98,6 +106,12 @@ const taches: GraineTache[] = [
     statut: Statut.termine,
     joursAvantEcheance: -3,
     emailResponsable: 'ouvrier@ferme.rca',
+    sousTaches: [
+      { titre: 'Sortir doses du frigo 1h avant', faite: true },
+      { titre: 'Préparer pulvérisateur', faite: true },
+      { titre: 'Vacciner les 200 poussins', faite: true },
+      { titre: 'Noter dans registre sanitaire', faite: true },
+    ],
   },
   {
     titre: 'Commande aliments démarrage poussins',
@@ -117,6 +131,13 @@ const taches: GraineTache[] = [
     statut: Statut.en_cours,
     joursAvantEcheance: 7,
     emailResponsable: null,
+    sousTaches: [
+      { titre: 'Coffrage et ferraillage', faite: true },
+      { titre: 'Préparer pente 2% drainage', faite: true },
+      { titre: 'Couler 4 m³ de béton', faite: false },
+      { titre: 'Lisser et talocher', faite: false },
+      { titre: 'Couvrir et arroser pendant cure 7 jours', faite: false },
+    ],
   },
   {
     titre: 'Achat de 12 porcs reproducteurs',
@@ -657,6 +678,7 @@ const main = async () => {
 
   // Repart des tâches à zéro pour rester déterministe
   await prisma.mouvement.deleteMany({})
+  await prisma.sousTache.deleteMany({})
   await prisma.tache.deleteMany({})
 
   const idAdmin = idsParEmail['admin@ferme.rca']!
@@ -667,7 +689,7 @@ const main = async () => {
       ? null
       : new Date(maintenant.getTime() + t.joursAvantEcheance * 24 * 60 * 60 * 1000)
     const responsableId = t.emailResponsable ? idsParEmail[t.emailResponsable] ?? null : null
-    await prisma.tache.create({
+    const tacheCree = await prisma.tache.create({
       data: {
         titre: t.titre,
         description: t.description,
@@ -681,7 +703,17 @@ const main = async () => {
         dateFinReelle: t.statut === Statut.termine ? maintenant : null,
       },
     })
-    console.log(`  • ${t.filiere.padEnd(15)} [${t.statut.padEnd(9)}] ${t.titre}`)
+    if (t.sousTaches && t.sousTaches.length > 0) {
+      await prisma.sousTache.createMany({
+        data: t.sousTaches.map((st, idx) => ({
+          tacheId: tacheCree.id,
+          titre: st.titre,
+          faite: st.faite ?? false,
+          ordre: idx,
+        })),
+      })
+    }
+    console.log(`  • ${t.filiere.padEnd(15)} [${t.statut.padEnd(9)}] ${t.titre}${t.sousTaches ? ` (${t.sousTaches.length} sous-tâches)` : ''}`)
   }
 
   // Reset zones (idempotent)

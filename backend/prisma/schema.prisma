@@ -24,6 +24,7 @@ enum Filiere {
   caprins
   cultures
   infrastructure
+  habitat
 }
 
 enum Statut {
@@ -156,10 +157,25 @@ model Tache {
   zone          Zone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
 
   mouvements    Mouvement[]
+  sousTaches    SousTache[]
 
   @@index([statut])
   @@index([filiere])
   @@index([responsableId])
+}
+
+model SousTache {
+  id        String   @id @default(cuid())
+  titre     String
+  faite     Boolean  @default(false)
+  ordre     Int      @default(0)
+  creeLe    DateTime @default(now())
+  modifieLe DateTime @updatedAt
+
+  tacheId   String
+  tache     Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+
+  @@index([tacheId])
 }
 
 model Zone {

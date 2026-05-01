@@ -7,6 +7,7 @@ export type Filiere =
   | 'caprins'
   | 'cultures'
   | 'infrastructure'
+  | 'habitat'
 
 export type Utilisateur = {
   id: string

@@ -26,9 +26,16 @@ import { ICONES_STATUT, STATUTS_ORDRE, type ProprietesZoneKanban } from './types
 type ProprietesCarteDraggable = {
   tache: Tache
   onPress: () => void
+  onChangerStatut: () => void
+  onSupprimer?: () => void
 }
 
-const CarteDraggable = ({ tache, onPress }: ProprietesCarteDraggable) => {
+const CarteDraggable = ({
+  tache,
+  onPress,
+  onChangerStatut,
+  onSupprimer,
+}: ProprietesCarteDraggable) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: tache.id,
   })
@@ -46,7 +53,13 @@ const CarteDraggable = ({ tache, onPress }: ProprietesCarteDraggable) => {
       {...(listeners as object)}
       style={styleWrapper}
     >
-      <CarteTacheIso tache={tache} onPress={onPress} />
+      <CarteTacheIso
+        tache={tache}
+        onPress={onPress}
+        onChangerStatut={onChangerStatut}
+        onEditer={onPress}
+        onSupprimer={onSupprimer}
+      />
     </View>
   )
 }
@@ -55,12 +68,14 @@ type ProprietesColonneDroppable = {
   statut: Statut
   taches: Tache[]
   onTachePress: (t: Tache) => void
+  onSupprimerTache?: (id: string) => void
 }
 
 const ColonneDroppable = ({
   statut,
   taches,
   onTachePress,
+  onSupprimerTache,
 }: ProprietesColonneDroppable) => {
   const { setNodeRef, isOver } = useDroppable({ id: statut })
   const couleur = COULEURS_STATUTS[statut]
@@ -101,6 +116,8 @@ const ColonneDroppable = ({
               key={t.id}
               tache={t}
               onPress={() => onTachePress(t)}
+              onChangerStatut={() => onTachePress(t)}
+              onSupprimer={onSupprimerTache ? () => onSupprimerTache(t.id) : undefined}
             />
           ))
         )}
@@ -113,6 +130,7 @@ export const ZoneKanbanDnd = ({
   taches,
   onTachePress,
   onDeplacer,
+  onSupprimerTache,
 }: ProprietesZoneKanban) => {
   const [tacheActive, setTacheActive] = useState<Tache | null>(null)
 
@@ -155,6 +173,7 @@ export const ZoneKanbanDnd = ({
             statut={statut}
             taches={taches.filter((t) => t.statut === statut)}
             onTachePress={onTachePress}
+            onSupprimerTache={onSupprimerTache}
           />
         ))}
       </ScrollView>

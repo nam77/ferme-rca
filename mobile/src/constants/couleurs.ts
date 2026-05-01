@@ -8,6 +8,7 @@ export const COULEURS_FILIERES = {
   caprins: '#7b6e3e',
   cultures: '#4a8c3f',
   infrastructure: '#6b6b6b',
+  habitat: '#5c3d1e',
 } as const
 
 export type Filiere = keyof typeof COULEURS_FILIERES
@@ -35,15 +36,17 @@ export const ICONES_FILIERES: Record<Filiere, string> = {
   caprins: '🐐',
   cultures: '🌾',
   infrastructure: '🏗️',
+  habitat: '🏠',
 }
 
 export const LIBELLES_FILIERES: Record<Filiere, string> = {
   pisciculture: 'Pisciculture',
   aviculture: 'Aviculture',
   porcins: 'Porcins',
-  caprins: 'Caprins & Ovins',
+  caprins: 'Caprins/Ovins',
   cultures: 'Cultures',
   infrastructure: 'Infrastructure',
+  habitat: 'Habitat/Stock',
 }
 
 export const LIBELLES_STATUTS: Record<Statut, string> = {
