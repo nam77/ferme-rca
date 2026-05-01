@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useLots } from '../hooks/useLots'
 import { CarteLot } from '../components/CarteLot'
+import { ModalCreationLot } from '../components/ModalCreationLot'
 import { COULEURS, COULEURS_FILIERES } from '../constants/couleurs'
 import {
   ESPECES_ORDRE,
@@ -30,7 +31,8 @@ type GroupeEspece = {
 
 export const EcranCheptel = () => {
   const router = useRouter()
-  const { lots, enChargement, erreur, recharger } = useLots()
+  const { lots, enChargement, erreur, recharger, ajouter } = useLots()
+  const [modalOuverte, setModalOuverte] = useState(false)
 
   const groupes: GroupeEspece[] = useMemo(() => {
     return ESPECES_ORDRE.map((espece) => {
@@ -74,7 +76,17 @@ export const EcranCheptel = () => {
             {totalGlobal} animal{totalGlobal > 1 ? 'aux' : ''} sur {lots.length} lot{lots.length > 1 ? 's' : ''}
           </Text>
         </View>
-        <View style={styles.placeholderBouton} />
+        <Pressable
+          onPress={() => setModalOuverte(true)}
+          accessibilityLabel="Nouveau lot"
+          accessibilityRole="button"
+          style={({ pressed }) => [
+            styles.boutonAjout,
+            pressed && styles.boutonPresse,
+          ]}
+        >
+          <Text style={styles.boutonAjoutTexte}>+</Text>
+        </Pressable>
       </View>
 
       {erreur ? (
@@ -128,10 +140,20 @@ export const EcranCheptel = () => {
 
         {groupes.length === 0 && !enChargement ? (
           <View style={styles.vide}>
-            <Text style={styles.videTexte}>Aucun lot enregistré.</Text>
+            <Text style={styles.videTexte}>
+              Aucun lot enregistré.{'\n'}Appuyez sur + pour créer le premier.
+            </Text>
           </View>
         ) : null}
       </ScrollView>
+
+      <ModalCreationLot
+        visible={modalOuverte}
+        onFermer={() => setModalOuverte(false)}
+        onCreer={async (entree) => {
+          await ajouter(entree)
+        }}
+      />
     </SafeAreaView>
   )
 }
@@ -164,7 +186,16 @@ const styles = StyleSheet.create({
   titreBloc: { flex: 1 },
   titre: { fontSize: 18, fontWeight: '700', color: COULEURS.texte },
   sousTitre: { fontSize: 12, color: COULEURS.texteSecondaire, marginTop: 2 },
-  placeholderBouton: { width: 40 },
+  boutonAjout: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COULEURS.vert,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  boutonAjoutTexte: { color: '#fff', fontSize: 22, fontWeight: '700', lineHeight: 24 },
+  boutonPresse: { opacity: 0.85 },
   bandeauErreur: {
     backgroundColor: 'rgba(231,76,60,0.1)',
     borderTopWidth: 1,
