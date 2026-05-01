@@ -1,3 +1,4 @@
+
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -59,6 +60,14 @@ const MODULES: Module[] = [
     icone: '🗺️',
     couleur: '#7b6e3e',
     route: '/ferme',
+  },
+  {
+    id: 'cheptel',
+    titre: 'Cheptel',
+    description: 'Effectifs et mouvements d\'animaux',
+    icone: '🐾',
+    couleur: '#d4548a',
+    route: '/cheptel',
   },
 ]
 

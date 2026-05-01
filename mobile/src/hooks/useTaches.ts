@@ -71,7 +71,8 @@ export const useTaches = () => {
     if (queue.length === 0) return
     setEtat((s) => ({ ...s, enSynchronisation: true }))
     let succes = 0
-    let echecs = 0
+    let refus = 0
+    let echecsReseau = 0
     for (const action of queue) {
       try {
         const misAJour = await changerStatutTache(action.tacheId, action.nouveauStatut)
@@ -81,22 +82,36 @@ export const useTaches = () => {
           taches: s.taches.map((t) => (t.id === misAJour.id ? misAJour : t)),
         }))
         succes += 1
-      } catch {
-        echecs += 1
-        // On garde l'action en queue et on arrête (peut-être déconnexion)
+      } catch (e) {
+        const erreurAxios = e as { response?: { status?: number } }
+        const statutHttp = erreurAxios.response?.status
+        // 4xx hors timeout : refus définitif → on purge l'action et on continue
+        if (statutHttp && statutHttp >= 400 && statutHttp < 500 && statutHttp !== 408) {
+          await supprimerAction(action.id)
+          refus += 1
+          continue
+        }
+        // Erreur réseau / 5xx : on garde et on stoppe la sync
+        echecsReseau += 1
         break
       }
     }
     setEtat((s) => ({ ...s, enSynchronisation: false }))
     if (succes > 0) {
       afficherToast(
-        `${succes} action${succes > 1 ? 's' : ''} synchronisée${succes > 1 ? 's' : ''}` +
-          (echecs > 0 ? ` (${echecs} échec${echecs > 1 ? 's' : ''})` : ''),
-        echecs > 0 ? 'avertissement' : 'succes',
+        `${succes} action${succes > 1 ? 's' : ''} synchronisée${succes > 1 ? 's' : ''}`,
+        'succes',
       )
-    } else if (echecs > 0) {
+    }
+    if (refus > 0) {
       afficherToast(
-        `Synchronisation impossible (${echecs} action${echecs > 1 ? 's' : ''} en attente)`,
+        `${refus} action${refus > 1 ? 's' : ''} refusée${refus > 1 ? 's' : ''} par le serveur (purgée${refus > 1 ? 's' : ''}).`,
+        'avertissement',
+      )
+    }
+    if (echecsReseau > 0 && succes === 0) {
+      afficherToast(
+        `Synchronisation impossible (${echecsReseau} action${echecsReseau > 1 ? 's' : ''} en attente)`,
         'erreur',
       )
     }
@@ -142,7 +157,29 @@ export const useTaches = () => {
           taches: s.taches.map((t) => (t.id === id ? misAJour : t)),
         }))
       } catch (e) {
-        // Réseau peut-être tombé entre-temps : on enfile et on garde l'optimiste
+        const erreurAxios = e as {
+          response?: { status?: number; data?: { message?: string } }
+        }
+        const statutHttp = erreurAxios.response?.status
+
+        // Refus du serveur (4xx hors 408 timeout) : on rollback la carte et on prévient
+        if (statutHttp && statutHttp >= 400 && statutHttp < 500 && statutHttp !== 408) {
+          setEtat((s) => ({
+            ...s,
+            taches: s.taches.map((t) =>
+              t.id === id ? { ...t, statut: ancien.statut } : t,
+            ),
+          }))
+          const message =
+            erreurAxios.response?.data?.message ??
+            (statutHttp === 403
+              ? 'Action interdite : votre rôle ne permet pas de déplacer cette tâche.'
+              : `Action refusée par le serveur (${statutHttp}).`)
+          afficherToast(message, 'erreur')
+          return
+        }
+
+        // Sinon (réseau coupé, 5xx, timeout) : on enfile et on garde l'optimiste
         await enfilerAction({
           tacheId: id,
           ancienStatut: ancien.statut,
@@ -152,8 +189,6 @@ export const useTaches = () => {
           'Connexion perdue. Action mise en file pour synchronisation.',
           'avertissement',
         )
-        // Pas de rollback ici : l'optimiste devient la valeur attendue
-        void e
       }
     },
     [afficherToast],

@@ -50,6 +50,39 @@ enum StatutZone {
   planifie
 }
 
+enum Espece {
+  poulet
+  porc
+  caprin
+  ovin
+  tilapia
+  clarias
+}
+
+enum SexeAnimal {
+  male
+  femelle
+  mixte
+}
+
+enum CategorieAge {
+  jeune
+  croissance
+  adulte
+  reforme
+}
+
+enum TypeMouvementAnimal {
+  achat
+  naissance
+  vente
+  mortalite
+  consommation_interne
+  reforme
+  transfert_entree
+  transfert_sortie
+}
+
 model Utilisateur {
   id              String   @id @default(cuid())
   email           String   @unique
@@ -66,6 +99,7 @@ model Utilisateur {
   tachesCreees    Tache[]      @relation("TacheCreateur")
   mouvements      Mouvement[]
   photosTelechargees Photo[]   @relation("PhotoUploader")
+  mouvementsAnimauxCrees MouvementAnimal[] @relation("AuteurMouvementAnimal")
 }
 
 model Tache {
@@ -111,6 +145,56 @@ model Zone {
 
   taches       Tache[]
   photos       Photo[]
+  lots         LotAnimaux[]
+}
+
+model LotAnimaux {
+  id            String       @id @default(cuid())
+  nom           String
+  espece        Espece
+  sexe          SexeAnimal?
+  categorieAge  CategorieAge @default(adulte)
+  dateNaissance DateTime?
+  notes         String?
+  actif         Boolean      @default(true)
+  creeLe        DateTime     @default(now())
+  modifieLe     DateTime     @updatedAt
+
+  zoneId        String?
+  zone          Zone?        @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+
+  mouvements    MouvementAnimal[]
+
+  @@index([espece])
+  @@index([zoneId])
+  @@index([actif])
+}
+
+model MouvementAnimal {
+  id              String              @id @default(cuid())
+  type            TypeMouvementAnimal
+  quantite        Int
+  dateMouvement   DateTime            @default(now())
+  coutTotal       Decimal?            @db.Decimal(12, 2)
+  devise          String              @default("XAF")
+  motif           String?
+  notes           String?
+  creeLe          DateTime            @default(now())
+
+  lotId           String
+  lot             LotAnimaux          @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  auteurId        String
+  auteur          Utilisateur         @relation("AuteurMouvementAnimal", fields: [auteurId], references: [id])
+
+  // Lien optionnel pour les transferts (sortie ↔ entrée)
+  mouvementLieId  String?             @unique
+  mouvementLie    MouvementAnimal?    @relation("TransfertAnimal", fields: [mouvementLieId], references: [id])
+  mouvementOppose MouvementAnimal?    @relation("TransfertAnimal")
+
+  @@index([lotId])
+  @@index([dateMouvement])
+  @@index([type])
 }
 
 model BudgetLigne {

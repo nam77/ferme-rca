@@ -1,6 +1,16 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from '../src/lib/prisma.js'
-import { Role, Filiere, Statut, Priorite, Phase } from '../src/generated/prisma/enums.js'
+import {
+  Role,
+  Filiere,
+  Statut,
+  Priorite,
+  Phase,
+  Espece,
+  SexeAnimal,
+  CategorieAge,
+  TypeMouvementAnimal,
+} from '../src/generated/prisma/enums.js'
 
 type GraineUtilisateur = {
   email: string
@@ -376,6 +386,122 @@ const lignesBudget: GraineBudget[] = [
   },
 ]
 
+type GraineMouvement = {
+  type: TypeMouvementAnimal
+  quantite: number
+  joursDansLePasse: number
+  coutTotal?: number
+  motif?: string
+  notes?: string
+}
+
+type GraineLot = {
+  nom: string
+  espece: Espece
+  sexe: SexeAnimal | null
+  categorieAge: CategorieAge
+  zoneFiliere: Filiere | null // pour retrouver la zone via la filière
+  zoneNomContient?: string    // sous-chaîne du nom de la zone si plusieurs zones par filière
+  notes?: string
+  mouvements: GraineMouvement[]
+}
+
+const lots: GraineLot[] = [
+  // Caprins déjà installés (mentionnés dans la zone "Parc caprins & ovins")
+  {
+    nom: 'Chèvres reproductrices',
+    espece: Espece.caprin,
+    sexe: SexeAnimal.femelle,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.caprins,
+    notes: 'Chèvre naine d\'Afrique de l\'Ouest. Achat initial complété, premières mises bas attendues.',
+    mouvements: [
+      { type: TypeMouvementAnimal.achat, quantite: 10, joursDansLePasse: 60, coutTotal: 350_000, motif: 'Achat initial femelles' },
+      { type: TypeMouvementAnimal.naissance, quantite: 3, joursDansLePasse: 8, motif: 'Mise bas chèvre #4 (triplés)' },
+      { type: TypeMouvementAnimal.mortalite, quantite: 1, joursDansLePasse: 4, motif: 'Décès d\'un chevreau (faiblesse à la naissance)' },
+    ],
+  },
+  {
+    nom: 'Boucs reproducteurs',
+    espece: Espece.caprin,
+    sexe: SexeAnimal.male,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.caprins,
+    mouvements: [
+      { type: TypeMouvementAnimal.achat, quantite: 2, joursDansLePasse: 60, coutTotal: 90_000, motif: 'Achat initial mâles' },
+    ],
+  },
+  // Ovins
+  {
+    nom: 'Brebis Djallonké',
+    espece: Espece.ovin,
+    sexe: SexeAnimal.femelle,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.caprins, // même zone que caprins
+    mouvements: [
+      { type: TypeMouvementAnimal.achat, quantite: 2, joursDansLePasse: 60, coutTotal: 90_000, motif: 'Achat initial brebis' },
+    ],
+  },
+  {
+    nom: 'Bélier Djallonké',
+    espece: Espece.ovin,
+    sexe: SexeAnimal.male,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.caprins,
+    mouvements: [
+      { type: TypeMouvementAnimal.achat, quantite: 1, joursDansLePasse: 60, coutTotal: 50_000, motif: 'Achat initial bélier' },
+    ],
+  },
+  // Porcins (achat à venir mais on prépare le lot)
+  {
+    nom: 'Truies Large White × locale',
+    espece: Espece.porc,
+    sexe: SexeAnimal.femelle,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.porcins,
+    notes: 'Effectif à constituer après finalisation de la porcherie.',
+    mouvements: [],
+  },
+  {
+    nom: 'Verrats Large White × locale',
+    espece: Espece.porc,
+    sexe: SexeAnimal.male,
+    categorieAge: CategorieAge.adulte,
+    zoneFiliere: Filiere.porcins,
+    mouvements: [],
+  },
+  // Aviculture - cycle de poulets de chair (à venir)
+  {
+    nom: 'Cycle 1 — poulets de chair Cobb 500',
+    espece: Espece.poulet,
+    sexe: SexeAnimal.mixte,
+    categorieAge: CategorieAge.jeune,
+    zoneFiliere: Filiere.aviculture,
+    notes: 'Premier cycle de 2 000 poussins, cycle 6 semaines. Lot ouvert pour préparation.',
+    mouvements: [],
+  },
+  // Pisciculture
+  {
+    nom: 'Bassin 1 — Tilapia',
+    espece: Espece.tilapia,
+    sexe: SexeAnimal.mixte,
+    categorieAge: CategorieAge.jeune,
+    zoneFiliere: Filiere.pisciculture,
+    zoneNomContient: 'Bassins 1',
+    notes: 'Mise en eau en cours. Empoissonnement 2 000 alevins prévu.',
+    mouvements: [],
+  },
+  {
+    nom: 'Bassin 2 — Tilapia',
+    espece: Espece.tilapia,
+    sexe: SexeAnimal.mixte,
+    categorieAge: CategorieAge.jeune,
+    zoneFiliere: Filiere.pisciculture,
+    zoneNomContient: 'Bassins 1',
+    mouvements: [],
+  },
+]
+
 const main = async () => {
   console.log('🌱 Seed démarré...')
 
@@ -467,8 +593,57 @@ const main = async () => {
     )
   }
 
+  // Reset lots et mouvements animaux
+  await prisma.mouvementAnimal.deleteMany({})
+  await prisma.lotAnimaux.deleteMany({})
+
+  // Index zones par filière (premier match) pour rattachement automatique
+  const zonesParFiliere = await prisma.zone.findMany({})
+  const trouverZoneId = (filiere: Filiere | null, contient?: string): string | null => {
+    if (!filiere) return null
+    const candidates = zonesParFiliere.filter((z) => z.filiere === filiere)
+    if (contient) {
+      const trouve = candidates.find((z) => z.nom.includes(contient))
+      if (trouve) return trouve.id
+    }
+    return candidates[0]?.id ?? null
+  }
+
+  let totalMouvements = 0
+  for (const l of lots) {
+    const zoneId = trouverZoneId(l.zoneFiliere, l.zoneNomContient)
+    const lotEnregistre = await prisma.lotAnimaux.create({
+      data: {
+        nom: l.nom,
+        espece: l.espece,
+        sexe: l.sexe,
+        categorieAge: l.categorieAge,
+        notes: l.notes,
+        zoneId,
+      },
+    })
+
+    for (const m of l.mouvements) {
+      const dateMouvement = new Date(maintenant.getTime() - m.joursDansLePasse * 24 * 60 * 60 * 1000)
+      await prisma.mouvementAnimal.create({
+        data: {
+          lotId: lotEnregistre.id,
+          type: m.type,
+          quantite: m.quantite,
+          dateMouvement,
+          coutTotal: m.coutTotal,
+          motif: m.motif,
+          notes: m.notes,
+          auteurId: idAdmin,
+        },
+      })
+      totalMouvements += 1
+    }
+    console.log(`  🐾 ${l.espece.padEnd(8)} ${l.nom} (${l.mouvements.length} mvts)`)
+  }
+
   console.log(
-    `✅ Seed terminé : ${utilisateurs.length} utilisateurs, ${taches.length} tâches, ${zones.length} zones, ${lignesBudget.length} lignes budget.`,
+    `✅ Seed terminé : ${utilisateurs.length} utilisateurs, ${taches.length} tâches, ${zones.length} zones, ${lignesBudget.length} lignes budget, ${lots.length} lots animaux, ${totalMouvements} mouvements.`,
   )
 }
 

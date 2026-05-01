@@ -7,12 +7,30 @@ import { routeurTaches } from './routes/taches.js'
 import { routeurDashboard } from './routes/dashboard.js'
 import { routeurBudget } from './routes/budget.js'
 import { routeurZones } from './routes/zones.js'
+import { routeurLots } from './routes/lots.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
 
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
+
+// Journalisation simple : méthode + URL + statut + durée + corps si erreur 4xx/5xx
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const debut = Date.now()
+  const corpsReq = req.method !== 'GET' ? JSON.stringify(req.body).slice(0, 300) : ''
+  res.on('finish', () => {
+    const duree = Date.now() - debut
+    const marqueur = res.statusCode >= 400 ? '⚠' : '✓'
+    const ligne = `${marqueur} ${req.method} ${req.originalUrl} → ${res.statusCode} (${duree}ms)`
+    if (res.statusCode >= 400 && corpsReq) {
+      console.log(`${ligne}\n   corps: ${corpsReq}`)
+    } else {
+      console.log(ligne)
+    }
+  })
+  next()
+})
 
 const limiteurAuth = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -35,6 +53,7 @@ app.use('/api/taches', routeurTaches)
 app.use('/api/dashboard', routeurDashboard)
 app.use('/api/budget', routeurBudget)
 app.use('/api/zones', routeurZones)
+app.use('/api/lots', routeurLots)
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ succes: false, message: 'Route inconnue' })

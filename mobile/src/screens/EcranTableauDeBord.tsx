@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useDashboard } from '../hooks/useDashboard'
+import { useLots } from '../hooks/useLots'
 import { CarteKPI } from '../components/CarteKPI'
 import { GraphiqueBarresFiliere } from '../components/GraphiqueBarresFiliere'
 import { BarreProgression } from '../components/BarreProgression'
@@ -22,6 +23,12 @@ import {
   LIBELLES_STATUTS,
   type Filiere,
 } from '../constants/couleurs'
+import {
+  ESPECES_ORDRE,
+  FILIERE_PAR_ESPECE,
+  ICONES_ESPECES,
+  LIBELLES_ESPECES,
+} from '../constants/animaux'
 
 const LIBELLES_STATUT_MOUVEMENT: Record<string, string> = {
   a_faire: 'À faire',
@@ -42,6 +49,13 @@ const formatDateHeure = (iso: string): string => {
 export const EcranTableauDeBord = () => {
   const router = useRouter()
   const { dashboard, enChargement, erreur, recharger } = useDashboard()
+  const { lots } = useLots()
+
+  const cheptelParEspece = ESPECES_ORDRE.map((e) => ({
+    espece: e,
+    total: lots.filter((l) => l.espece === e).reduce((acc, l) => acc + l.effectif, 0),
+  })).filter((g) => g.total > 0 || lots.some((l) => l.espece === g.espece))
+  const totalCheptel = lots.reduce((acc, l) => acc + l.effectif, 0)
 
   if (enChargement && !dashboard) {
     return (
@@ -152,6 +166,35 @@ export const EcranTableauDeBord = () => {
             couleur={COULEURS.vert}
           />
         </View>
+
+        {cheptelParEspece.length > 0 ? (
+          <View style={styles.bloc}>
+            <Pressable
+              onPress={() => router.push('/cheptel' as never)}
+              accessibilityLabel="Voir le cheptel détaillé"
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.cheptelEntete,
+                pressed && styles.cheptelEntetePressee,
+              ]}
+            >
+              <Text style={styles.section}>Cheptel · {totalCheptel} animaux</Text>
+              <Text style={styles.cheptelFleche}>›</Text>
+            </Pressable>
+            <View style={styles.cheptelGrille}>
+              {cheptelParEspece.map((g) => {
+                const couleur = COULEURS_FILIERES[FILIERE_PAR_ESPECE[g.espece]]
+                return (
+                  <View key={g.espece} style={[styles.cheptelKPI, { borderTopColor: couleur }]}>
+                    <Text style={styles.cheptelIcone}>{ICONES_ESPECES[g.espece]}</Text>
+                    <Text style={[styles.cheptelValeur, { color: couleur }]}>{g.total}</Text>
+                    <Text style={styles.cheptelLibelle}>{LIBELLES_ESPECES[g.espece]}</Text>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.bloc}>
           <Text style={styles.section}>Tâches par filière</Text>
@@ -313,4 +356,43 @@ const styles = StyleSheet.create({
   },
   boutonPresse: { opacity: 0.85 },
   boutonReessayerTexte: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  cheptelEntete: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cheptelEntetePressee: { opacity: 0.7 },
+  cheptelFleche: {
+    fontSize: 22,
+    color: COULEURS.texteSecondaire,
+    lineHeight: 24,
+  },
+  cheptelGrille: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  cheptelKPI: {
+    flexBasis: '30%',
+    flexGrow: 1,
+    minWidth: 90,
+    backgroundColor: COULEURS.carte,
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    borderTopWidth: 3,
+    borderBottomWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomColor: COULEURS.bordure,
+    borderLeftColor: COULEURS.bordure,
+    borderRightColor: COULEURS.bordure,
+  },
+  cheptelIcone: { fontSize: 18, marginBottom: 2 },
+  cheptelValeur: { fontSize: 22, fontWeight: '700', lineHeight: 26 },
+  cheptelLibelle: {
+    fontSize: 10,
+    color: COULEURS.texteSecondaire,
+    textAlign: 'center',
+  },
 })
