@@ -1277,6 +1277,53 @@
     color: #5c3d1e;
   }
   .empty-state .hint { font-size: 12px; color: #8b5e3c; margin-top: 6px; }
+
+  /* Actions CRUD sur les cartes (parcelles, lots) — visibles au survol */
+  .parcelle-card { position: relative; }
+  .parcelle-card .card-actions {
+    position: absolute;
+    top: 8px; right: 8px;
+    display: flex; gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 2;
+  }
+  .parcelle-card:hover .card-actions { opacity: 1; }
+  .parcelle-card .card-actions button {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(92,61,30,0.20);
+    background: rgba(255,255,255,0.92);
+    cursor: pointer;
+    font-size: 11px;
+    color: #5c3d1e;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .parcelle-card .card-actions button:hover { background: #faf6ee; transform: scale(1.08); }
+  .parcelle-card .act-edit:hover { color: #1a6b8a; border-color: #1a6b8a; }
+  .parcelle-card .act-dup:hover  { color: #4a8c3f; border-color: #4a8c3f; }
+  .parcelle-card .act-del:hover  { color: #e74c3c; border-color: #e74c3c; }
+
+  /* Actions sur ligne d'activité */
+  .act-item-actions {
+    display: flex; gap: 4px; margin-left: 4px;
+  }
+  .act-item-actions .row-act {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(92,61,30,0.18);
+    background: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    color: #5c3d1e;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+  }
+  .act-item-actions .row-act:hover { background: #faf6ee; }
+  .act-item-actions .act-edit:hover { color: #1a6b8a; border-color: #1a6b8a; }
+  .act-item-actions .act-dup:hover  { color: #4a8c3f; border-color: #4a8c3f; }
+  .act-item-actions .act-del:hover  { color: #e74c3c; border-color: #e74c3c; }
 </style>
 </head>
 <body>
@@ -3092,7 +3139,11 @@ function renderActivityItem(t) {
              value="${escapeAttr(t.titre)}" placeholder="Quoi ?">
       <select class="act-item-status-select act-stat-${t.statut}"
               data-field="statut" data-id="${t.id}">${statutsOptions}</select>
-      <button class="act-item-del" data-del-act="${t.id}" title="Supprimer">✕</button>
+      <div class="act-item-actions">
+        <button class="row-act act-edit" data-edit-act="${t.id}" title="Modifier">✎</button>
+        <button class="row-act act-dup"  data-dup-act="${t.id}"  title="Dupliquer">⎘</button>
+        <button class="row-act act-del"  data-del-act="${t.id}"  title="Supprimer">✕</button>
+      </div>
     </div>
     <div class="act-meta-grid">
       <span class="k">QUI</span>
@@ -3167,6 +3218,18 @@ function attachInlineEditors(root) {
   // Bouton supprimer activité
   root.querySelectorAll('[data-del-act]').forEach(b => {
     b.addEventListener('click', () => deleteTacheFromActivites(b.dataset.delAct));
+  });
+  // Bouton modifier activité (ouvre la modal Kanban en édition)
+  root.querySelectorAll('[data-edit-act]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); openTaskModal(b.dataset.editAct); });
+  });
+  // Bouton dupliquer activité
+  root.querySelectorAll('[data-dup-act]').forEach(b => {
+    b.addEventListener('click', async e => {
+      e.stopPropagation();
+      await duplicateTache(b.dataset.dupAct);
+      renderActivites();
+    });
   });
   // Inputs file de prise de photo
   root.querySelectorAll('[data-photo-add-id]').forEach(inp => {
@@ -4699,6 +4762,11 @@ function renderCultures() {
       : '';
     return `
       <div class="parcelle-card" data-id="${p.id}">
+        <div class="card-actions">
+          <button class="row-act act-edit" data-edit-parcelle="${p.id}" title="Modifier">✎</button>
+          <button class="row-act act-dup"  data-dup-parcelle="${p.id}"  title="Dupliquer">⎘</button>
+          <button class="row-act act-del"  data-del-parcelle="${p.id}"  title="Supprimer">✕</button>
+        </div>
         <div class="parcelle-head">
           <div class="parcelle-titre"><span class="parcelle-icone">${m.icone}</span><span>${escapeHtml(p.nom)}</span></div>
           <div class="parcelle-tag" style="background:${st.color}15;border:1px solid ${st.color}60;color:${st.color}">${st.label}</div>
@@ -4720,6 +4788,59 @@ function renderCultures() {
   grid.querySelectorAll('.parcelle-evt').forEach(btn => {
     btn.addEventListener('click', () => openEvenementModal(btn.dataset.id));
   });
+  // CRUD parcelles
+  grid.querySelectorAll('[data-edit-parcelle]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); editParcelle(b.dataset.editParcelle); });
+  });
+  grid.querySelectorAll('[data-dup-parcelle]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); duplicateParcelle(b.dataset.dupParcelle); });
+  });
+  grid.querySelectorAll('[data-del-parcelle]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); deleteParcelle(b.dataset.delParcelle); });
+  });
+}
+
+async function editParcelle(id) {
+  const p = state.parcelles.find(x => x.id === id);
+  if (!p) return;
+  const nom = prompt('Nom de la parcelle', p.nom);
+  if (nom === null) return;
+  const surfaceStr = prompt('Surface (ha)', String(p.surfaceHa || 1));
+  if (surfaceStr === null) return;
+  const surface = parseFloat(surfaceStr);
+  if (isNaN(surface) || surface <= 0) { toast('Surface invalide', 'error'); return; }
+  try {
+    await apiFetch('PATCH', '/parcelles/' + id, { nom: nom.trim(), surfaceHa: surface });
+    toast('Parcelle modifiée', 'success');
+    await rechargerParcelles();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function duplicateParcelle(id) {
+  const p = state.parcelles.find(x => x.id === id);
+  if (!p) return;
+  try {
+    await apiFetch('POST', '/parcelles', {
+      nom: p.nom + ' (copie)',
+      typeCulture: p.typeCulture,
+      surfaceHa: p.surfaceHa,
+      statut: 'preparation',
+    });
+    toast('Parcelle dupliquée', 'success');
+    await rechargerParcelles();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function deleteParcelle(id) {
+  const p = state.parcelles.find(x => x.id === id);
+  if (!p) return;
+  const ok = await confirmAction(`Supprimer la parcelle « ${p.nom} » ?`, 'Supprimer');
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/parcelles/' + id);
+    toast('Parcelle supprimée', 'success');
+    await rechargerParcelles();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
 }
 
 function escapeHtml(s) {
@@ -4844,6 +4965,11 @@ function renderCheptel() {
     const sexe = l.sexe ? (l.sexe === 'male' ? '♂ Mâle' : l.sexe === 'femelle' ? '♀ Femelle' : '⚥ Mixte') : '—';
     return `
       <div class="parcelle-card" data-id="${l.id}">
+        <div class="card-actions">
+          <button class="row-act act-edit" data-edit-lot="${l.id}" title="Modifier">✎</button>
+          <button class="row-act act-dup"  data-dup-lot="${l.id}"  title="Dupliquer">⎘</button>
+          <button class="row-act act-del"  data-del-lot="${l.id}"  title="Supprimer">✕</button>
+        </div>
         <div class="parcelle-head">
           <div class="parcelle-titre"><span class="parcelle-icone">${m.icone}</span><span>${escapeHtml(l.nom)}</span></div>
           <div class="parcelle-tag" style="background:rgba(74,140,63,0.10);border:1px solid rgba(74,140,63,0.40);color:#4a8c3f">
@@ -4864,6 +4990,55 @@ function renderCheptel() {
   grid.querySelectorAll('.parcelle-evt').forEach(btn => {
     btn.addEventListener('click', () => openMouvementModal(btn.dataset.id));
   });
+  grid.querySelectorAll('[data-edit-lot]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); editLot(b.dataset.editLot); });
+  });
+  grid.querySelectorAll('[data-dup-lot]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); duplicateLot(b.dataset.dupLot); });
+  });
+  grid.querySelectorAll('[data-del-lot]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); deleteLot(b.dataset.delLot); });
+  });
+}
+
+async function editLot(id) {
+  const l = state.lots.find(x => x.id === id);
+  if (!l) return;
+  const nom = prompt('Nom du lot', l.nom);
+  if (nom === null) return;
+  const notes = prompt('Notes (optionnel)', l.notes || '');
+  try {
+    await apiFetch('PATCH', '/lots/' + id, { nom: nom.trim(), notes: notes ? notes.trim() : null });
+    toast('Lot modifié', 'success');
+    await rechargerLots();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function duplicateLot(id) {
+  const l = state.lots.find(x => x.id === id);
+  if (!l) return;
+  try {
+    await apiFetch('POST', '/lots', {
+      nom: l.nom + ' (copie)',
+      espece: l.espece,
+      sexe: l.sexe,
+      categorieAge: l.categorieAge,
+    });
+    toast('Lot dupliqué', 'success');
+    await rechargerLots();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function deleteLot(id) {
+  const l = state.lots.find(x => x.id === id);
+  if (!l) return;
+  const ok = await confirmAction(`Supprimer le lot « ${l.nom} » et tous ses mouvements ?`, 'Supprimer');
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/lots/' + id);
+    toast('Lot supprimé', 'success');
+    await rechargerLots();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
 }
 
 function setupCheptel() {
