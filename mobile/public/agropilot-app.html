@@ -1617,8 +1617,11 @@
           <button class="seg-btn" data-stat="en_cours">En cours</button>
           <button class="seg-btn" data-stat="termine">Terminé</button>
         </div>
+        <button class="btn btn-primary" id="btn-new-activite">＋ Nouvelle activité</button>
       </div>
     </div>
+
+    <div class="kanban-filters" id="activites-filters"></div>
 
     <!-- Formulaire d'ajout inline -->
     <div class="act-new-form">
@@ -1761,6 +1764,7 @@
       </div>
     </div>
 
+    <div class="kanban-filters" id="cultures-filters"></div>
     <div class="cultures-stats" id="cultures-stats"></div>
     <div class="cultures-grid" id="cultures-grid"></div>
   </section>
@@ -1777,6 +1781,7 @@
       </div>
     </div>
 
+    <div class="kanban-filters" id="cheptel-filters"></div>
     <div class="cultures-stats" id="cheptel-stats"></div>
     <div class="cultures-grid" id="cheptel-grid"></div>
   </section>
@@ -2957,6 +2962,10 @@ function setupActivites() {
       if (e.key === 'Enter') { e.preventDefault(); addNewActivityInline(); }
     });
   }
+
+  // Bouton "+ Nouvelle activité" en haut de la page (ouvre la modal complète)
+  const newActBtn = document.getElementById('btn-new-activite');
+  if (newActBtn) newActBtn.addEventListener('click', () => openTaskModal(null));
 }
 
 /* Ajouter une nouvelle activité depuis le formulaire inline en haut de page */
@@ -2997,12 +3006,16 @@ async function addNewActivityInline() {
 }
 
 function renderActivites() {
+  renderActivitesFilters();
   const grid = document.getElementById('activites-grid');
   if (!grid) return;
   const filtreStat = state.actStatutFiltre || 'tous';
-  const taches = filtreStat === 'tous'
-    ? state.taches
-    : state.taches.filter(t => t.statut === filtreStat);
+  const filtreFil = state.filtreActivitesFiliere || 'tous';
+  const taches = state.taches.filter(t => {
+    if (filtreStat !== 'tous' && t.statut !== filtreStat) return false;
+    if (filtreFil !== 'tous' && t.filiere !== filtreFil) return false;
+    return true;
+  });
 
   // Une carte par zone qui a au moins une tâche, plus une carte spéciale "Sans zone"
   const groupes = [];
@@ -4633,25 +4646,12 @@ function applyAuthState() {
   applyPermissionsToUI(role);
 }
 
-function applyPermissionsToUI(role) {
-  // Bouton "Reset" : visible seulement pour admin
-  const resetBtn = document.getElementById('btn-reset-data');
-  if (resetBtn) resetBtn.style.display = role.canResetData ? '' : 'none';
-
-  // Bouton "Nouvelle tâche" : caché pour ouvrier
-  const newTaskBtn = document.getElementById('btn-new-task');
-  if (newTaskBtn) newTaskBtn.style.display = role.canCreateTask ? '' : 'none';
-
-  // Formulaire d'ajout d'activité inline : caché pour ouvrier
-  const newActForm = document.querySelector('.act-new-form');
-  if (newActForm) newActForm.style.display = role.canCreateTask ? '' : 'none';
-
-  // Bouton "Nouvelle ligne" budget : visible pour admin/responsable
-  const newBudgetBtn = document.getElementById('btn-new-budget');
-  if (newBudgetBtn) newBudgetBtn.style.display = role.canEditBudget ? '' : 'none';
-
-  // Si le budget est en lecture seule pour ce rôle, on ajoute une classe
-  document.body.classList.toggle('budget-readonly', !role.canEditBudget);
+function applyPermissionsToUI(_role) {
+  // Toutes les actions UI sont ouvertes (cohérent avec l'API REST où
+  // les restrictions de rôle ont aussi été retirées). Les rôles
+  // continuent de donner du contexte (label, icône, visibleTabs) mais
+  // ne masquent plus les boutons d'action.
+  document.body.classList.remove('budget-readonly');
 }
 
 /* Helpers pour vérifier une permission depuis le code */
@@ -4672,6 +4672,70 @@ function requirePermission(perm, errorMsg) {
 /* ============ INIT ============ */
 /* ============ CULTURES — Parcelles ============ */
 state.parcelles = [];
+state.filtreCultureType = 'tous';
+state.filtreCheptelEspece = 'tous';
+state.filtreActivitesFiliere = 'tous';
+
+function renderActivitesFilters() {
+  const wrap = document.getElementById('activites-filters');
+  if (!wrap) return;
+  const filieresList = ['tous', ...Object.keys(FILIERES)];
+  wrap.innerHTML = '<span class="label">FILTRER</span>' + filieresList.map(f => {
+    const active = state.filtreActivitesFiliere === f ? 'active' : '';
+    if (f === 'tous') return `<button class="filter-btn ${active}" data-fil="tous">Toutes</button>`;
+    const fil = FILIERES[f];
+    return `<button class="filter-btn ${active}" data-fil="${f}">
+      <span class="dot" style="background:${fil.color}"></span>${fil.icon} ${fil.label}
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      state.filtreActivitesFiliere = b.dataset.fil;
+      renderActivites();
+    });
+  });
+}
+
+function renderCulturesFilters() {
+  const wrap = document.getElementById('cultures-filters');
+  if (!wrap) return;
+  const items = ['tous', ...TYPES_CULTURE.map(t => t.cle)];
+  wrap.innerHTML = '<span class="label">FILTRER</span>' + items.map(c => {
+    const active = state.filtreCultureType === c ? 'active' : '';
+    if (c === 'tous') return `<button class="filter-btn ${active}" data-cul="tous">Toutes</button>`;
+    const t = TYPES_CULTURE.find(x => x.cle === c);
+    return `<button class="filter-btn ${active}" data-cul="${c}">
+      <span class="dot" style="background:#4a8c3f"></span>${t.icone} ${t.label}
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      state.filtreCultureType = b.dataset.cul;
+      renderCultures();
+    });
+  });
+}
+
+function renderCheptelFilters() {
+  const wrap = document.getElementById('cheptel-filters');
+  if (!wrap) return;
+  const items = ['tous', ...ESPECES.map(e => e.cle)];
+  wrap.innerHTML = '<span class="label">FILTRER</span>' + items.map(c => {
+    const active = state.filtreCheptelEspece === c ? 'active' : '';
+    if (c === 'tous') return `<button class="filter-btn ${active}" data-esp="tous">Toutes</button>`;
+    const e = ESPECES.find(x => x.cle === c);
+    const fil = FILIERES[e.filiere] || { color: '#6b6b6b' };
+    return `<button class="filter-btn ${active}" data-esp="${c}">
+      <span class="dot" style="background:${fil.color}"></span>${e.icone} ${e.label}
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      state.filtreCheptelEspece = b.dataset.esp;
+      renderCheptel();
+    });
+  });
+}
 
 const TYPES_CULTURE = [
   { cle:'mais', label:'Maïs', icone:'🌽' },
@@ -4723,15 +4787,20 @@ async function rechargerParcelles() {
 }
 
 function renderCultures() {
+  renderCulturesFilters();
   const stats = document.getElementById('cultures-stats');
   const grid = document.getElementById('cultures-grid');
   if (!stats || !grid) return;
 
-  const total = state.parcelles.length;
-  const surfaceTotale = state.parcelles.reduce((s, p) => s + (Number(p.surfaceHa) || 0), 0);
-  const enCroissance = state.parcelles.filter(p => p.statut === 'croissance').length;
-  const totalRecolte = state.parcelles.reduce((s, p) => s + (Number(p.totalRecolteKg) || 0), 0);
-  const coutTotal = state.parcelles.reduce((s, p) => s + (Number(p.coutTotal) || 0), 0);
+  const filtered = state.filtreCultureType === 'tous'
+    ? state.parcelles
+    : state.parcelles.filter(p => p.typeCulture === state.filtreCultureType);
+
+  const total = filtered.length;
+  const surfaceTotale = filtered.reduce((s, p) => s + (Number(p.surfaceHa) || 0), 0);
+  const enCroissance = filtered.filter(p => p.statut === 'croissance').length;
+  const totalRecolte = filtered.reduce((s, p) => s + (Number(p.totalRecolteKg) || 0), 0);
+  const coutTotal = filtered.reduce((s, p) => s + (Number(p.coutTotal) || 0), 0);
 
   stats.innerHTML = `
     <div class="kpi-grid">
@@ -4745,13 +4814,13 @@ function renderCultures() {
 
   if (total === 0) {
     grid.innerHTML = `<div class="empty-state">
-      <p>Aucune parcelle pour l'instant.</p>
-      <p class="hint">Cliquez sur « + Nouvelle parcelle » pour commencer.</p>
+      <p>Aucune parcelle pour ce filtre.</p>
+      <p class="hint">Cliquez sur « + Nouvelle parcelle » ou changez le filtre.</p>
     </div>`;
     return;
   }
 
-  grid.innerHTML = state.parcelles.map(p => {
+  grid.innerHTML = filtered.map(p => {
     const m = getCultureMeta(p.typeCulture);
     const st = getStatutMeta(p.statut);
     const recolteBloc = (Number(p.totalRecolteKg) || 0) > 0
@@ -4919,14 +4988,19 @@ async function rechargerLots() {
 }
 
 function renderCheptel() {
+  renderCheptelFilters();
   const stats = document.getElementById('cheptel-stats');
   const grid = document.getElementById('cheptel-grid');
   if (!stats || !grid) return;
 
-  const totalEffectif = state.lots.reduce((s, l) => s + (Number(l.effectif) || 0), 0);
+  const filtered = state.filtreCheptelEspece === 'tous'
+    ? state.lots
+    : state.lots.filter(l => l.espece === state.filtreCheptelEspece);
+
+  const totalEffectif = filtered.reduce((s, l) => s + (Number(l.effectif) || 0), 0);
   // Groupage par espèce
   const parEspece = {};
-  for (const l of state.lots) {
+  for (const l of filtered) {
     if (!parEspece[l.espece]) parEspece[l.espece] = { effectif: 0, lots: 0 };
     parEspece[l.espece].effectif += Number(l.effectif) || 0;
     parEspece[l.espece].lots += 1;
@@ -4936,7 +5010,7 @@ function renderCheptel() {
   stats.innerHTML = `
     <div class="kpi-grid">
       <div class="kpi-card"><div class="kpi-num">${totalEffectif}</div><div class="kpi-label">Animaux total</div></div>
-      <div class="kpi-card"><div class="kpi-num">${state.lots.length}</div><div class="kpi-label">Lots</div></div>
+      <div class="kpi-card"><div class="kpi-num">${filtered.length}</div><div class="kpi-label">Lots</div></div>
       ${especesAffichees.map(e => `
         <div class="kpi-card">
           <div class="kpi-num">${e.icone} ${parEspece[e.cle].effectif}</div>
@@ -4946,16 +5020,16 @@ function renderCheptel() {
     </div>
   `;
 
-  if (state.lots.length === 0) {
+  if (filtered.length === 0) {
     grid.innerHTML = `<div class="empty-state">
-      <p>Aucun lot pour l'instant.</p>
-      <p class="hint">Cliquez sur « + Nouveau lot » pour commencer.</p>
+      <p>Aucun lot pour ce filtre.</p>
+      <p class="hint">Cliquez sur « + Nouveau lot » ou changez le filtre.</p>
     </div>`;
     return;
   }
 
   // Tri par espèce puis nom
-  const lotsTries = [...state.lots].sort((a, b) => {
+  const lotsTries = [...filtered].sort((a, b) => {
     if (a.espece !== b.espece) return a.espece.localeCompare(b.espece);
     return (a.nom||'').localeCompare(b.nom||'');
   });
