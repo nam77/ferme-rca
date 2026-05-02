@@ -1412,6 +1412,24 @@
   .cra-cell:hover { transform: scale(1.04); }
   .cra-cell.empty { background: transparent; border-color: transparent; cursor: default; }
   .cra-cell.weekend { background: rgba(92,61,30,0.04); }
+  .cra-day-top { display: flex; justify-content: space-between; align-items: center; }
+  .cra-heures-input {
+    width: 100%;
+    margin-top: 4px;
+    padding: 2px 4px;
+    border: 1px solid rgba(92,61,30,0.20);
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-align: center;
+    background: rgba(255,255,255,0.85);
+    color: #2d1f0e;
+    cursor: text;
+  }
+  .cra-heures-input:focus {
+    outline: 2px solid rgba(74,140,63,0.45);
+    outline-offset: -1px;
+  }
   .cra-cell.travail   { background: rgba(74,140,63,0.18);  border-color: rgba(74,140,63,0.50); }
   .cra-cell.absence   { background: rgba(231,76,60,0.15);  border-color: rgba(231,76,60,0.50); }
   .cra-cell.conge     { background: rgba(26,107,138,0.15); border-color: rgba(26,107,138,0.50); }
@@ -1784,7 +1802,12 @@
     <div class="kpi-grid" id="kpi-grid"></div>
 
     <div class="dash-section">
-      <h3><span class="icon">📋</span>Activités</h3>
+      <h3><span class="icon">📋</span>Kanban — Évolution 30 jours</h3>
+      <div class="chart-wrap tall"><canvas id="chart-kanban-evol"></canvas></div>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">📅</span>Activités</h3>
       <div class="dash-charts-row">
         <div class="chart-wrap"><canvas id="chart-act-filiere"></canvas></div>
         <div class="chart-wrap"><canvas id="chart-act-statut"></canvas></div>
@@ -5014,6 +5037,25 @@ function chartBar(canvasId, labels, datasets, options = {}) {
   });
 }
 
+function chartLine(canvasId, labels, datasets, options = {}) {
+  destroyChart(canvasId);
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  CHARTS[canvasId] = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: Object.assign({
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { font: { family: 'DM Sans' }, precision: 0 } },
+        x: { ticks: { font: { family: 'DM Sans', size: 9 }, maxRotation: 45, minRotation: 45 } },
+      },
+    }, options),
+  });
+}
+
 function chartDoughnut(canvasId, labels, data, colors) {
   destroyChart(canvasId);
   const el = document.getElementById(canvasId);
@@ -5030,6 +5072,43 @@ function chartDoughnut(canvasId, labels, data, colors) {
 
 function renderDashboardCharts() {
   if (typeof Chart === 'undefined') return;
+
+  // === Kanban — évolution sur 30 jours ===
+  // Pour chaque jour D des 30 derniers, on calcule combien de tâches étaient
+  // dans chaque statut à cette date, en utilisant creeLe / dateDebut / dateFinReelle.
+  const NB_JOURS = 30;
+  const aujourdhui = new Date();
+  aujourdhui.setHours(0, 0, 0, 0);
+  const labelsDates = [];
+  const dataAFaire = [];
+  const dataEnCours = [];
+  const dataTermine = [];
+  for (let i = NB_JOURS - 1; i >= 0; i--) {
+    const d = new Date(aujourdhui);
+    d.setDate(d.getDate() - i);
+    labelsDates.push(d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+    let af = 0, ec = 0, tm = 0;
+    for (const t of state.taches) {
+      const cree = t.creeLe ? new Date(t.creeLe) : null;
+      const debut = t.dateDebut ? new Date(t.dateDebut) : null;
+      const fin = t.dateFinReelle ? new Date(t.dateFinReelle) : null;
+      // Tâche n'existe pas encore à cette date
+      if (cree && cree > d) continue;
+      // Si terminée à D
+      if (fin && fin <= d) { tm++; continue; }
+      // Si démarrée à D mais pas encore terminée
+      if (debut && debut <= d) { ec++; continue; }
+      // Sinon à faire (existante mais pas démarrée ni terminée)
+      // Si pas de creeLe, on suppose qu'elle existait déjà
+      af++;
+    }
+    dataAFaire.push(af); dataEnCours.push(ec); dataTermine.push(tm);
+  }
+  chartLine('chart-kanban-evol', labelsDates, [
+    { label: 'À faire', data: dataAFaire, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.15)', tension: 0.3, fill: false, pointRadius: 2 },
+    { label: 'En cours', data: dataEnCours, borderColor: '#e8943a', backgroundColor: 'rgba(232,148,58,0.15)', tension: 0.3, fill: false, pointRadius: 2 },
+    { label: 'Terminé', data: dataTermine, borderColor: '#4a8c3f', backgroundColor: 'rgba(74,140,63,0.15)', tension: 0.3, fill: false, pointRadius: 2 },
+  ], { plugins: { title: { display: true, text: `Kanban — ${state.taches.length} tâches sur 30 derniers jours`, font: { family: 'Fraunces', size: 13 } } } });
 
   // === Activités ===
   const filieresKeys = Object.keys(FILIERES);
@@ -5193,21 +5272,58 @@ async function renderCRA() {
     const dow = date.getUTCDay();
     const isWeekend = (dow === 0 || dow === 6);
     const s = saisiesParJour[dateStr];
-    const type = s?.type || (isWeekend ? '' : '');
+    const type = s?.type || '';
+    const heures = s?.heures != null ? s.heures : (type === 'travail' ? 8 : 0);
     const tagLabel = type ? type.slice(0,4).toUpperCase() : '';
     const cls = type ? type : (isWeekend ? 'weekend' : '');
+    const heuresInput = type
+      ? `<input type="number" class="cra-heures-input" data-date="${dateStr}" value="${heures}" min="0" max="24" step="0.5" title="Heures travaillées" />`
+      : '';
     html += `
       <div class="cra-cell ${cls}" data-date="${dateStr}" data-type="${type||''}" data-id="${s?.id||''}">
-        <div class="cra-day-num">${d}</div>
-        <div class="cra-day-tag">${tagLabel}</div>
+        <div class="cra-day-top">
+          <span class="cra-day-num">${d}</span>
+          <span class="cra-day-tag">${tagLabel}</span>
+        </div>
+        ${heuresInput}
       </div>
     `;
   }
 
   grid.innerHTML = html;
-  // Click handler : cycle entre les types
+  // Click handler : cycle entre les types (sauf sur l'input heures)
   grid.querySelectorAll('.cra-cell[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => cycleCRACell(cell));
+    cell.addEventListener('click', (e) => {
+      if (e.target.classList.contains('cra-heures-input')) return;
+      cycleCRACell(cell);
+    });
+  });
+  // Saisie des heures
+  grid.querySelectorAll('.cra-heures-input').forEach(input => {
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('change', async e => {
+      e.stopPropagation();
+      const cell = input.closest('.cra-cell');
+      const dateStr = input.dataset.date;
+      const heures = parseFloat(input.value);
+      if (isNaN(heures) || heures < 0 || heures > 24) {
+        toast('Heures invalides (0–24)', 'error');
+        renderCRA();
+        return;
+      }
+      try {
+        await apiFetch('POST', '/cra', {
+          date: dateStr,
+          type: cell.dataset.type || 'travail',
+          heures,
+          utilisateurId: state.craUtilisateurId,
+        });
+        toast(`${heures} h enregistrées`, 'success');
+        await renderCRA();
+      } catch (err) {
+        toast('Erreur : ' + err.message, 'error');
+      }
+    });
   });
 
   // Recap
