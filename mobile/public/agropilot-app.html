@@ -1453,7 +1453,7 @@
 
 <main>
   <!-- ============ KANBAN ============ -->
-  <section class="view" id="view-kanban">
+  <section class="view active" id="view-kanban">
     <div class="view-head">
       <div>
         <h2 class="view-title">Kanban — <em>Tâches & opérations</em></h2>
@@ -1579,7 +1579,7 @@
   </section>
 
   <!-- ============ FERME ============ -->
-  <section class="view active" id="view-ferme">
+  <section class="view" id="view-ferme">
     <div class="view-head">
       <div>
         <h2 class="view-title">La Ferme — <em>Plan & zones</em></h2>
@@ -4244,6 +4244,28 @@ async function init() {
   if (state.user) applyPermissionsToUI(ROLES[state.user.role]);
   // Démarrer l'animation des engrenages du logo
   startLogoAnimation();
+
+  // Activer la vue passée en paramètre URL (?view=kanban|activites|dashboard|budget|ferme)
+  // pour permettre l'embarquement en iframe par l'écran React Native correspondant.
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const requestedView = params.get('view');
+    if (requestedView) {
+      const target = document.querySelector('nav.tabs button[data-view="' + requestedView + '"]');
+      if (target) target.click();
+    }
+    // Mode embarqué (?embed=1) : masquer le header (logo + nav + user-pill)
+    // pour ne pas faire doublon avec la BarreNavigation React Native.
+    if (params.get('embed') === '1') {
+      const header = document.querySelector('header');
+      if (header) header.style.display = 'none';
+      document.body.style.background = 'transparent';
+      const main = document.querySelector('main');
+      if (main) main.style.paddingTop = '0';
+    }
+  } catch (e) {
+    void e;
+  }
 }
 
 /* ============ ANIMATION ENGRENAGES LOGO ============
