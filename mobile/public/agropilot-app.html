@@ -1734,7 +1734,7 @@
     <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
     <button data-view="cheptel"><span class="tab-icon">🐾</span>Cheptel</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
-    <button data-view="budget" data-restrict="admin,responsable"><span class="tab-icon">💰</span>Budget</button>
+    <button data-view="budget"><span class="tab-icon">💰</span>Budget &amp; Ventes</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
     <button data-view="cra"><span class="tab-icon">🕒</span>CRA</button>
   </nav>
@@ -1843,6 +1843,15 @@
       </div>
     </div>
 
+    <div class="dash-section">
+      <h3><span class="icon">🛒</span>Ventes — Chiffre d'affaires</h3>
+      <div id="ventes-dash-stats" style="margin-bottom:14px"></div>
+      <div class="dash-charts-row">
+        <div class="chart-wrap"><canvas id="chart-vente-cat"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-vente-evol"></canvas></div>
+      </div>
+    </div>
+
     <div class="dash-grid">
       <div class="card">
         <h3 class="panel-title"><span class="icon">⚠️</span>Tâches urgentes</h3>
@@ -1908,11 +1917,12 @@
   <section class="view" id="view-budget">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Budget — <em>Prévu vs Réel</em></h2>
-        <p class="view-sub">Trois phases — montants en FCFA. Modifie directement les cellules ou utilise les actions.</p>
+        <h2 class="view-title">Budget &amp; Ventes — <em>Pilotage financier</em></h2>
+        <p class="view-sub">Budget par phase + chiffre d'affaires des ventes. Tous les montants en FCFA.</p>
       </div>
       <div class="row">
-        <button class="btn btn-primary" id="btn-new-budget">＋ Nouvelle ligne</button>
+        <button class="btn btn-primary" id="btn-new-budget">＋ Nouvelle ligne budget</button>
+        <button class="btn btn-primary" id="btn-new-vente" style="background:#1a6b8a">＋ Nouvelle vente</button>
       </div>
     </div>
 
@@ -1938,6 +1948,34 @@
     </div>
 
     <div class="budget-summary" id="budget-summary"></div>
+
+    <!-- ============ Section Ventes ============ -->
+    <h3 style="font-family:'Fraunces',serif;font-weight:600;font-size:18px;color:#2d1f0e;margin-top:32px;margin-bottom:6px">
+      🛒 Ventes — <em style="color:#1a6b8a">Chiffre d'affaires</em>
+    </h3>
+    <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:14px">
+      Cumul de tous les produits de ferme vendus (animaux, viande, œufs, lait, poisson, céréales, légumes, etc.).
+    </p>
+
+    <div class="cultures-stats" id="ventes-kpi"></div>
+
+    <div class="budget-table-wrap">
+      <table class="budget-table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Catégorie</th>
+            <th class="num">Prix unitaire</th>
+            <th class="num">Quantité</th>
+            <th class="num">Prix total (FCFA)</th>
+            <th>Date</th>
+            <th>Client</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ventes-tbody"></tbody>
+      </table>
+    </div>
   </section>
 
   <!-- ============ FERME ============ -->
@@ -1993,6 +2031,64 @@
     <div class="cultures-stats" id="cultures-stats"></div>
     <div class="cultures-grid" id="cultures-grid"></div>
   </section>
+
+  <!-- ============ MODAL VENTE ============ -->
+  <div class="modal-backdrop" id="modal-vente">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-head">
+        <h2 id="vente-titre">Nouvelle vente</h2>
+        <button class="modal-close" data-close-modal>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Produit</label>
+          <input type="text" id="v-produit" placeholder="Ex: Chèvre 18 kg, Maïs grain, Œufs frais..." maxlength="200">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select id="v-categorie"></select>
+          </div>
+          <div class="form-group">
+            <label>Unité</label>
+            <select id="v-unite"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prix unitaire (FCFA)</label>
+            <input type="number" id="v-prix" min="0" step="100" value="0">
+          </div>
+          <div class="form-group">
+            <label>Quantité</label>
+            <input type="number" id="v-qte" min="0" step="0.01" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Prix total <span class="hint">— calculé automatiquement</span></label>
+          <input type="text" id="v-total-affiche" readonly style="background:rgba(74,140,63,0.06);font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:#4a8c3f">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="v-date">
+          </div>
+          <div class="form-group">
+            <label>Client</label>
+            <input type="text" id="v-client" placeholder="Marché Bangui, Kouadio..." maxlength="200">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea id="v-notes" placeholder="Détails..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-modal>Annuler</button>
+        <button class="btn btn-primary" id="v-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ MODAL MOUVEMENT CHEPTEL ============ -->
   <div class="modal-backdrop" id="modal-mvt-cheptel">
@@ -4226,6 +4322,8 @@ function setupBudgetTabs() {
 }
 
 function renderBudget() {
+  // Render aussi les ventes (même page Budget & Ventes)
+  renderVentes();
   const lignes = state.budget.filter(b => b.phase === state.phaseActive);
   const tbody = document.getElementById('budget-tbody');
   let totPrev = 0, totReel = 0;
@@ -5088,6 +5186,235 @@ function renderCulturesFilters() {
   });
 }
 
+/* ============ VENTES — Chiffre d'affaires ============ */
+state.ventes = [];
+state.ventesParCategorie = {};
+state.ventesTotalCA = 0;
+
+const CATEGORIES_PRODUIT = [
+  { cle:'animal_vivant', label:'Animal vivant', icone:'🐐', color:'#7b6e3e' },
+  { cle:'viande',        label:'Viande',         icone:'🥩', color:'#d4548a' },
+  { cle:'oeuf',          label:'Œufs',           icone:'🥚', color:'#e8943a' },
+  { cle:'lait',          label:'Lait',           icone:'🥛', color:'#a3c5d8' },
+  { cle:'poisson',       label:'Poisson',        icone:'🐟', color:'#1a6b8a' },
+  { cle:'cereale',       label:'Céréales',       icone:'🌽', color:'#c9a96e' },
+  { cle:'manioc',        label:'Manioc',         icone:'🍠', color:'#8b5e3c' },
+  { cle:'legume',        label:'Légumes',        icone:'🍅', color:'#4a8c3f' },
+  { cle:'fruit',         label:'Fruits',         icone:'🍌', color:'#7bc67a' },
+  { cle:'fourrage',      label:'Fourrage',       icone:'🌾', color:'#a08850' },
+  { cle:'autre',         label:'Autre',          icone:'📦', color:'#6b6b6b' },
+];
+const CAT_INDEX = Object.fromEntries(CATEGORIES_PRODUIT.map(c => [c.cle, c]));
+const UNITES_PRODUIT = [
+  { cle:'unite', label:'unité' },
+  { cle:'kg',    label:'kg' },
+  { cle:'tete',  label:'tête' },
+  { cle:'litre', label:'litre' },
+  { cle:'douzaine', label:'douzaine' },
+  { cle:'sac',    label:'sac' },
+  { cle:'caisse', label:'caisse' },
+];
+
+async function apiChargerVentes() {
+  if (!API_DISPONIBLE) return { ventes: [], totalCA: 0, parCategorie: {} };
+  try { const r = await apiFetch('GET', '/ventes'); return r.donnees || { ventes: [], totalCA: 0, parCategorie: {} }; }
+  catch { return { ventes: [], totalCA: 0, parCategorie: {} }; }
+}
+
+async function rechargerVentes() {
+  const d = await apiChargerVentes();
+  state.ventes = d.ventes || [];
+  state.ventesTotalCA = d.totalCA || 0;
+  state.ventesParCategorie = d.parCategorie || {};
+  renderVentes();
+}
+
+function fmtMontantFCFA(n) {
+  return Math.round(Number(n) || 0).toLocaleString('fr-FR') + ' FCFA';
+}
+
+function renderVentes() {
+  const tbody = document.getElementById('ventes-tbody');
+  const kpi = document.getElementById('ventes-kpi');
+  if (!tbody || !kpi) return;
+
+  // KPI : CA total + par catégorie
+  const cats = CATEGORIES_PRODUIT.filter(c => state.ventesParCategorie[c.cle] > 0);
+  kpi.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card" style="border-left:3px solid #4a8c3f">
+        <div class="kpi-num" style="color:#4a8c3f">${fmtMontantFCFA(state.ventesTotalCA)}</div>
+        <div class="kpi-label">Chiffre d'affaires total</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">${state.ventes.length}</div>
+        <div class="kpi-label">Ventes enregistrées</div>
+      </div>
+      ${cats.map(c => `
+        <div class="kpi-card" style="border-left:3px solid ${c.color}">
+          <div class="kpi-num" style="color:${c.color}">${fmtMontantFCFA(state.ventesParCategorie[c.cle])}</div>
+          <div class="kpi-label">${c.icone} ${c.label}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // Tableau
+  if (state.ventes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b5e3c;font-style:italic;padding:24px">
+      Aucune vente enregistrée. Cliquez « + Nouvelle vente » pour commencer.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.ventes.map(v => {
+    const cat = CAT_INDEX[v.categorie] || { icone:'📦', label:v.categorie, color:'#6b6b6b' };
+    const date = new Date(v.dateVente).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+    const unite = (UNITES_PRODUIT.find(u => u.cle === v.unite) || { label:v.unite }).label;
+    return `<tr>
+      <td><strong>${escapeHtml(v.produit)}</strong></td>
+      <td><span class="filiere-badge" style="background:${cat.color}15;color:${cat.color};border:1px solid ${cat.color}40">${cat.icone} ${cat.label}</span></td>
+      <td class="num">${fmtMontantFCFA(v.prixUnitaire)}</td>
+      <td class="num">${Number(v.quantite).toLocaleString('fr-FR')} ${escapeHtml(unite)}</td>
+      <td class="num"><strong style="color:#4a8c3f">${fmtMontantFCFA(v.prixTotal)}</strong></td>
+      <td>${date}</td>
+      <td>${escapeHtml(v.client || '—')}</td>
+      <td class="actions-col"><div class="row-actions">
+        <button class="row-act act-edit" data-vedit="${v.id}" title="Modifier">✎</button>
+        <button class="row-act act-dup"  data-vdup="${v.id}"  title="Dupliquer">⎘</button>
+        <button class="row-act act-del"  data-vdel="${v.id}"  title="Supprimer">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  // Ligne TOTAL
+  tbody.insertAdjacentHTML('beforeend', `<tr class="total">
+    <td colspan="4"><strong>CHIFFRE D'AFFAIRES TOTAL</strong></td>
+    <td class="num"><strong style="font-size:15px;color:#4a8c3f">${fmtMontantFCFA(state.ventesTotalCA)}</strong></td>
+    <td colspan="3"></td>
+  </tr>`);
+
+  // CRUD handlers
+  tbody.querySelectorAll('[data-vedit]').forEach(b => b.addEventListener('click', () => openVenteModal(b.dataset.vedit)));
+  tbody.querySelectorAll('[data-vdup]').forEach(b => b.addEventListener('click', () => duplicateVente(b.dataset.vdup)));
+  tbody.querySelectorAll('[data-vdel]').forEach(b => b.addEventListener('click', () => deleteVente(b.dataset.vdel)));
+}
+
+let _venteEnEdition = null;
+
+function openVenteModal(id) {
+  const modal = document.getElementById('modal-vente');
+  if (!modal) return;
+  _venteEnEdition = id || null;
+  // Remplir les selects
+  const selCat = document.getElementById('v-categorie');
+  selCat.innerHTML = CATEGORIES_PRODUIT.map(c => `<option value="${c.cle}">${c.icone} ${c.label}</option>`).join('');
+  const selUnite = document.getElementById('v-unite');
+  selUnite.innerHTML = UNITES_PRODUIT.map(u => `<option value="${u.cle}">${u.label}</option>`).join('');
+
+  if (id) {
+    const v = state.ventes.find(x => x.id === id);
+    if (v) {
+      document.getElementById('vente-titre').textContent = 'Modifier vente';
+      document.getElementById('v-produit').value = v.produit;
+      selCat.value = v.categorie;
+      selUnite.value = v.unite;
+      document.getElementById('v-prix').value = v.prixUnitaire;
+      document.getElementById('v-qte').value = v.quantite;
+      document.getElementById('v-date').value = v.dateVente.slice(0,10);
+      document.getElementById('v-client').value = v.client || '';
+      document.getElementById('v-notes').value = v.notes || '';
+    }
+  } else {
+    document.getElementById('vente-titre').textContent = 'Nouvelle vente';
+    document.getElementById('v-produit').value = '';
+    selCat.value = 'animal_vivant';
+    selUnite.value = 'unite';
+    document.getElementById('v-prix').value = '0';
+    document.getElementById('v-qte').value = '1';
+    document.getElementById('v-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('v-client').value = '';
+    document.getElementById('v-notes').value = '';
+  }
+  recalculerTotalVente();
+  modal.classList.add('open');
+}
+
+function recalculerTotalVente() {
+  const p = parseFloat(document.getElementById('v-prix').value) || 0;
+  const q = parseFloat(document.getElementById('v-qte').value) || 0;
+  document.getElementById('v-total-affiche').value = fmtMontantFCFA(p * q);
+}
+
+async function sauverVente() {
+  const dto = {
+    produit: (document.getElementById('v-produit').value || '').trim(),
+    categorie: document.getElementById('v-categorie').value,
+    unite: document.getElementById('v-unite').value,
+    prixUnitaire: parseFloat(document.getElementById('v-prix').value) || 0,
+    quantite: parseFloat(document.getElementById('v-qte').value) || 0,
+    dateVente: new Date(document.getElementById('v-date').value + 'T00:00:00Z').toISOString(),
+    client: (document.getElementById('v-client').value || '').trim() || null,
+    notes: (document.getElementById('v-notes').value || '').trim() || null,
+  };
+  if (!dto.produit || dto.produit.length < 1) { toast('Produit requis', 'error'); return; }
+  if (dto.quantite <= 0) { toast('Quantité invalide', 'error'); return; }
+  if (dto.prixUnitaire < 0) { toast('Prix invalide', 'error'); return; }
+  try {
+    if (_venteEnEdition) {
+      await apiFetch('PATCH', '/ventes/' + _venteEnEdition, dto);
+      toast('Vente modifiée', 'success');
+    } else {
+      await apiFetch('POST', '/ventes', dto);
+      toast('Vente enregistrée', 'success');
+    }
+    document.getElementById('modal-vente').classList.remove('open');
+    _venteEnEdition = null;
+    await rechargerVentes();
+    if (typeof renderDashboardCharts === 'function' && document.getElementById('view-dashboard').classList.contains('active')) {
+      renderDashboardCharts();
+    }
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function duplicateVente(id) {
+  const v = state.ventes.find(x => x.id === id);
+  if (!v) return;
+  try {
+    await apiFetch('POST', '/ventes', {
+      produit: v.produit, categorie: v.categorie, unite: v.unite,
+      prixUnitaire: Number(v.prixUnitaire), quantite: Number(v.quantite),
+      client: v.client, notes: v.notes,
+    });
+    toast('Vente dupliquée', 'success');
+    await rechargerVentes();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+async function deleteVente(id) {
+  const ok = await confirmAction('Supprimer cette vente ?', 'Supprimer');
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/ventes/' + id);
+    toast('Vente supprimée', 'success');
+    await rechargerVentes();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+function setupVentes() {
+  const btnNew = document.getElementById('btn-new-vente');
+  if (btnNew) btnNew.addEventListener('click', () => openVenteModal(null));
+  const btnSave = document.getElementById('v-save');
+  if (btnSave) btnSave.addEventListener('click', sauverVente);
+  // Recalcul live du total
+  ['v-prix','v-qte'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', recalculerTotalVente);
+  });
+  document.querySelectorAll('#modal-vente [data-close-modal]').forEach(b => {
+    b.addEventListener('click', () => document.getElementById('modal-vente').classList.remove('open'));
+  });
+  const back = document.getElementById('modal-vente');
+  if (back) back.addEventListener('click', e => { if (e.target === back) back.classList.remove('open'); });
+}
+
 /* ============ DASHBOARD — Graphiques ============ */
 const CHARTS = {};
 const PALETTE_FILIERES = {
@@ -5358,6 +5685,64 @@ function renderDashboardCharts() {
   ], { plugins: { title: { display: true, text: 'Budget : prévu vs réel par phase (FCFA)', font: { family: 'Fraunces', size: 13 } } } });
 
   chartDoughnut('chart-bud-phases', phasesLabels, prevuParPhase, ['#1a6b8a','#e8943a','#4a8c3f']);
+
+  // === Ventes — chiffre d'affaires ===
+  const dashV = document.getElementById('ventes-dash-stats');
+  if (dashV) {
+    const cats = CATEGORIES_PRODUIT.filter(c => state.ventesParCategorie[c.cle] > 0);
+    dashV.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-left:3px solid #4a8c3f">
+          <div class="kpi-num" style="color:#4a8c3f">${fmtMontantFCFA(state.ventesTotalCA)}</div>
+          <div class="kpi-label">Chiffre d'affaires total</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-num">${state.ventes.length}</div>
+          <div class="kpi-label">Ventes enregistrées</div>
+        </div>
+        ${cats.slice(0,4).map(c => `
+          <div class="kpi-card" style="border-left:3px solid ${c.color}">
+            <div class="kpi-num" style="color:${c.color}">${fmtMontantFCFA(state.ventesParCategorie[c.cle])}</div>
+            <div class="kpi-label">${c.icone} ${c.label}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Camembert CA par catégorie
+  const catsAvecCA = CATEGORIES_PRODUIT.filter(c => state.ventesParCategorie[c.cle] > 0);
+  if (catsAvecCA.length > 0) {
+    chartDoughnut('chart-vente-cat',
+      catsAvecCA.map(c => `${c.icone} ${c.label}`),
+      catsAvecCA.map(c => Math.round(state.ventesParCategorie[c.cle])),
+      catsAvecCA.map(c => c.color));
+  } else {
+    destroyChart('chart-vente-cat');
+  }
+
+  // Courbe CA cumulé sur 30 jours
+  const NB_J = 30;
+  const lblsV = []; const cumulV = []; let cum = 0;
+  // Map date → CA du jour
+  const parJour = {};
+  for (const v of state.ventes) {
+    const k = v.dateVente.slice(0,10);
+    parJour[k] = (parJour[k] || 0) + Number(v.prixTotal || 0);
+  }
+  const todayV = new Date(); todayV.setHours(0,0,0,0);
+  for (let i = NB_J - 1; i >= 0; i--) {
+    const d = new Date(todayV); d.setDate(d.getDate() - i);
+    const k = d.toISOString().slice(0,10);
+    cum += parJour[k] || 0;
+    lblsV.push(d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }));
+    cumulV.push(Math.round(cum));
+  }
+  chartLine('chart-vente-evol', lblsV, [{
+    label: 'CA cumulé (FCFA)', data: cumulV,
+    borderColor: '#4a8c3f', backgroundColor: 'rgba(74,140,63,0.18)',
+    tension: 0.3, fill: true, pointRadius: 1,
+  }], { plugins: { title: { display: true, text: 'CA cumulé sur 30 jours', font: { family: 'Fraunces', size: 13 } } } });
 }
 
 /* ============ CRA — Compte Rendu d'Activité ============ */
@@ -6214,9 +6599,11 @@ async function init() {
   //        state.taches/budget par les vraies données BDD ; sinon on garde
   //        ce que loadState a chargé depuis le seed/localStorage.
   await apiInit();
-  // 5.ter) Charge les parcelles et les lots (API uniquement)
+  // 5.ter) Charge les parcelles, lots et ventes (API uniquement)
   state.parcelles = await apiChargerParcelles();
   state.lots = await apiChargerLots();
+  const dv = await apiChargerVentes();
+  state.ventes = dv.ventes; state.ventesTotalCA = dv.totalCA; state.ventesParCategorie = dv.parCategorie;
   // État initial du filtre Activités
   state.actStatutFiltre = 'tous';
   setupTabs();
@@ -6226,6 +6613,7 @@ async function init() {
   setupActivites();
   setupCultures();
   setupCheptel();
+  setupVentes();
   setupCRA();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);

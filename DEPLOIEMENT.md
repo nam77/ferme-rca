@@ -18,6 +18,18 @@ PORT=3001
 NODE_ENV=production
 ```
 
+### Routes API exposées
+
+À l'heure du commit, l'API expose :
+- `/api/auth` (connexion, inscription, /moi)
+- `/api/taches` (+ sous-tâches)
+- `/api/lots` (+ mouvements animaux : achat / naissance / vente / mortalité / maladie / vaccination / croisement / pesée…)
+- `/api/parcelles` (+ événements culture)
+- `/api/budget` (lignes par phase)
+- `/api/ventes` (chiffre d'affaires par produit / catégorie)
+- `/api/cra` (saisies de jours travaillés / agrégats mensuels)
+- `/api/dashboard`, `/api/zones`
+
 ### Migration Prisma propre
 
 En développement on a utilisé `prisma db push` pour aller vite. **Avant le premier déploiement** il faut créer une vraie migration baseline :
