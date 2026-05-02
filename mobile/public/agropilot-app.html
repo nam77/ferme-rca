@@ -1192,6 +1192,91 @@
   .readonly-mode .editable select{
     pointer-events:none;opacity:0.7;
   }
+
+  /* ===== Cultures ===== */
+  .cultures-stats { margin-bottom: 18px; }
+  .cultures-stats .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .cultures-stats .kpi-card {
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+  }
+  .cultures-stats .kpi-num {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 22px; color: #2d1f0e;
+    line-height: 1.1;
+  }
+  .cultures-stats .kpi-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: #8b5e3c;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-top: 4px;
+  }
+  .cultures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .parcelle-card {
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-left: 4px solid #4a8c3f;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 8px rgba(45,31,14,0.06);
+    display: flex; flex-direction: column;
+  }
+  .parcelle-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 8px; margin-bottom: 4px;
+  }
+  .parcelle-titre {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 15px; color: #2d1f0e;
+    display: flex; gap: 6px; align-items: center;
+    flex: 1;
+  }
+  .parcelle-icone { font-size: 18px; }
+  .parcelle-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; padding: 2px 8px; border-radius: 6px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .parcelle-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; color: #5c3d1e;
+    margin-bottom: 10px;
+  }
+  .parcelle-rows {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: 12px;
+  }
+  .parcelle-row {
+    display: flex; justify-content: space-between;
+    font-family: 'DM Sans', sans-serif; font-size: 12.5px;
+  }
+  .parcelle-label { color: #8b5e3c; }
+  .parcelle-val { color: #2d1f0e; font-weight: 500; }
+  .parcelle-evt {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+  .empty-state {
+    background: #fff;
+    border: 1px dashed rgba(92,61,30,0.25);
+    border-radius: 10px;
+    padding: 32px;
+    text-align: center;
+    color: #5c3d1e;
+  }
+  .empty-state .hint { font-size: 12px; color: #8b5e3c; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -1437,6 +1522,7 @@
   <nav class="tabs" id="nav-tabs" role="tablist">
     <button data-view="kanban" class="active"><span class="tab-icon">📋</span>Kanban</button>
     <button data-view="activites"><span class="tab-icon">📅</span>Activités</button>
+    <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable"><span class="tab-icon">💰</span>Budget</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
@@ -1613,6 +1699,22 @@
       </p>
       <div class="flux-legend" id="flux-legend"></div>
     </div>
+  </section>
+
+  <!-- ============ CULTURES ============ -->
+  <section class="view" id="view-cultures">
+    <div class="view-head">
+      <div>
+        <h2 class="view-title">Cultures — <em>Parcelles & événements</em></h2>
+        <p class="view-sub">Suivi des parcelles agricoles : semis, fertilisation, irrigation, désherbage, récoltes.</p>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="btn-new-parcelle">＋ Nouvelle parcelle</button>
+      </div>
+    </div>
+
+    <div class="cultures-stats" id="cultures-stats"></div>
+    <div class="cultures-grid" id="cultures-grid"></div>
   </section>
 </main>
 
@@ -1800,7 +1902,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: true,      // SEUL admin peut supprimer des tâches/activités
     canResetData: true,
-    visibleTabs: ['kanban','activites','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','dashboard','budget','ferme']
   },
   responsable: {
     label: 'Responsable', icon: '🛠️',
@@ -1811,7 +1913,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: false,     // ne peut PAS supprimer
     canResetData: false,
-    visibleTabs: ['kanban','activites','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','dashboard','budget','ferme']
   },
   ouvrier: {
     label: 'Ouvrier', icon: '👷',
@@ -1822,7 +1924,7 @@ const ROLES = {
     canEditAnyTask: true,     // peut mettre à jour le statut/dates des tâches existantes
     canDeleteTask: false,
     canResetData: false,
-    visibleTabs: ['kanban','activites','dashboard','ferme']
+    visibleTabs: ['kanban','activites','cultures','dashboard','ferme']
   }
 };
 
@@ -2742,6 +2844,7 @@ function setupTabs() {
       document.getElementById('view-'+view).classList.add('active');
       // refresh à l'ouverture
       if (view === 'activites') renderActivites();
+      if (view === 'cultures') renderCultures();
       if (view === 'dashboard') renderDashboard();
       if (view === 'budget') renderBudget();
       if (view === 'ferme') renderFerme();
@@ -4486,6 +4589,177 @@ function requirePermission(perm, errorMsg) {
 }
 
 /* ============ INIT ============ */
+/* ============ CULTURES — Parcelles ============ */
+state.parcelles = [];
+
+const TYPES_CULTURE = [
+  { cle:'mais', label:'Maïs', icone:'🌽' },
+  { cle:'manioc', label:'Manioc', icone:'🍠' },
+  { cle:'arachide', label:'Arachide', icone:'🥜' },
+  { cle:'legumes', label:'Légumes', icone:'🍅' },
+  { cle:'brachiaria', label:'Brachiaria', icone:'🌿' },
+  { cle:'bananier', label:'Bananiers', icone:'🍌' },
+  { cle:'jachere', label:'Jachère', icone:'🟫' },
+];
+const STATUTS_PARCELLE = [
+  { cle:'preparation', label:'Préparation', color:'#7b6e3e' },
+  { cle:'semis', label:'Semis', color:'#e8943a' },
+  { cle:'croissance', label:'Croissance', color:'#4a8c3f' },
+  { cle:'recolte', label:'Récolte', color:'#1a6b8a' },
+  { cle:'jachere', label:'Jachère', color:'#9e9e9e' },
+  { cle:'abandonnee', label:'Abandonnée', color:'#e74c3c' },
+];
+
+function getCultureMeta(cle) {
+  return TYPES_CULTURE.find(t => t.cle === cle) || { cle, label: cle, icone: '🌱' };
+}
+function getStatutMeta(cle) {
+  return STATUTS_PARCELLE.find(s => s.cle === cle) || { cle, label: cle, color: '#9e9e9e' };
+}
+
+function formatDateFr(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatNombre(n) {
+  return Number(n || 0).toLocaleString('fr-FR');
+}
+
+async function apiChargerParcelles() {
+  if (!API_DISPONIBLE) return [];
+  try {
+    const r = await apiFetch('GET', '/parcelles');
+    return r.donnees || [];
+  } catch (e) {
+    console.warn('[api] parcelles indisponibles', e.message);
+    return [];
+  }
+}
+
+async function rechargerParcelles() {
+  state.parcelles = await apiChargerParcelles();
+  renderCultures();
+}
+
+function renderCultures() {
+  const stats = document.getElementById('cultures-stats');
+  const grid = document.getElementById('cultures-grid');
+  if (!stats || !grid) return;
+
+  const total = state.parcelles.length;
+  const surfaceTotale = state.parcelles.reduce((s, p) => s + (Number(p.surfaceHa) || 0), 0);
+  const enCroissance = state.parcelles.filter(p => p.statut === 'croissance').length;
+  const totalRecolte = state.parcelles.reduce((s, p) => s + (Number(p.totalRecolteKg) || 0), 0);
+  const coutTotal = state.parcelles.reduce((s, p) => s + (Number(p.coutTotal) || 0), 0);
+
+  stats.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-num">${total}</div><div class="kpi-label">Parcelles</div></div>
+      <div class="kpi-card"><div class="kpi-num">${surfaceTotale.toFixed(1)} ha</div><div class="kpi-label">Surface totale</div></div>
+      <div class="kpi-card"><div class="kpi-num">${enCroissance}</div><div class="kpi-label">En croissance</div></div>
+      <div class="kpi-card"><div class="kpi-num">${formatNombre(totalRecolte)} kg</div><div class="kpi-label">Récolté à ce jour</div></div>
+      <div class="kpi-card"><div class="kpi-num">${formatNombre(coutTotal)}</div><div class="kpi-label">Coût total (FCFA)</div></div>
+    </div>
+  `;
+
+  if (total === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <p>Aucune parcelle pour l'instant.</p>
+      <p class="hint">Cliquez sur « + Nouvelle parcelle » pour commencer.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = state.parcelles.map(p => {
+    const m = getCultureMeta(p.typeCulture);
+    const st = getStatutMeta(p.statut);
+    const recolteBloc = (Number(p.totalRecolteKg) || 0) > 0
+      ? `<div class="parcelle-row"><span class="parcelle-label">Récolté</span><span class="parcelle-val" style="color:#4a8c3f">${formatNombre(p.totalRecolteKg)} kg</span></div>`
+      : '';
+    const rendementBloc = p.rendementPrevuKg
+      ? `<div class="parcelle-row"><span class="parcelle-label">Rendement prévu</span><span class="parcelle-val">${formatNombre(p.rendementPrevuKg)} kg</span></div>`
+      : '';
+    return `
+      <div class="parcelle-card" data-id="${p.id}">
+        <div class="parcelle-head">
+          <div class="parcelle-titre"><span class="parcelle-icone">${m.icone}</span><span>${escapeHtml(p.nom)}</span></div>
+          <div class="parcelle-tag" style="background:${st.color}15;border:1px solid ${st.color}60;color:${st.color}">${st.label}</div>
+        </div>
+        <div class="parcelle-meta">${m.label} · ${Number(p.surfaceHa).toFixed(1)} ha</div>
+        <div class="parcelle-rows">
+          <div class="parcelle-row"><span class="parcelle-label">Semis</span><span class="parcelle-val">${formatDateFr(p.dateSemis)}</span></div>
+          <div class="parcelle-row"><span class="parcelle-label">Récolte prévue</span><span class="parcelle-val">${formatDateFr(p.dateRecoltePrev)}</span></div>
+          ${rendementBloc}
+          ${recolteBloc}
+          <div class="parcelle-row"><span class="parcelle-label">Événements</span><span class="parcelle-val">${p.nombreEvenements || 0}</span></div>
+        </div>
+        <button class="btn btn-ghost btn-sm parcelle-evt" data-id="${p.id}">＋ Événement</button>
+      </div>
+    `;
+  }).join('');
+
+  // Click sur "+ Événement"
+  grid.querySelectorAll('.parcelle-evt').forEach(btn => {
+    btn.addEventListener('click', () => openEvenementModal(btn.dataset.id));
+  });
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ===== Modals Cultures ===== */
+function setupCultures() {
+  const btn = document.getElementById('btn-new-parcelle');
+  if (btn) btn.addEventListener('click', openNouvelleParcelleModal);
+}
+
+function openNouvelleParcelleModal() {
+  const nom = prompt('Nom de la parcelle (ex: "Maïs Champ Nord")');
+  if (!nom || nom.trim().length < 2) return;
+  const type = prompt('Type de culture : mais, manioc, arachide, legumes, brachiaria, bananier, jachere', 'mais');
+  if (!type || !TYPES_CULTURE.find(t => t.cle === type)) {
+    toast('Type de culture invalide', 'error');
+    return;
+  }
+  const surfaceStr = prompt('Surface en hectares (ex: 2)', '1');
+  const surface = parseFloat(surfaceStr);
+  if (isNaN(surface) || surface <= 0) {
+    toast('Surface invalide', 'error');
+    return;
+  }
+  apiCreerParcelle({ nom: nom.trim(), typeCulture: type, surfaceHa: surface })
+    .then(() => { rechargerParcelles(); toast('Parcelle créée', 'success'); })
+    .catch(e => toast('Erreur : ' + e.message, 'error'));
+}
+
+async function apiCreerParcelle(dto) {
+  if (!API_DISPONIBLE) throw new Error('API indisponible');
+  return apiFetch('POST', '/parcelles', dto);
+}
+
+async function openEvenementModal(parcelleId) {
+  const type = prompt('Type d\'événement : preparation_sol, semis, fertilisation, irrigation, traitement, desherbage, recolte, observation', 'observation');
+  if (!type) return;
+  const description = prompt('Description (optionnel)') || null;
+  let quantiteKg = null, coutTotal = null;
+  if (type === 'recolte') {
+    const qStr = prompt('Quantité récoltée (kg)', '0');
+    quantiteKg = parseFloat(qStr); if (isNaN(quantiteKg)) quantiteKg = null;
+  }
+  const cStr = prompt('Coût (FCFA, optionnel)', '');
+  if (cStr) { coutTotal = parseFloat(cStr); if (isNaN(coutTotal)) coutTotal = null; }
+  try {
+    await apiFetch('POST', '/parcelles/' + parcelleId + '/evenements', {
+      type, description, quantiteKg, coutTotal,
+    });
+    toast('Événement enregistré', 'success');
+    await rechargerParcelles();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
 async function init() {
   // Récupère le jeton et l'utilisateur passés par le wrapper RN (IframePage)
   // via query params : ?jeton=xxx&user=base64(JSON).
@@ -4532,6 +4806,8 @@ async function init() {
   //        state.taches/budget par les vraies données BDD ; sinon on garde
   //        ce que loadState a chargé depuis le seed/localStorage.
   await apiInit();
+  // 5.ter) Charge les parcelles (API uniquement, pas de fallback localStorage)
+  state.parcelles = await apiChargerParcelles();
   // État initial du filtre Activités
   state.actStatutFiltre = 'tous';
   setupTabs();
@@ -4539,6 +4815,7 @@ async function init() {
   setupBudgetTabs();
   setupBudgetModal();
   setupActivites();
+  setupCultures();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);
   }

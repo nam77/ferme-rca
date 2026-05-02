@@ -74,6 +74,15 @@ const MODULES: Module[] = [
     route: '/cheptel',
     tag: 'Animaux',
   },
+  {
+    id: 'cultures',
+    titre: 'Cultures',
+    description: 'Parcelles agricoles : semis, fertilisation, récoltes.',
+    icone: '🌾',
+    couleur: COULEURS_TOKEN.cultures,
+    route: '/cultures',
+    tag: 'Végétal',
+  },
 ]
 
 export default function EcranAccueil() {
@@ -118,7 +127,7 @@ export default function EcranAccueil() {
           <View style={styles.entete}>
             <Text style={styles.numero}>01 — MODULES</Text>
             <Text style={styles.titreSection}>
-              <Text style={styles.titreItalique}>Cinq</Text> portes d'entrée
+              <Text style={styles.titreItalique}>Six</Text> portes d&apos;entrée
             </Text>
           </View>
 
