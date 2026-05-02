@@ -2436,6 +2436,269 @@ async function loadState() {
 async function saveTaches() { await storageSet(KEYS.TACHES, state.taches); }
 async function saveBudget() { await storageSet(KEYS.BUDGET, state.budget); }
 
+/* ============ CONNEXION API REST (BACKEND POSTGRES) ============
+   Branchement sur l'API Express + Prisma (port 3001) au lieu du
+   localStorage seul. Stratégie :
+   - loadState() : fetch /api/taches + /api/budget, mappe au format HTML.
+   - saveTaches()/saveBudget() : diff entre snapshot et state actuel,
+     déclenche POST/PATCH/DELETE pour chaque changement.
+   - Fallback localStorage si API indisponible.
+*/
+const API_BASE = (() => {
+  // En iframe servie par Expo (port 8081), on parle au backend sur 3001
+  try {
+    const host = window.location.hostname || 'localhost';
+    return 'http://' + host + ':3001/api';
+  } catch { return 'http://localhost:3001/api'; }
+})();
+let API_JETON = null;
+let API_DISPONIBLE = false;
+let TACHES_SNAPSHOT = [];          // dernier état synchronisé (pour diff)
+let BUDGET_SNAPSHOT = [];
+
+const FILIERE_HTML_VERS_API = {
+  pisciculture: 'pisciculture', aviculture: 'aviculture',
+  porcins: 'porcins', caprins: 'caprins', cultures: 'cultures',
+  infrastructure: 'infrastructure', habitat: 'habitat',
+};
+const PHASE_HTML_VERS_API = {
+  '1': 'phase_1_infrastructure',
+  '2': 'phase_2_lancement',
+  '3': 'phase_3_exploitation',
+};
+const PHASE_API_VERS_HTML = {
+  'phase_1_infrastructure': '1',
+  'phase_2_lancement': '2',
+  'phase_3_exploitation': '3',
+};
+
+function tacheApiVersHtml(t) {
+  return {
+    id: 'api:' + t.id,
+    titre: t.titre || '',
+    description: t.description || '',
+    filiere: t.filiere,
+    priorite: t.priorite,
+    statut: t.statut,
+    responsable: t.responsable ? (t.responsable.prenom + ' ' + (t.responsable.nom||'').charAt(0) + '.') : '',
+    dateFin: t.dateLimite ? t.dateLimite.split('T')[0] : null,
+    comment: '',
+    categorie: t.zoneId ?? null,
+    _apiId: t.id,
+  };
+}
+function tacheHtmlVersApi(t) {
+  return {
+    titre: t.titre,
+    description: t.description || null,
+    filiere: t.filiere,
+    priorite: t.priorite || 'moyenne',
+    statut: t.statut || 'a_faire',
+    dateLimite: t.dateFin ? new Date(t.dateFin + 'T00:00:00Z').toISOString() : null,
+  };
+}
+function budgetApiVersHtml(b) {
+  return {
+    id: 'api:' + b.id,
+    phase: PHASE_API_VERS_HTML[b.phase] || '1',
+    categorie: b.categorie || '',
+    prevu: Number(b.montantPrevu) || 0,
+    reel: Number(b.montantReel) || 0,
+    _apiId: b.id,
+  };
+}
+function budgetHtmlVersApi(b) {
+  return {
+    phase: PHASE_HTML_VERS_API[b.phase] || 'phase_1_infrastructure',
+    categorie: b.categorie || '',
+    description: b.categorie || '',
+    montantPrevu: Number(b.prevu) || 0,
+    montantReel: Number(b.reel) || 0,
+  };
+}
+
+async function apiFetch(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (API_JETON) opts.headers['Authorization'] = 'Bearer ' + API_JETON;
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(API_BASE + path, opts);
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error(`API ${method} ${path} → ${r.status} ${txt.slice(0,120)}`);
+  }
+  return r.json();
+}
+
+async function apiAuthLogin() {
+  // Auto-login admin (les credentials sont déjà ouvertes côté backend)
+  try {
+    const r = await fetch(API_BASE + '/auth/connexion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@ferme.rca', motDePasse: 'admin123' }),
+    });
+    if (!r.ok) throw new Error('login → ' + r.status);
+    const d = await r.json();
+    API_JETON = d.donnees?.jeton;
+    API_DISPONIBLE = !!API_JETON;
+    return API_DISPONIBLE;
+  } catch (e) {
+    console.warn('[api] login impossible — fallback localStorage', e.message);
+    API_DISPONIBLE = false;
+    return false;
+  }
+}
+
+async function apiChargerTaches() {
+  const r = await apiFetch('GET', '/taches');
+  return (r.donnees || []).map(tacheApiVersHtml);
+}
+async function apiChargerBudget() {
+  const r = await apiFetch('GET', '/budget');
+  // /api/budget retourne {donnees: {groupes: {phase_1_...: [...], phase_2_...: [...], ...}}}
+  // On aplatit toutes les phases en un tableau unique.
+  let items = [];
+  if (Array.isArray(r.donnees)) items = r.donnees;
+  else if (Array.isArray(r.donnees?.lignes)) items = r.donnees.lignes;
+  else if (r.donnees?.groupes && typeof r.donnees.groupes === 'object') {
+    items = Object.values(r.donnees.groupes).flat();
+  }
+  return items.map(budgetApiVersHtml);
+}
+
+async function apiInit() {
+  await apiAuthLogin();
+  if (!API_DISPONIBLE) return;
+  try {
+    const taches = await apiChargerTaches();
+    state.taches = taches;
+    TACHES_SNAPSHOT = JSON.parse(JSON.stringify(taches));
+    // Cache local en bonus
+    localSet(KEYS.TACHES, taches);
+  } catch (e) {
+    console.warn('[api] taches indisponibles', e.message);
+  }
+  try {
+    const budget = await apiChargerBudget();
+    state.budget = budget;
+    BUDGET_SNAPSHOT = JSON.parse(JSON.stringify(budget));
+    localSet(KEYS.BUDGET, budget);
+  } catch (e) {
+    console.warn('[api] budget indisponible', e.message);
+  }
+}
+
+// Save : diff snapshot ↔ state actuel, puis appels REST en parallèle.
+async function apiSauvegarderTaches() {
+  if (!API_DISPONIBLE) return;
+  const avant = new Map(TACHES_SNAPSHOT.map(t => [t.id, t]));
+  const apres = new Map(state.taches.map(t => [t.id, t]));
+  const promesses = [];
+  // Suppressions
+  for (const [id, t] of avant) {
+    if (!apres.has(id) && t._apiId) {
+      promesses.push(apiFetch('DELETE', '/taches/' + t._apiId).catch(e => console.warn('[api] del', id, e.message)));
+    }
+  }
+  // Ajouts + modifs
+  for (const [id, t] of apres) {
+    const ancien = avant.get(id);
+    if (!ancien) {
+      // Nouvelle tâche locale (id 't-...' ou similaire) → POST
+      const dto = tacheHtmlVersApi(t);
+      promesses.push(
+        apiFetch('POST', '/taches', dto).then(r => {
+          if (r.donnees) {
+            t._apiId = r.donnees.id;
+            t.id = 'api:' + r.donnees.id;
+          }
+        }).catch(e => console.warn('[api] post', e.message))
+      );
+    } else if (ancien._apiId) {
+      // Modif sur tâche existante → PATCH si champ change
+      const champsChanges = {};
+      ['titre','description','filiere','priorite'].forEach(k => {
+        if ((t[k]||null) !== (ancien[k]||null)) champsChanges[k] = t[k]||null;
+      });
+      if ((t.dateFin||null) !== (ancien.dateFin||null)) {
+        champsChanges.dateLimite = t.dateFin ? new Date(t.dateFin+'T00:00:00Z').toISOString() : null;
+      }
+      if (t.statut !== ancien.statut) {
+        // Route dédiée pour le statut (passe par le mouvement)
+        promesses.push(apiFetch('PATCH', '/taches/'+ancien._apiId+'/statut', { nouveauStatut: t.statut })
+          .catch(e => console.warn('[api] patch statut', e.message)));
+      }
+      if (Object.keys(champsChanges).length > 0) {
+        promesses.push(apiFetch('PATCH', '/taches/'+ancien._apiId, champsChanges)
+          .catch(e => console.warn('[api] patch', e.message)));
+      }
+    }
+  }
+  await Promise.all(promesses);
+  TACHES_SNAPSHOT = JSON.parse(JSON.stringify(state.taches));
+}
+
+async function apiSauvegarderBudget() {
+  if (!API_DISPONIBLE) return;
+  const avant = new Map(BUDGET_SNAPSHOT.map(b => [b.id, b]));
+  const apres = new Map(state.budget.map(b => [b.id, b]));
+  const promesses = [];
+  for (const [id, b] of avant) {
+    if (!apres.has(id) && b._apiId) {
+      promesses.push(apiFetch('DELETE', '/budget/' + b._apiId).catch(e => console.warn('[api] del bud', e.message)));
+    }
+  }
+  for (const [id, b] of apres) {
+    const ancien = avant.get(id);
+    if (!ancien) {
+      const dto = budgetHtmlVersApi(b);
+      promesses.push(
+        apiFetch('POST', '/budget', dto).then(r => {
+          if (r.donnees) {
+            b._apiId = r.donnees.id;
+            b.id = 'api:' + r.donnees.id;
+          }
+        }).catch(e => console.warn('[api] post bud', e.message))
+      );
+    } else if (ancien._apiId) {
+      const champsChanges = {};
+      if (b.categorie !== ancien.categorie) { champsChanges.categorie = b.categorie; champsChanges.description = b.categorie; }
+      if (Number(b.prevu) !== Number(ancien.prevu)) champsChanges.montantPrevu = Number(b.prevu) || 0;
+      if (Number(b.reel) !== Number(ancien.reel)) champsChanges.montantReel = Number(b.reel) || 0;
+      if (b.phase !== ancien.phase) champsChanges.phase = PHASE_HTML_VERS_API[b.phase] || 'phase_1_infrastructure';
+      if (Object.keys(champsChanges).length > 0) {
+        promesses.push(apiFetch('PATCH', '/budget/'+ancien._apiId, champsChanges)
+          .catch(e => console.warn('[api] patch bud', e.message)));
+      }
+    }
+  }
+  await Promise.all(promesses);
+  BUDGET_SNAPSHOT = JSON.parse(JSON.stringify(state.budget));
+}
+
+// Override des fonctions de save : route vers l'API si dispo, fallback local sinon.
+const _saveTachesOriginal = saveTaches;
+const _saveBudgetOriginal = saveBudget;
+saveTaches = async function() {
+  if (API_DISPONIBLE) {
+    await apiSauvegarderTaches();
+    localSet(KEYS.TACHES, state.taches); // cache
+  } else {
+    await _saveTachesOriginal();
+  }
+};
+saveBudget = async function() {
+  if (API_DISPONIBLE) {
+    await apiSauvegarderBudget();
+    localSet(KEYS.BUDGET, state.budget);
+  } else {
+    await _saveBudgetOriginal();
+  }
+};
+
 /* ============ NAVIGATION (ONGLETS) ============ */
 function setupTabs() {
   // Bouton hamburger : ouvre/ferme le menu accordéon mobile
@@ -4225,6 +4488,10 @@ async function init() {
   applyAuthState();
   // 5) Chargement de l'état métier
   await loadState();
+  // 5.bis) Tente une connexion à l'API REST (Postgres). Si dispo, remplace
+  //        state.taches/budget par les vraies données BDD ; sinon on garde
+  //        ce que loadState a chargé depuis le seed/localStorage.
+  await apiInit();
   // État initial du filtre Activités
   state.actStatutFiltre = 'tous';
   setupTabs();
