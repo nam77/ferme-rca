@@ -1,344 +1,83 @@
-import { useMemo, useState } from 'react'
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
-import { useZones } from '../hooks/useZones'
-import { PlanFerme } from '../components/PlanFerme'
-import { PlanTechnique } from '../components/PlanTechnique'
-import { DiagrammeCycle } from '../components/DiagrammeCycle'
-import { ModalZone } from '../components/ModalZone'
-import {
-  COULEURS_FILIERES,
-  ICONES_FILIERES,
-  LIBELLES_FILIERES,
-} from '../constants/couleurs'
-import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../constants/theme'
-import type { Filiere } from '../types/auth.types'
-import type { ZoneListe } from '../types/zone.types'
+// EcranFerme : reproduction iso de la page Ferme via iframe sur le HTML
+// de référence (mobile/public/ferme-app.html). Sur native, message de
+// repli (le HTML est riche en SVG animés peu adaptés à RN sans WebView).
 
-const FILIERES_LEGENDE: Filiere[] = [
-  'pisciculture',
-  'aviculture',
-  'porcins',
-  'caprins',
-  'cultures',
-  'infrastructure',
-  'habitat',
-]
+import { View, Text, StyleSheet, Platform } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../constants/theme'
 
 export const EcranFerme = () => {
-  const { zones, enChargement, erreur } = useZones()
-  const [zoneSelectionnee, setZoneSelectionnee] = useState<ZoneListe | null>(null)
-
-  const surfaceTotale = useMemo(
-    () => zones.reduce((s, z) => s + (z.surface ?? 0), 0),
-    [zones],
-  )
-
-  if (enChargement && zones.length === 0) {
+  if (Platform.OS === 'web') {
     return (
-      <View style={styles.chargement}>
-        <ActivityIndicator size="large" color={COULEURS_TOKEN.mint} />
-      </View>
+      <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
+        {/*
+          On utilise un élément DOM natif <iframe> via createElement-like
+          syntax de React Native Web.
+        */}
+        <View style={styles.iframeWrap}>
+          {React.createElement('iframe', {
+            src: '/ferme-app.html',
+            style: {
+              width: '100%',
+              height: '100%',
+              border: 0,
+              display: 'block',
+            },
+            title: 'Plan de la ferme',
+          })}
+        </View>
+      </SafeAreaView>
     )
   }
 
   return (
     <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={styles.contenu}>
-        <View style={styles.entete}>
-          <View style={styles.entetegauche}>
-            <Text style={styles.titre}>
-              La Ferme <Text style={styles.titreItalique}>— Plan & zones</Text>
-            </Text>
-            <Text style={styles.sousTitre}>
-              Vue illustrée à gauche, plan technique à droite. Cliquez sur les zones pour voir les détails.
-              {' '}{(surfaceTotale / 10000).toFixed(1)} hectares · {zones.length} zones.
-            </Text>
-          </View>
-
-        </View>
-
-        {erreur ? (
-          <View style={styles.bandeauErreur}>
-            <Text style={styles.bandeauErreurTexte}>{erreur}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.deuxColonnes}>
-          <View style={styles.cartePlan}>
-            <View style={styles.carteEntete}>
-              <View style={styles.carteEnteteIcone}>
-                <Ionicons name="image-outline" size={14} color={COULEURS_TOKEN.mint} />
-              </View>
-              <Text style={styles.carteEnteteTitre}>Vue illustrée</Text>
-              <View style={styles.carteEntetePastille}>
-                <Text style={styles.carteEntetePastilleTexte}>
-                  {(surfaceTotale / 10000).toFixed(1)} ha
-                </Text>
-              </View>
-            </View>
-            <PlanFerme zones={zones} onZonePress={setZoneSelectionnee} />
-          </View>
-
-          <View style={styles.cartePlan}>
-            <View style={styles.carteEntete}>
-              <View style={styles.carteEnteteIcone}>
-                <Ionicons name="map-outline" size={14} color={COULEURS_TOKEN.mint} />
-              </View>
-              <Text style={styles.carteEnteteTitre}>Plan technique</Text>
-              <View style={styles.carteEntetePastille}>
-                <Text style={styles.carteEntetePastilleTexte}>
-                  {zones.length} zones
-                </Text>
-              </View>
-            </View>
-            <PlanTechnique zones={zones} onZonePress={setZoneSelectionnee} />
-          </View>
-        </View>
-
-        <View style={styles.legende}>
-          {FILIERES_LEGENDE.map((f) => {
-            const couleur = COULEURS_FILIERES[f]
-            return (
-              <View key={f} style={styles.legendeItem}>
-                <View style={[styles.legendePoint, { backgroundColor: couleur }]} />
-                <Text style={styles.legendeIcone}>{ICONES_FILIERES[f]}</Text>
-                <Text style={styles.legendeTexte}>{LIBELLES_FILIERES[f]}</Text>
-              </View>
-            )
-          })}
-        </View>
-
-        <DiagrammeCycle />
-
-        <Text style={styles.section}>Liste des zones</Text>
-        <View style={styles.liste}>
-          {zones.map((z) => {
-            const couleur = COULEURS_FILIERES[z.filiere as Filiere]
-            return (
-              <Pressable
-                key={z.id}
-                onPress={() => setZoneSelectionnee(z)}
-                accessibilityLabel={`Détail de ${z.nom}`}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.ligne,
-                  { borderLeftColor: couleur },
-                  pressed && styles.lignePressee,
-                ]}
-              >
-                <Text style={styles.ligneIcone}>{ICONES_FILIERES[z.filiere as Filiere]}</Text>
-                <View style={styles.ligneContenu}>
-                  <Text style={styles.ligneTitre}>{z.nom}</Text>
-                  <Text style={styles.ligneFiliere}>
-                    {LIBELLES_FILIERES[z.filiere as Filiere]}
-                    {z.surface ? ` · ${z.surface >= 10_000 ? `${(z.surface / 10_000).toFixed(1)} ha` : `${z.surface} m²`}` : ''}
-                  </Text>
-                </View>
-                <Text style={styles.ligneFleche}>›</Text>
-              </Pressable>
-            )
-          })}
-        </View>
-      </ScrollView>
-
-      <ModalZone
-        zoneListe={zoneSelectionnee}
-        visible={zoneSelectionnee !== null}
-        onFermer={() => setZoneSelectionnee(null)}
-      />
+      <View style={styles.fallback}>
+        <Text style={styles.fallbackTitre}>Plan de la ferme</Text>
+        <Text style={styles.fallbackTexte}>
+          La vue détaillée du plan de la ferme (illustration + plan technique
+          + cycle d'économie circulaire) est disponible sur la version web.
+        </Text>
+      </View>
     </SafeAreaView>
   )
 }
 
+import React from 'react'
+
 const styles = StyleSheet.create({
   conteneur: { flex: 1, backgroundColor: COULEURS_TOKEN.cream },
-  chargement: {
+  iframeWrap: {
     flex: 1,
     backgroundColor: COULEURS_TOKEN.cream,
+  },
+  fallback: {
+    flex: 1,
+    padding: ESPACEMENTS.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  contenu: { paddingBottom: ESPACEMENTS.xxl },
-  entete: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: ESPACEMENTS.xl,
-    paddingTop: ESPACEMENTS.l,
-    paddingBottom: ESPACEMENTS.m,
-    gap: ESPACEMENTS.l,
-    flexWrap: 'wrap',
-  },
-  entetegauche: { flex: 1, minWidth: 280 },
-  titre: {
+  fallbackTitre: {
     fontFamily: POLICES.serifSemi,
-    fontSize: 28,
-    color: COULEURS_TOKEN.soil,
-    lineHeight: 34,
-  },
-  titreItalique: {
-    fontFamily: POLICES.serifItalique,
-    color: COULEURS_TOKEN.mint,
     fontSize: 24,
-  },
-  sousTitre: {
-    fontFamily: POLICES.sans,
-    fontSize: 13,
-    color: COULEURS_TOKEN.earth,
-    marginTop: 4,
-  },
-  deuxColonnes: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: ESPACEMENTS.l,
-    paddingHorizontal: ESPACEMENTS.xl,
-    marginTop: ESPACEMENTS.s,
-  },
-  boutonPresse: { opacity: 0.85 },
-  bandeauErreur: {
-    marginHorizontal: ESPACEMENTS.xl,
-    padding: ESPACEMENTS.s,
-    backgroundColor: 'rgba(231,76,60,0.10)',
-    borderRadius: RAYONS.moyen,
-    borderWidth: 1,
-    borderColor: 'rgba(231,76,60,0.30)',
-  },
-  bandeauErreurTexte: {
-    color: COULEURS_TOKEN.rouge,
-    fontFamily: POLICES.sans,
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  cartePlan: {
-    flex: 1,
-    minWidth: 320,
-    backgroundColor: COULEURS_TOKEN.carte,
-    borderRadius: RAYONS.grand,
-    borderWidth: 1,
-    borderColor: COULEURS_TOKEN.bordure,
-    overflow: 'hidden',
-  },
-  carteEntete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ESPACEMENTS.s,
-    paddingHorizontal: ESPACEMENTS.l,
-    paddingVertical: ESPACEMENTS.m,
-    borderBottomWidth: 1,
-    borderBottomColor: COULEURS_TOKEN.bordure,
-  },
-  carteEnteteIcone: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(74,140,63,0.10)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  carteEnteteTitre: {
-    flex: 1,
-    fontFamily: POLICES.serifSemi,
-    fontSize: 16,
     color: COULEURS_TOKEN.soil,
-  },
-  carteEntetePastille: {
-    paddingHorizontal: ESPACEMENTS.s,
-    paddingVertical: 2,
-    borderRadius: RAYONS.pastille,
-    backgroundColor: 'rgba(74,140,63,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(74,140,63,0.35)',
-  },
-  carteEntetePastilleTexte: {
-    fontFamily: POLICES.mono,
-    fontSize: 10,
-    color: COULEURS_TOKEN.mint,
-    letterSpacing: 0.6,
-  },
-  legende: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: ESPACEMENTS.s,
-    paddingHorizontal: ESPACEMENTS.xl,
-    marginTop: ESPACEMENTS.m,
-  },
-  legendeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: ESPACEMENTS.s,
-    paddingVertical: 4,
-    borderRadius: RAYONS.pastille,
-    backgroundColor: COULEURS_TOKEN.carte,
-    borderWidth: 1,
-    borderColor: COULEURS_TOKEN.bordure,
-  },
-  legendePoint: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendeIcone: { fontSize: 12 },
-  legendeTexte: {
-    fontFamily: POLICES.sansMedium,
-    fontSize: 12,
-    color: COULEURS_TOKEN.soil,
-  },
-  section: {
-    fontFamily: POLICES.mono,
-    fontSize: 11,
-    color: COULEURS_TOKEN.clay,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    paddingHorizontal: ESPACEMENTS.xl,
-    marginTop: ESPACEMENTS.xl,
     marginBottom: ESPACEMENTS.s,
   },
-  liste: {
-    paddingHorizontal: ESPACEMENTS.xl,
-    gap: ESPACEMENTS.s,
-  },
-  ligne: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: ESPACEMENTS.m,
-    backgroundColor: COULEURS_TOKEN.carte,
-    borderRadius: RAYONS.moyen,
-    padding: ESPACEMENTS.m,
-    borderLeftWidth: 4,
-    borderTopWidth: 1,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderTopColor: COULEURS_TOKEN.bordure,
-    borderRightColor: COULEURS_TOKEN.bordure,
-    borderBottomColor: COULEURS_TOKEN.bordure,
-  },
-  lignePressee: { opacity: 0.85 },
-  ligneIcone: { fontSize: 24 },
-  ligneContenu: { flex: 1 },
-  ligneTitre: {
-    fontFamily: POLICES.serifSemi,
-    fontSize: 15,
-    color: COULEURS_TOKEN.soil,
-  },
-  ligneFiliere: {
+  fallbackTexte: {
     fontFamily: POLICES.sans,
-    fontSize: 12,
+    fontSize: 14,
     color: COULEURS_TOKEN.earth,
-    marginTop: 2,
+    textAlign: 'center',
+    maxWidth: 360,
+    lineHeight: 20,
+    marginBottom: ESPACEMENTS.l,
   },
-  ligneFleche: {
-    fontFamily: POLICES.serif,
-    fontSize: 22,
-    color: COULEURS_TOKEN.clay,
+  fallbackPastille: {
+    paddingHorizontal: ESPACEMENTS.m,
+    paddingVertical: ESPACEMENTS.s,
+    borderRadius: RAYONS.pastille,
+    backgroundColor: 'rgba(74,140,63,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(74,140,63,0.30)',
   },
 })
