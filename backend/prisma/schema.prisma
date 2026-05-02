@@ -82,6 +82,11 @@ enum TypeMouvementAnimal {
   reforme
   transfert_entree
   transfert_sortie
+  maladie
+  vaccination
+  traitement_sanitaire
+  croisement
+  pesee
 }
 
 enum TypeCulture {
@@ -238,6 +243,15 @@ model MouvementAnimal {
   motif           String?
   notes           String?
   creeLe          DateTime            @default(now())
+
+  // Champs détaillés (optionnels) pour enrichir chaque type de mouvement
+  poidsMoyenKg    Float?              // poids moyen par tête (achat/vente/pesée/naissance)
+  prixUnitaire    Decimal?            @db.Decimal(12, 2) // FCFA/tête (achat/vente)
+  tiersExterne    String?             // fournisseur/acheteur/vétérinaire/marché
+  cause           String?             // cause de mortalité/maladie
+  traitement      String?             // médicament/vaccin administré
+  geniteurMaleLotId   String?         // pour naissance / croisement
+  geniteurFemelleLotId String?
 
   lotId           String
   lot             LotAnimaux          @relation(fields: [lotId], references: [id], onDelete: Cascade)

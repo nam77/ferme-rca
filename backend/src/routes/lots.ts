@@ -35,6 +35,13 @@ const schemaCreationMouvement = z.object({
   coutTotal: z.number().nonnegative().optional().nullable(),
   motif: z.string().max(500).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
+  poidsMoyenKg: z.number().nonnegative().optional().nullable(),
+  prixUnitaire: z.number().nonnegative().optional().nullable(),
+  tiersExterne: z.string().max(200).optional().nullable(),
+  cause: z.string().max(500).optional().nullable(),
+  traitement: z.string().max(500).optional().nullable(),
+  geniteurMaleLotId: z.string().optional().nullable(),
+  geniteurFemelleLotId: z.string().optional().nullable(),
 })
 
 const TYPES_ENTREE: TypeMouvementAnimal[] = [
@@ -51,13 +58,23 @@ const TYPES_SORTIE: TypeMouvementAnimal[] = [
   TypeMouvementAnimal.transfert_sortie,
 ]
 
+// Types qui ne modifient pas l'effectif (suivi sanitaire, croisement, pesée)
+const TYPES_NEUTRES: TypeMouvementAnimal[] = [
+  TypeMouvementAnimal.maladie,
+  TypeMouvementAnimal.vaccination,
+  TypeMouvementAnimal.traitement_sanitaire,
+  TypeMouvementAnimal.croisement,
+  TypeMouvementAnimal.pesee,
+]
+void TYPES_NEUTRES
+
 const calculerEffectif = (
   mouvements: { type: TypeMouvementAnimal; quantite: number }[],
 ): number => {
   return mouvements.reduce((acc, m) => {
     if (TYPES_ENTREE.includes(m.type)) return acc + m.quantite
     if (TYPES_SORTIE.includes(m.type)) return acc - m.quantite
-    return acc
+    return acc // pesée/maladie/vaccination/etc. → effectif inchangé
   }, 0)
 }
 
@@ -266,6 +283,13 @@ routeurLots.post('/:id/mouvements', async (req: Request, res: Response) => {
         coutTotal: parsed.data.coutTotal ?? null,
         motif: parsed.data.motif ?? null,
         notes: parsed.data.notes ?? null,
+        poidsMoyenKg: parsed.data.poidsMoyenKg ?? null,
+        prixUnitaire: parsed.data.prixUnitaire ?? null,
+        tiersExterne: parsed.data.tiersExterne ?? null,
+        cause: parsed.data.cause ?? null,
+        traitement: parsed.data.traitement ?? null,
+        geniteurMaleLotId: parsed.data.geniteurMaleLotId ?? null,
+        geniteurFemelleLotId: parsed.data.geniteurFemelleLotId ?? null,
         auteurId: req.utilisateur!.utilisateurId,
       },
       include: {

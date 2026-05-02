@@ -1823,11 +1823,16 @@
     </div>
 
     <div class="dash-section">
-      <h3><span class="icon">🐾</span>Cheptel</h3>
+      <h3><span class="icon">🐾</span>Cheptel — Vue globale</h3>
       <div class="dash-charts-row">
         <div class="chart-wrap"><canvas id="chart-chep-mvts"></canvas></div>
         <div class="chart-wrap"><canvas id="chart-chep-effectifs"></canvas></div>
       </div>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">🐾</span>Cheptel par type d'élevage</h3>
+      <div id="cheptel-by-espece"></div>
     </div>
 
     <div class="dash-section">
@@ -1988,6 +1993,80 @@
     <div class="cultures-stats" id="cultures-stats"></div>
     <div class="cultures-grid" id="cultures-grid"></div>
   </section>
+
+  <!-- ============ MODAL MOUVEMENT CHEPTEL ============ -->
+  <div class="modal-backdrop" id="modal-mvt-cheptel">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-head">
+        <h2 id="mvt-titre">Nouveau mouvement</h2>
+        <button class="modal-close" data-close-modal>×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Type de mouvement</label>
+          <select id="mvt-type"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantité (têtes)</label>
+            <input type="number" id="mvt-qte" min="0" step="1" value="1">
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="mvt-date">
+          </div>
+        </div>
+
+        <!-- Champs conditionnels par type -->
+        <div class="form-group" id="mvt-grp-prix">
+          <label>Prix unitaire (FCFA / tête) — <span class="hint">optionnel</span></label>
+          <input type="number" id="mvt-prix-unitaire" min="0" step="500" placeholder="0">
+        </div>
+        <div class="form-group" id="mvt-grp-cout">
+          <label>Total <span class="hint" id="mvt-cout-hint">(FCFA)</span></label>
+          <input type="number" id="mvt-cout-total" min="0" step="500" placeholder="0">
+        </div>
+        <div class="form-group" id="mvt-grp-poids">
+          <label>Poids moyen par tête (kg) — <span class="hint">optionnel</span></label>
+          <input type="number" id="mvt-poids" min="0" step="0.1" placeholder="0">
+        </div>
+        <div class="form-group" id="mvt-grp-tiers">
+          <label id="mvt-tiers-label">Tiers (acheteur / fournisseur / vétérinaire)</label>
+          <input type="text" id="mvt-tiers" placeholder="Nom du tiers" maxlength="200">
+        </div>
+        <div class="form-group" id="mvt-grp-cause">
+          <label id="mvt-cause-label">Cause / symptômes</label>
+          <input type="text" id="mvt-cause" placeholder="Ex: parasitose, diarrhée, maladie de Newcastle…" maxlength="500">
+        </div>
+        <div class="form-group" id="mvt-grp-traitement">
+          <label>Médicament / vaccin administré</label>
+          <input type="text" id="mvt-traitement" placeholder="Ex: Ivermectine 1%, vaccin La Sota…" maxlength="500">
+        </div>
+        <div class="form-row" id="mvt-grp-geniteurs">
+          <div class="form-group">
+            <label>Géniteur ♂ (lot mâles)</label>
+            <select id="mvt-geniteur-male"></select>
+          </div>
+          <div class="form-group">
+            <label>Génitrice ♀ (lot femelles)</label>
+            <select id="mvt-geniteur-femelle"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Motif / résumé</label>
+          <input type="text" id="mvt-motif" placeholder="Ex: Mise bas chèvre #4 (triplés)" maxlength="500">
+        </div>
+        <div class="form-group">
+          <label>Notes complémentaires</label>
+          <textarea id="mvt-notes" placeholder="Détails libres..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-modal>Annuler</button>
+        <button class="btn btn-primary" id="mvt-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ CHEPTEL ============ -->
   <section class="view" id="view-cheptel">
@@ -5070,8 +5149,102 @@ function chartDoughnut(canvasId, labels, data, colors) {
   });
 }
 
+async function chargerTousMouvementsCheptel() {
+  // Pour avoir les mouvements détaillés du dashboard, on parcourt chaque lot.
+  // (On pourrait ajouter une route /api/lots/mouvements globale, mais en l'état
+  //  on a que peu de lots, donc N+1 acceptable.)
+  if (!API_DISPONIBLE) return [];
+  const tousLesMvts = [];
+  for (const lot of state.lots) {
+    try {
+      const r = await apiFetch('GET', '/lots/' + lot.id);
+      const det = r.donnees;
+      if (det && Array.isArray(det.mouvements)) {
+        for (const m of det.mouvements) {
+          tousLesMvts.push({ ...m, _lot: { id: lot.id, nom: lot.nom, espece: lot.espece } });
+        }
+      }
+    } catch { /* ignore */ }
+  }
+  return tousLesMvts;
+}
+
+function renderCheptelParEspece(tousMvts) {
+  const container = document.getElementById('cheptel-by-espece');
+  if (!container) return;
+
+  // Filtrer le mois courant
+  const aujourd = new Date();
+  const debutMois = new Date(aujourd.getFullYear(), aujourd.getMonth(), 1);
+  const mvtsMois = tousMvts.filter(m => new Date(m.dateMouvement) >= debutMois);
+
+  // Lots groupés par espèce
+  const especesActives = ESPECES.filter(e => state.lots.some(l => l.espece === e.cle));
+  if (especesActives.length === 0) {
+    container.innerHTML = '<div class="empty-state">Aucun lot enregistré.</div>';
+    return;
+  }
+
+  // On dessine 1 bloc par espèce avec stats clés et un mini canvas chart
+  container.innerHTML = especesActives.map(e => {
+    const lots = state.lots.filter(l => l.espece === e.cle);
+    const effectif = lots.reduce((s,l) => s + (l.effectif||0), 0);
+    const mvtsEsp = tousMvts.filter(m => m._lot.espece === e.cle);
+    const mvtsMoisEsp = mvtsMois.filter(m => m._lot.espece === e.cle);
+    const naissances = mvtsMoisEsp.filter(m => m.type === 'naissance').reduce((s,m)=>s+m.quantite,0);
+    const deces = mvtsMoisEsp.filter(m => m.type === 'mortalite').reduce((s,m)=>s+m.quantite,0);
+    const ventes = mvtsMoisEsp.filter(m => m.type === 'vente').reduce((s,m)=>s+m.quantite,0);
+    const achats = mvtsMoisEsp.filter(m => m.type === 'achat').reduce((s,m)=>s+m.quantite,0);
+    const maladies = mvtsMoisEsp.filter(m => m.type === 'maladie').length;
+    const vaccins = mvtsMoisEsp.filter(m => m.type === 'vaccination').length;
+    const croisements = mvtsMoisEsp.filter(m => m.type === 'croisement').length;
+    const recettes = mvtsEsp.filter(m => m.type === 'vente').reduce((s,m)=>s + Number(m.coutTotal||0), 0);
+    const couts    = mvtsEsp.filter(m => m.type === 'achat').reduce((s,m)=>s + Number(m.coutTotal||0), 0);
+    const fil = FILIERES[e.filiere] || { color: '#6b6b6b' };
+    return `
+      <div class="dash-section" style="border-left:4px solid ${fil.color};margin-top:12px">
+        <h3 style="font-size:15px"><span class="icon">${e.icone}</span>${e.label} <span style="font-family:'DM Mono',monospace;font-size:11px;color:#8b5e3c;letter-spacing:0.5px;margin-left:8px">${effectif} têtes · ${lots.length} lot${lots.length>1?'s':''}</span></h3>
+        <div class="kpi-grid" style="margin-bottom:12px">
+          <div class="kpi-card"><div class="kpi-num" style="color:#4a8c3f">+${naissances}</div><div class="kpi-label">Naissances (mois)</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:#e74c3c">−${deces}</div><div class="kpi-label">Décès (mois)</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:#1a6b8a">+${achats}</div><div class="kpi-label">Achats (mois)</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:#e8943a">−${ventes}</div><div class="kpi-label">Ventes (mois)</div></div>
+          <div class="kpi-card"><div class="kpi-num">${maladies}/${vaccins}/${croisements}</div><div class="kpi-label">Maladies/Vaccins/Crois.</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:#4a8c3f">${formatFCFA(recettes)}</div><div class="kpi-label">Recettes total</div></div>
+          <div class="kpi-card"><div class="kpi-num" style="color:#e74c3c">${formatFCFA(couts)}</div><div class="kpi-label">Coûts achat</div></div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="chart-chep-${e.cle}"></canvas></div>
+      </div>
+    `;
+  }).join('');
+
+  // Pour chaque espèce, dessine un bar chart par type de mouvement (mois courant)
+  especesActives.forEach(e => {
+    const mvtsMoisEsp = mvtsMois.filter(m => m._lot.espece === e.cle);
+    const fil = FILIERES[e.filiere] || { color: '#6b6b6b' };
+    const types = TYPES_MOUVEMENT.map(t => t.cle);
+    const labels = TYPES_MOUVEMENT.map(t => t.icone + ' ' + t.label);
+    const data = types.map(t => mvtsMoisEsp.filter(m => m.type === t).reduce((s,m)=>s+m.quantite,0));
+    chartBar('chart-chep-' + e.cle, labels, [{
+      label: 'Quantité (mois)', data,
+      backgroundColor: fil.color + '90',
+      borderColor: fil.color,
+      borderWidth: 1,
+    }], { plugins: { legend: { display: false }, title: { display: true, text: `Mouvements du mois — ${e.label}`, font: { family: 'Fraunces', size: 12 } } } });
+  });
+}
+
+function formatFCFA(n) {
+  if (!n) return '0';
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(1) + ' M';
+  if (n >= 1000) return (n/1000).toFixed(0) + ' k';
+  return String(Math.round(n));
+}
+
 function renderDashboardCharts() {
   if (typeof Chart === 'undefined') return;
+  // Charge les mouvements détaillés du cheptel pour les graphiques par espèce
+  chargerTousMouvementsCheptel().then(mvts => renderCheptelParEspece(mvts));
 
   // === Kanban — évolution sur 30 jours ===
   // Pour chaque jour D des 30 derniers, on calcule combien de tâches étaient
@@ -5642,15 +5815,22 @@ const ESPECES = [
   { cle:'clarias', label:'Clarias', icone:'🐠', filiere:'pisciculture' },
 ];
 const TYPES_MOUVEMENT = [
-  { cle:'achat', label:'Achat', sens:'+', icone:'🛒' },
-  { cle:'naissance', label:'Naissance', sens:'+', icone:'🐣' },
-  { cle:'transfert_entree', label:'Transfert (entrée)', sens:'+', icone:'↘️' },
-  { cle:'vente', label:'Vente', sens:'-', icone:'💰' },
-  { cle:'mortalite', label:'Mortalité', sens:'-', icone:'⚰️' },
-  { cle:'consommation_interne', label:'Consommation interne', sens:'-', icone:'🍴' },
-  { cle:'reforme', label:'Réforme', sens:'-', icone:'🔚' },
-  { cle:'transfert_sortie', label:'Transfert (sortie)', sens:'-', icone:'↗️' },
+  { cle:'achat',                label:'Achat',                 sens:'+', icone:'🛒' },
+  { cle:'naissance',            label:'Naissance',             sens:'+', icone:'🐣' },
+  { cle:'transfert_entree',     label:'Transfert (entrée)',    sens:'+', icone:'↘️' },
+  { cle:'vente',                label:'Vente',                 sens:'-', icone:'💰' },
+  { cle:'mortalite',            label:'Décès / mortalité',     sens:'-', icone:'⚰️' },
+  { cle:'consommation_interne', label:'Consommation interne',  sens:'-', icone:'🍴' },
+  { cle:'reforme',              label:'Réforme',               sens:'-', icone:'🔚' },
+  { cle:'transfert_sortie',     label:'Transfert (sortie)',    sens:'-', icone:'↗️' },
+  { cle:'maladie',              label:'Maladie déclarée',      sens:'·', icone:'🤒' },
+  { cle:'vaccination',          label:'Vaccination',           sens:'·', icone:'💉' },
+  { cle:'traitement_sanitaire', label:'Traitement / déparasitage', sens:'·', icone:'🧴' },
+  { cle:'croisement',           label:'Croisement / saillie',  sens:'·', icone:'❤️' },
+  { cle:'pesee',                label:'Pesée',                 sens:'·', icone:'⚖️' },
 ];
+
+const TYPES_MVT_INDEX = Object.fromEntries(TYPES_MOUVEMENT.map(t => [t.cle, t]));
 function getEspeceMeta(cle) {
   return ESPECES.find(e => e.cle === cle) || { cle, label: cle, icone: '🐾' };
 }
@@ -5802,6 +5982,19 @@ async function deleteLot(id) {
 function setupCheptel() {
   const btn = document.getElementById('btn-new-lot');
   if (btn) btn.addEventListener('click', openNouveauLotModal);
+  // Modal mouvement
+  const saveBtn = document.getElementById('mvt-save');
+  if (saveBtn) saveBtn.addEventListener('click', sauverMouvement);
+  // Boutons fermer (data-close-modal) du modal mouvement (couverts par
+  // l'écouteur global plus bas, mais on s'en assure)
+  document.querySelectorAll('#modal-mvt-cheptel [data-close-modal]').forEach(b => {
+    b.addEventListener('click', () => document.getElementById('modal-mvt-cheptel').classList.remove('open'));
+  });
+  // Click sur le backdrop pour fermer
+  const back = document.getElementById('modal-mvt-cheptel');
+  if (back) back.addEventListener('click', e => {
+    if (e.target === back) back.classList.remove('open');
+  });
 }
 
 function openNouveauLotModal() {
@@ -5819,32 +6012,134 @@ function openNouveauLotModal() {
     .catch(e => toast('Erreur : ' + e.message, 'error'));
 }
 
-async function openMouvementModal(lotId) {
+/* ===== Modal mouvement cheptel — ouverture, configuration dynamique, save ===== */
+let _mvtLotCourant = null;
+
+function openMouvementModal(lotId) {
+  _mvtLotCourant = lotId;
   const lot = state.lots.find(l => l.id === lotId);
-  const effectifAct = lot ? lot.effectif : 0;
-  const type = prompt(
-    `Type de mouvement (effectif courant : ${effectifAct})\n` +
-    `Entrées : achat, naissance, transfert_entree\n` +
-    `Sorties : vente, mortalite, consommation_interne, reforme, transfert_sortie`,
-    'naissance'
-  );
-  if (!type) return;
-  const tm = TYPES_MOUVEMENT.find(t => t.cle === type);
-  if (!tm) { toast('Type invalide', 'error'); return; }
-  const qStr = prompt(`Quantité (${tm.sens})`, '1');
-  const quantite = parseInt(qStr, 10);
-  if (isNaN(quantite) || quantite <= 0) { toast('Quantité invalide', 'error'); return; }
-  const motif = prompt('Motif / commentaire (optionnel)') || null;
-  let coutTotal = null;
-  if (type === 'achat' || type === 'vente') {
-    const cStr = prompt(type === 'achat' ? 'Coût total (FCFA)' : 'Recette totale (FCFA)', '');
-    if (cStr) { coutTotal = parseFloat(cStr); if (isNaN(coutTotal)) coutTotal = null; }
+  if (!lot) return;
+  const modal = document.getElementById('modal-mvt-cheptel');
+  if (!modal) return;
+
+  // Titre
+  document.getElementById('mvt-titre').textContent = `Mouvement — ${lot.nom}`;
+
+  // Type select
+  const selType = document.getElementById('mvt-type');
+  selType.innerHTML = TYPES_MOUVEMENT.map(t =>
+    `<option value="${t.cle}">${t.icone} ${t.label}</option>`
+  ).join('');
+  selType.value = 'naissance';
+
+  // Date par défaut = aujourd'hui
+  document.getElementById('mvt-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('mvt-qte').value = '1';
+  // Reset des champs
+  ['mvt-prix-unitaire','mvt-cout-total','mvt-poids','mvt-tiers','mvt-cause','mvt-traitement','mvt-motif','mvt-notes']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+  // Sélecteurs géniteurs (lots de la même espèce)
+  const memeEspece = state.lots.filter(l => l.espece === lot.espece && l.id !== lot.id);
+  const males = memeEspece.filter(l => l.sexe === 'male');
+  const femelles = memeEspece.filter(l => l.sexe === 'femelle');
+  const optsM = '<option value="">— Aucun —</option>' + males.map(l => `<option value="${l.id}">${escapeHtml(l.nom)}</option>`).join('');
+  const optsF = '<option value="">— Aucune —</option>' + femelles.map(l => `<option value="${l.id}">${escapeHtml(l.nom)}</option>`).join('');
+  document.getElementById('mvt-geniteur-male').innerHTML = optsM;
+  document.getElementById('mvt-geniteur-femelle').innerHTML = optsF;
+
+  // Adapter la visibilité des champs selon le type
+  selType.onchange = () => adapterChampsMouvement(selType.value);
+  adapterChampsMouvement('naissance');
+
+  modal.classList.add('open');
+}
+
+function adapterChampsMouvement(type) {
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+  // Tous les types ont quantite + date + motif + notes par défaut
+  const isAchat = type === 'achat';
+  const isVente = type === 'vente';
+  const isMortalite = type === 'mortalite';
+  const isMaladie = type === 'maladie';
+  const isVacc = type === 'vaccination' || type === 'traitement_sanitaire';
+  const isCroisement = type === 'croisement';
+  const isNaissance = type === 'naissance';
+  const isPesee = type === 'pesee';
+
+  show('mvt-grp-prix', isAchat || isVente);
+  show('mvt-grp-cout', isAchat || isVente);
+  show('mvt-grp-poids', isAchat || isVente || isPesee || isNaissance);
+  show('mvt-grp-tiers', isAchat || isVente || isVacc || isMaladie);
+  show('mvt-grp-cause', isMortalite || isMaladie);
+  show('mvt-grp-traitement', isVacc);
+  show('mvt-grp-geniteurs', isNaissance || isCroisement);
+
+  // Adapter les libellés
+  const tiersLabel = document.getElementById('mvt-tiers-label');
+  if (tiersLabel) {
+    tiersLabel.textContent = isAchat ? 'Fournisseur'
+      : isVente ? 'Acheteur'
+      : (isVacc || isMaladie) ? 'Vétérinaire / praticien'
+      : 'Tiers';
   }
+  const coutHint = document.getElementById('mvt-cout-hint');
+  if (coutHint) coutHint.textContent = isAchat ? 'Coût total achat (FCFA)' : isVente ? 'Recette totale (FCFA)' : '(FCFA)';
+  const causeLabel = document.getElementById('mvt-cause-label');
+  if (causeLabel) causeLabel.textContent = isMortalite ? 'Cause du décès' : 'Symptômes / cause';
+}
+
+async function sauverMouvement() {
+  if (!_mvtLotCourant) return;
+  const lot = state.lots.find(l => l.id === _mvtLotCourant);
+  const type = document.getElementById('mvt-type').value;
+  const quantite = parseInt(document.getElementById('mvt-qte').value, 10);
+  const date = document.getElementById('mvt-date').value;
+  const dto = {
+    type,
+    quantite: isNaN(quantite) || quantite <= 0 ? 1 : quantite,
+    dateMouvement: date ? new Date(date + 'T00:00:00Z').toISOString() : undefined,
+    motif: (document.getElementById('mvt-motif').value || '').trim() || null,
+    notes: (document.getElementById('mvt-notes').value || '').trim() || null,
+  };
+  const num = (id) => {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? null : v;
+  };
+  const txt = (id) => {
+    const el = document.getElementById(id);
+    if (!el || el.closest('.form-group')?.style.display === 'none') return null;
+    return (el.value || '').trim() || null;
+  };
+  // Calcul automatique du coût total si prix unitaire saisi et coût vide
+  const prixU = num('mvt-prix-unitaire');
+  let coutTot = num('mvt-cout-total');
+  if (prixU != null && coutTot == null) coutTot = prixU * dto.quantite;
+
+  Object.assign(dto, {
+    poidsMoyenKg: num('mvt-poids'),
+    prixUnitaire: prixU,
+    coutTotal: coutTot,
+    tiersExterne: txt('mvt-tiers'),
+    cause: txt('mvt-cause'),
+    traitement: txt('mvt-traitement'),
+    geniteurMaleLotId: (document.getElementById('mvt-geniteur-male').value || null) || null,
+    geniteurFemelleLotId: (document.getElementById('mvt-geniteur-femelle').value || null) || null,
+  });
+
+  // Valide effectif si sortie
+  if (lot && ['vente','mortalite','consommation_interne','reforme','transfert_sortie'].includes(type)) {
+    if (dto.quantite > lot.effectif) {
+      toast(`Effectif insuffisant : ${lot.effectif} disponible(s)`, 'error');
+      return;
+    }
+  }
+
   try {
-    await apiFetch('POST', '/lots/' + lotId + '/mouvements', {
-      type, quantite, motif, coutTotal,
-    });
+    await apiFetch('POST', '/lots/' + _mvtLotCourant + '/mouvements', dto);
     toast('Mouvement enregistré', 'success');
+    document.getElementById('modal-mvt-cheptel').classList.remove('open');
+    _mvtLotCourant = null;
     await rechargerLots();
   } catch (e) {
     toast('Erreur : ' + e.message, 'error');
