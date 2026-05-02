@@ -1623,38 +1623,8 @@
 
     <div class="kanban-filters" id="activites-filters"></div>
 
-    <!-- Formulaire d'ajout inline -->
-    <div class="act-new-form">
-      <div class="act-new-head">
-        <span class="act-new-icon">＋</span>
-        <span class="act-new-title">Nouvelle activité</span>
-      </div>
-      <div class="act-new-grid">
-        <div class="nf-field">
-          <label>QUOI</label>
-          <input type="text" id="nf-titre" placeholder="Ex: Vacciner les poulets">
-        </div>
-        <div class="nf-field">
-          <label>QUI</label>
-          <input type="text" id="nf-resp" placeholder="Responsable" maxlength="40">
-        </div>
-        <div class="nf-field">
-          <label>QUAND</label>
-          <input type="date" id="nf-date">
-        </div>
-        <div class="nf-field">
-          <label>CATÉGORIE / ZONE</label>
-          <select id="nf-categorie"></select>
-        </div>
-        <div class="nf-field nf-field-wide">
-          <label>DESCRIPTION</label>
-          <input type="text" id="nf-desc" placeholder="Détails, méthode, contexte...">
-        </div>
-        <button class="btn btn-primary nf-add" id="nf-add">＋ Ajouter</button>
-      </div>
-    </div>
-
-    <div class="act-grid" id="activites-grid"></div>
+    <div class="cultures-stats" id="activites-stats"></div>
+    <div class="cultures-grid" id="activites-grid"></div>
   </section>
 
   <!-- ============ DASHBOARD ============ -->
@@ -3017,26 +2987,95 @@ function renderActivites() {
     return true;
   });
 
-  // Une carte par zone qui a au moins une tâche, plus une carte spéciale "Sans zone"
-  const groupes = [];
-  ZONES.forEach(z => {
-    const items = taches.filter(t => t.categorie === z.id);
-    if (items.length > 0) groupes.push({ zone: z, items });
-  });
-  const transversales = taches.filter(t => !t.categorie);
-  if (transversales.length > 0) {
-    groupes.push({ zone: null, items: transversales });
+  // KPI bandeau (style page Cultures)
+  const stats = document.getElementById('activites-stats');
+  if (stats) {
+    const total = taches.length;
+    const aFaire = taches.filter(t => t.statut === 'a_faire').length;
+    const enCours = taches.filter(t => t.statut === 'en_cours').length;
+    const termine = taches.filter(t => t.statut === 'termine').length;
+    const today = new Date(new Date().toDateString());
+    const enRetard = taches.filter(t => t.statut !== 'termine' && t.dateFin && new Date(t.dateFin) < today).length;
+    stats.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-num">${total}</div><div class="kpi-label">Activités</div></div>
+        <div class="kpi-card"><div class="kpi-num">${aFaire}</div><div class="kpi-label">À faire</div></div>
+        <div class="kpi-card"><div class="kpi-num">${enCours}</div><div class="kpi-label">En cours</div></div>
+        <div class="kpi-card"><div class="kpi-num">${termine}</div><div class="kpi-label">Terminé</div></div>
+        <div class="kpi-card"><div class="kpi-num" style="color:${enRetard>0?'#e74c3c':'inherit'}">${enRetard}</div><div class="kpi-label">En retard</div></div>
+      </div>
+    `;
   }
 
-  if (groupes.length === 0) {
-    grid.innerHTML = `<div class="card empty-state" style="grid-column:1/-1">Aucune activité ne correspond à ce filtre. Utilisez le formulaire en haut pour en créer une.</div>`;
+  if (taches.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <p>Aucune activité pour ce filtre.</p>
+      <p class="hint">Cliquez sur « + Nouvelle activité » ou changez le filtre.</p>
+    </div>`;
     return;
   }
 
-  grid.innerHTML = groupes.map(g => renderZoneCard(g.zone, g.items)).join('');
+  // Tri : à faire → en cours → terminé, puis par date croissante
+  const order = { a_faire: 0, en_cours: 1, termine: 2 };
+  const sorted = taches.slice().sort((a, b) => {
+    const so = order[a.statut] - order[b.statut];
+    if (so !== 0) return so;
+    if (a.dateFin && b.dateFin) return new Date(a.dateFin) - new Date(b.dateFin);
+    if (a.dateFin) return -1;
+    if (b.dateFin) return 1;
+    return 0;
+  });
 
-  // Attacher les listeners d'édition inline
-  attachInlineEditors(grid);
+  grid.innerHTML = sorted.map(t => renderActiviteCard(t)).join('');
+
+  // Boutons CRUD
+  grid.querySelectorAll('[data-edit-act]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); openTaskModal(b.dataset.editAct); });
+  });
+  grid.querySelectorAll('[data-dup-act]').forEach(b => {
+    b.addEventListener('click', async e => {
+      e.stopPropagation();
+      await duplicateTache(b.dataset.dupAct);
+      renderActivites();
+    });
+  });
+  grid.querySelectorAll('[data-del-act]').forEach(b => {
+    b.addEventListener('click', () => deleteTacheFromActivites(b.dataset.delAct));
+  });
+  // Click sur une carte = édition
+  grid.querySelectorAll('.parcelle-card[data-act-id]').forEach(c => {
+    c.addEventListener('click', () => openTaskModal(c.dataset.actId));
+  });
+}
+
+function renderActiviteCard(t) {
+  const fil = FILIERES[t.filiere] || FILIERES.infrastructure;
+  const filIcon = FILIERE_ICONS[t.filiere] || fil.icon;
+  const today = new Date(new Date().toDateString());
+  const overdue = t.statut !== 'termine' && t.dateFin && new Date(t.dateFin) < today;
+  const dateLbl = t.dateFin ? fmtDate(t.dateFin) : '—';
+  const zone = t.categorie ? ZONES.find(z => z.id === t.categorie) : null;
+  const stMeta = STATUTS[t.statut] || { label: t.statut, color: '#9e9e9e' };
+  return `
+    <div class="parcelle-card" data-act-id="${t.id}" data-filiere="${t.filiere}" style="border-left-color:${fil.color};cursor:pointer">
+      <div class="card-actions">
+        <button class="row-act act-edit" data-edit-act="${t.id}" title="Modifier">✎</button>
+        <button class="row-act act-dup"  data-dup-act="${t.id}"  title="Dupliquer">⎘</button>
+        <button class="row-act act-del"  data-del-act="${t.id}"  title="Supprimer">✕</button>
+      </div>
+      <div class="parcelle-head">
+        <div class="parcelle-titre"><span class="parcelle-icone">${filIcon}</span><span>${escapeHtml(t.titre)}</span></div>
+        <div class="parcelle-tag" style="background:${stMeta.color}15;border:1px solid ${stMeta.color}60;color:${stMeta.color}">${stMeta.label}</div>
+      </div>
+      <div class="parcelle-meta">${fil.label}${zone ? ' · 📍 ' + escapeHtml(zone.nom) : ''}</div>
+      ${t.description ? `<div class="parcelle-rows"><div style="font-size:13px;color:#5c3d1e;line-height:1.5">${escapeHtml(t.description)}</div></div>` : ''}
+      <div class="parcelle-rows">
+        <div class="parcelle-row"><span class="parcelle-label">Responsable</span><span class="parcelle-val">${escapeHtml(t.responsable || '—')}</span></div>
+        <div class="parcelle-row"><span class="parcelle-label">Échéance</span><span class="parcelle-val" style="color:${overdue ? '#e74c3c' : 'inherit'}">${overdue ? '⚠ ' : ''}${dateLbl}</span></div>
+        <div class="parcelle-row"><span class="parcelle-label">Priorité</span><span class="parcelle-val">${t.priorite}</span></div>
+      </div>
+    </div>
+  `;
 }
 
 function renderZoneCard(zone, items) {
