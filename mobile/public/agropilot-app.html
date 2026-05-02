@@ -1503,6 +1503,68 @@
   }
   .depl-output.show { display: block; }
   .depl-output.error { background: #4a1a14; color: #ffd6cc; }
+  /* Timeline d'étapes */
+  .etape-card {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 12px;
+    border-left: 3px solid #c9a96e;
+    background: rgba(201,169,110,0.05);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .etape-card.en_attente { opacity: 0.5; }
+  .etape-card.en_cours   { border-left-color: #e8943a; background: rgba(232,148,58,0.10); animation: pulse-step 1s ease-in-out infinite alternate; }
+  .etape-card.reussi     { border-left-color: #4a8c3f; background: rgba(74,140,63,0.08); }
+  .etape-card.echec      { border-left-color: #e74c3c; background: rgba(231,76,60,0.08); }
+  @keyframes pulse-step {
+    from { box-shadow: 0 0 0 0 rgba(232,148,58,0.4); }
+    to   { box-shadow: 0 0 0 6px rgba(232,148,58,0); }
+  }
+  .etape-icone {
+    width: 32px; height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff;
+    border: 2px solid #c9a96e;
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    color: #5c3d1e;
+  }
+  .en_cours .etape-icone { border-color: #e8943a; color: #e8943a; }
+  .reussi .etape-icone   { border-color: #4a8c3f; background: #4a8c3f; color: #fff; }
+  .echec .etape-icone    { border-color: #e74c3c; background: #e74c3c; color: #fff; }
+  .etape-corps { flex: 1; }
+  .etape-titre {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 14px; color: #2d1f0e; margin-bottom: 2px;
+  }
+  .etape-meta {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: #8b5e3c; letter-spacing: 0.4px;
+  }
+  .etape-message {
+    margin-top: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 12.5px;
+    color: #2d1f0e;
+  }
+  .etape-card.echec .etape-message { color: #e74c3c; }
+  /* Barre de progression */
+  .progress-bar {
+    height: 8px; border-radius: 4px;
+    background: rgba(92,61,30,0.10); overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a8c3f, #7bc67a);
+    transition: width 0.4s ease;
+  }
+  .progress-fill.echec {
+    background: linear-gradient(90deg, #e74c3c, #f39c8a);
+  }
   code {
     background: rgba(92,61,30,0.08);
     padding: 1px 6px;
@@ -2213,50 +2275,36 @@
   <section class="view" id="view-deploiement">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Déploiement — <em>Administration système</em></h2>
-        <p class="view-sub">Réservé à l'administrateur. Outils de mise en production : statut, sauvegarde BDD, seed, build, migration.</p>
+        <h2 class="view-title">Déploiement — <em>Assistant de mise en production</em></h2>
+        <p class="view-sub">Lance un déploiement complet en une commande. Chaque étape est tracée avec horodatage et durée. Tous les artefacts sont sauvegardés dans un dossier dédié.</p>
       </div>
     </div>
 
     <div class="cultures-stats" id="depl-statut"></div>
 
     <div class="dash-section">
-      <h3><span class="icon">💾</span>Sauvegarde de la base de données</h3>
-      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
-        Télécharge un dump SQL complet (pg_dump) que tu pourras restaurer plus tard en cas de problème.
-        À faire <strong>avant tout déploiement</strong> et <strong>chaque semaine</strong>.
+      <h3><span class="icon">🚀</span>Lancer un déploiement complet</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:14px">
+        L'assistant exécute en série : création d'un dossier daté, sauvegarde BDD, build web, migration (optionnels). Les artefacts (backup.sql, web/, logs, RECAP.txt) sont écrits dans <code>deploiements/deploy-AAAA-MM-JJ_HH-MM-SS/</code>.
       </p>
-      <button class="btn btn-primary" id="depl-backup">⬇ Télécharger sauvegarde SQL</button>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-build" checked> 📦 Build web (Expo Export)</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-seed"> 🌱 Réinitialiser le seed</label>
+        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-migration"> 🗄️ Appliquer migrations Prisma</label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary" id="depl-orchestrer" style="background:#2d5a27">▶ Lancer le déploiement</button>
+        <button class="btn btn-ghost btn-sm" id="depl-backup">⬇ Télécharger sauvegarde SQL seule</button>
+      </div>
     </div>
 
-    <div class="dash-section">
-      <h3><span class="icon">🌱</span>Données de démonstration (seed)</h3>
-      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
-        Réinitialise les <strong>tâches, lots, mouvements, parcelles, événements et budget</strong> avec des données de démonstration.
-        Les <strong>comptes utilisateurs sont préservés</strong>. À ne <strong>pas</strong> exécuter en production sur des données réelles.
-      </p>
-      <button class="btn btn-primary" id="depl-seed" style="background:#e8943a">🔄 Relancer le seed</button>
-      <pre id="depl-seed-out" class="depl-output"></pre>
-    </div>
-
-    <div class="dash-section">
-      <h3><span class="icon">📦</span>Build web (Expo Export)</h3>
-      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
-        Génère le dossier <code>mobile/dist/</code> à pousser sur Cloudflare Pages / Vercel / Netlify.
-        Peut prendre 1–3 minutes.
-      </p>
-      <button class="btn btn-primary" id="depl-build">🔨 Lancer expo export</button>
-      <pre id="depl-build-out" class="depl-output"></pre>
-    </div>
-
-    <div class="dash-section">
-      <h3><span class="icon">🗄️</span>Migration Prisma</h3>
-      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
-        Applique les migrations Prisma à la BDD (<code>prisma migrate deploy</code>).
-        À utiliser sur la BDD de production lors d'une mise à jour du schéma.
-      </p>
-      <button class="btn btn-primary" id="depl-migration" style="background:#1a6b8a">🚀 Appliquer les migrations</button>
-      <pre id="depl-migration-out" class="depl-output"></pre>
+    <div class="dash-section" id="depl-progression-section" style="display:none">
+      <h3 id="depl-progression-titre"><span class="icon">⏳</span>Progression du déploiement</h3>
+      <div id="depl-progression-bar"></div>
+      <div id="depl-progression-meta" style="font-family:'DM Mono',monospace;font-size:11.5px;color:#5c3d1e;margin:8px 0 14px"></div>
+      <div id="depl-etapes"></div>
+      <h4 style="font-family:'Fraunces',serif;font-size:14px;margin-top:16px;margin-bottom:6px;color:#2d1f0e">📋 Journal d'événements</h4>
+      <pre id="depl-journal" class="depl-output show" style="display:block"></pre>
     </div>
 
     <div class="dash-section">
@@ -2264,11 +2312,11 @@
       <ol style="font-family:'DM Sans',sans-serif;font-size:13.5px;color:#2d1f0e;line-height:1.7;padding-left:22px">
         <li>Générer un vrai <code>JWT_SECRET</code> aléatoire (<code>openssl rand -base64 64</code>)</li>
         <li>Changer les mots de passe des comptes seed (admin / responsable / ouvrier / investisseur)</li>
-        <li>Configurer une whitelist CORS dans <code>backend/src/index.ts</code> (au lieu de <code>cors()</code> ouvert)</li>
-        <li>Activer HTTPS (Cloudflare en frontal ou certbot sur VPS)</li>
-        <li>Cliquer <strong>« Télécharger sauvegarde SQL »</strong> ci-dessus pour avoir un backup avant tout</li>
-        <li>Cliquer <strong>« Lancer expo export »</strong> et déployer <code>mobile/dist/</code> sur Cloudflare Pages</li>
-        <li>Cliquer <strong>« Appliquer les migrations »</strong> sur la BDD de production</li>
+        <li>Configurer une whitelist CORS dans <code>backend/src/index.ts</code></li>
+        <li>Activer HTTPS (Cloudflare en frontal ou certbot)</li>
+        <li>Lancer <strong>« ▶ Lancer le déploiement »</strong> pour générer le dossier <code>deploiements/deploy-…</code></li>
+        <li>Pousser <code>web/</code> sur Cloudflare Pages / Vercel / Netlify</li>
+        <li>Importer <code>backup.sql</code> dans la BDD de production si nécessaire</li>
         <li>Définir <code>EXPO_PUBLIC_API_URL</code> et <code>EXPO_PUBLIC_HTML_URL</code> côté EAS</li>
         <li>Tester chaque rôle (admin / responsable / ouvrier / investisseur)</li>
         <li>Programmer un <code>pg_dump</code> quotidien automatique sur le serveur</li>
@@ -5705,17 +5753,119 @@ async function deplTelechargerBackup() {
 }
 
 function setupDeploiement() {
-  const seed = document.getElementById('depl-seed');
-  if (seed) seed.addEventListener('click', () =>
-    deplLancerAction('depl-seed', 'depl-seed-out', '/deploiement/seed', 'POST', 'Seed'));
-  const build = document.getElementById('depl-build');
-  if (build) build.addEventListener('click', () =>
-    deplLancerAction('depl-build', 'depl-build-out', '/deploiement/build-web', 'POST', 'Build web'));
-  const migration = document.getElementById('depl-migration');
-  if (migration) migration.addEventListener('click', () =>
-    deplLancerAction('depl-migration', 'depl-migration-out', '/deploiement/migration', 'POST', 'Migration'));
   const backup = document.getElementById('depl-backup');
   if (backup) backup.addEventListener('click', deplTelechargerBackup);
+  const orch = document.getElementById('depl-orchestrer');
+  if (orch) orch.addEventListener('click', deplOrchestrer);
+}
+
+let _deplPollTimer = null;
+
+async function deplOrchestrer() {
+  const btn = document.getElementById('depl-orchestrer');
+  if (!btn) return;
+  btn.disabled = true;
+  const labelOrig = btn.textContent;
+  btn.textContent = '⏳ Orchestration en cours...';
+
+  const options = {
+    seed: document.getElementById('opt-seed').checked,
+    build: document.getElementById('opt-build').checked,
+    migration: document.getElementById('opt-migration').checked,
+  };
+
+  try {
+    const r = await apiFetch('POST', '/deploiement/orchestrer', options);
+    const id = r.donnees?.id;
+    const dossier = r.donnees?.dossier;
+    if (!id) throw new Error('ID de déploiement manquant');
+    // Affiche la section progression et démarre le polling
+    document.getElementById('depl-progression-section').style.display = '';
+    document.getElementById('depl-progression-titre').innerHTML =
+      `<span class="icon">⏳</span>Déploiement en cours · <code style="font-size:12px">${escapeHtml(dossier)}</code>`;
+    document.getElementById('depl-journal').textContent = '';
+    document.getElementById('depl-etapes').innerHTML = '';
+    if (_deplPollTimer) clearInterval(_deplPollTimer);
+    _deplPollTimer = setInterval(() => deplPollerEtat(id), 800);
+    deplPollerEtat(id);
+  } catch (e) {
+    toast('Erreur orchestration : ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelOrig;
+  }
+}
+
+async function deplPollerEtat(id) {
+  try {
+    const r = await apiFetch('GET', '/deploiement/etat/' + id);
+    const e = r.donnees;
+    if (!e) return;
+    deplAfficherEtat(e);
+    if (e.termine) {
+      clearInterval(_deplPollTimer); _deplPollTimer = null;
+      const titre = document.getElementById('depl-progression-titre');
+      if (titre) {
+        titre.innerHTML = e.reussi
+          ? `<span class="icon">✅</span>Déploiement réussi · <code style="font-size:12px">${escapeHtml(e.dossier)}</code>`
+          : `<span class="icon">❌</span>Déploiement avec erreurs · <code style="font-size:12px">${escapeHtml(e.dossier)}</code>`;
+      }
+      toast(e.reussi ? '✓ Déploiement réussi' : '✗ Déploiement avec erreurs', e.reussi ? 'success' : 'error');
+      renderDeploiement(); // refresh stats serveur
+    }
+  } catch (err) {
+    console.warn('[depl] poll error', err.message);
+  }
+}
+
+function deplAfficherEtat(e) {
+  // Barre de progression
+  const totEt = e.etapes.length;
+  const okEt = e.etapes.filter(et => et.statut === 'reussi').length;
+  const echEt = e.etapes.filter(et => et.statut === 'echec').length;
+  const enCours = e.etapes.find(et => et.statut === 'en_cours');
+  const pct = totEt > 0 ? Math.round(((okEt + echEt) / totEt) * 100) : 0;
+  const echec = !e.reussi && e.termine;
+  const bar = document.getElementById('depl-progression-bar');
+  if (bar) bar.innerHTML = `<div class="progress-bar"><div class="progress-fill ${echec ? 'echec' : ''}" style="width:${pct}%"></div></div>`;
+  const meta = document.getElementById('depl-progression-meta');
+  if (meta) {
+    const dureeS = ((e.finMs || Date.now()) - e.debutMs) / 1000;
+    meta.innerHTML = `${okEt}/${totEt} étapes terminées · ${echEt} échec(s) · ${dureeS.toFixed(1)} s écoulées${enCours ? ' · ▶ ' + escapeHtml(enCours.titre) : ''}`;
+  }
+
+  // Cartes étapes
+  const cont = document.getElementById('depl-etapes');
+  if (cont) {
+    cont.innerHTML = e.etapes.map(et => {
+      const numero = et.numero === 99 ? '✓' : String(et.numero);
+      const dureeStr = et.dureeMs != null ? `${et.dureeMs} ms` : '—';
+      const horodatage = et.debutMs ? new Date(et.debutMs).toLocaleTimeString('fr-FR') : '';
+      const details = et.details ? `<pre style="margin-top:6px;background:rgba(92,61,30,0.06);padding:8px;border-radius:6px;font-size:11px;color:#5c3d1e;max-height:120px;overflow:auto">${escapeHtml(et.details.slice(-1500))}</pre>` : '';
+      return `
+        <div class="etape-card ${et.statut}">
+          <div class="etape-icone">${numero}</div>
+          <div class="etape-corps">
+            <div class="etape-titre">${escapeHtml(et.titre)}</div>
+            <div class="etape-meta">${horodatage ? horodatage + ' · ' : ''}${et.statut.toUpperCase()} · durée ${dureeStr}</div>
+            ${et.message ? `<div class="etape-message">${escapeHtml(et.message)}</div>` : ''}
+            ${details}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Journal d'événements
+  const journ = document.getElementById('depl-journal');
+  if (journ) {
+    journ.textContent = e.journal.map(j => {
+      const t = new Date(j.ts).toLocaleTimeString('fr-FR');
+      const prefix = j.type === 'succes' ? '[OK]' : j.type === 'erreur' ? '[ERR]' : '[..]';
+      return `${t}  ${prefix}  ${j.texte}`;
+    }).join('\n');
+    journ.scrollTop = journ.scrollHeight;
+  }
 }
 
 /* ============ DASHBOARD — Graphiques ============ */
