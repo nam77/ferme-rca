@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useAuthStore } from '../../store/authStore'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../../constants/theme'
 
@@ -31,15 +32,22 @@ export const BarreNavigation = () => {
     item.prefixesActifs.some((p) => pathname.startsWith(p))
 
   return (
-    <View style={styles.barre}>
+    <LinearGradient
+      colors={['#1D3F17', '#264E20', '#446D33']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={styles.barre}
+    >
       <Pressable
         onPress={() => router.push('/' as never)}
         accessibilityLabel="Accueil AGROPILOT"
         accessibilityRole="link"
         style={styles.logoBloc}
       >
-        <Text style={styles.logoTexte}>AGROPILOT</Text>
-        <Text style={styles.logoSousTitre}>Pilotage stratégique</Text>
+        <Text style={styles.logoTexte}>
+          AGRO<Text style={styles.logoTexteAccent}>PILOT</Text>
+        </Text>
+        <Text style={styles.logoSousTitre}>Outil de pilotage agropastoral</Text>
       </Pressable>
 
       <ScrollView
@@ -60,7 +68,7 @@ export const BarreNavigation = () => {
               <Ionicons
                 name={item.icone}
                 size={16}
-                color={actif ? COULEURS_TOKEN.leaf : COULEURS_TOKEN.clay}
+                color={actif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
                 style={styles.itemIcone}
               />
               <Text style={[styles.itemTexte, actif && styles.itemTexteActif]}>
@@ -84,7 +92,7 @@ export const BarreNavigation = () => {
           </Pressable>
         ) : null}
       </ScrollView>
-    </View>
+    </LinearGradient>
   )
 }
 
@@ -92,9 +100,6 @@ const styles = StyleSheet.create({
   barre: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COULEURS_TOKEN.cream,
-    borderBottomWidth: 2,
-    borderBottomColor: COULEURS_TOKEN.bordure,
     paddingHorizontal: ESPACEMENTS.xl,
     paddingVertical: ESPACEMENTS.s,
     gap: ESPACEMENTS.xl,
@@ -104,19 +109,23 @@ const styles = StyleSheet.create({
     paddingVertical: ESPACEMENTS.xs,
     paddingRight: ESPACEMENTS.l,
     borderRightWidth: 1,
-    borderRightColor: COULEURS_TOKEN.bordure,
+    borderRightColor: 'rgba(250,246,238,0.20)',
   },
   logoTexte: {
     fontFamily: POLICES.serif,
     fontSize: 22,
-    color: COULEURS_TOKEN.leaf,
+    color: COULEURS_TOKEN.cream,
     letterSpacing: 0.5,
     lineHeight: 24,
+  },
+  logoTexteAccent: {
+    fontFamily: POLICES.serifItalique,
+    color: COULEURS_TOKEN.straw,
   },
   logoSousTitre: {
     fontFamily: POLICES.mono,
     fontSize: 9,
-    color: COULEURS_TOKEN.clay,
+    color: 'rgba(250,246,238,0.65)',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginTop: 2,
@@ -133,30 +142,31 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: ESPACEMENTS.m,
     paddingVertical: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderRadius: 999,
+    backgroundColor: 'transparent',
   },
   itemMenuActif: {
-    borderBottomColor: COULEURS_TOKEN.leaf,
+    backgroundColor: 'rgba(250,246,238,0.15)',
   },
   itemIcone: {},
   itemTexte: {
     fontFamily: POLICES.mono,
     fontSize: 11,
-    color: COULEURS_TOKEN.clay,
+    color: 'rgba(250,246,238,0.70)',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   itemTexteActif: {
-    color: COULEURS_TOKEN.leaf,
+    color: COULEURS_TOKEN.cream,
     fontFamily: POLICES.monoMedium,
   },
   itemUtilisateur: {
-    backgroundColor: COULEURS_TOKEN.leaf,
+    backgroundColor: 'rgba(250,246,238,0.18)',
     borderRadius: 999,
     paddingHorizontal: ESPACEMENTS.m,
-    borderBottomWidth: 0,
     marginLeft: ESPACEMENTS.s,
+    borderWidth: 1,
+    borderColor: 'rgba(250,246,238,0.25)',
   },
   itemUtilisateurTexte: {
     fontFamily: POLICES.monoMedium,
