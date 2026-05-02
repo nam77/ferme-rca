@@ -3,13 +3,16 @@
 // pixel-perfect.
 // - Web : <iframe src="/agropilot-app.html?view=...&embed=1"/>
 // - iOS/Android : WebView pointant vers le HTML servi par Expo Web
-//   (côté terrain RCA, l'app native consommera la même page web).
+//
+// Le jeton JWT et l'utilisateur du store auth RN sont passés en query
+// params pour que l'iframe utilise la même session.
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, Platform } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
 import Constants from 'expo-constants'
+import { useAuthStore } from '../store/authStore'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../constants/theme'
 
 type Props = {
@@ -17,25 +20,56 @@ type Props = {
   titreFallback: string
 }
 
-// Sur native, on pointe vers le HTML servi par le bundler Expo Web.
-// Pour la prod, EXPO_PUBLIC_HTML_URL peut être défini pour pointer vers
-// le déploiement web final.
 const URL_HTML_NATIF = (() => {
   const fromEnv = process.env.EXPO_PUBLIC_HTML_URL
   if (fromEnv) return fromEnv
-  // Tente de déduire l'host depuis Expo (debugger host)
   const host =
     (Constants.expoConfig?.hostUri ?? '').split(':')[0] || 'localhost'
   return `http://${host}:8081/agropilot-app.html`
 })()
 
+// Encode en base64 URL-safe (ASCII uniquement)
+const b64Url = (s: string): string => {
+  try {
+    const b = typeof btoa === 'function'
+      ? btoa(unescape(encodeURIComponent(s)))
+      : Buffer.from(s, 'utf-8').toString('base64')
+    return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  } catch {
+    return ''
+  }
+}
+
 export const IframePage = ({ vue, titreFallback }: Props) => {
+  const jeton = useAuthStore((s) => s.jeton)
+  const utilisateur = useAuthStore((s) => s.utilisateur)
+
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams({ view: vue, embed: '1' })
+    if (jeton) params.set('jeton', jeton)
+    if (utilisateur) {
+      params.set(
+        'user',
+        b64Url(
+          JSON.stringify({
+            id: utilisateur.id,
+            name: `${utilisateur.prenom} ${utilisateur.nom}`,
+            email: utilisateur.email,
+            role: utilisateur.role,
+            filiere: utilisateur.filiere,
+          }),
+        ),
+      )
+    }
+    return params.toString()
+  }, [vue, jeton, utilisateur])
+
   if (Platform.OS === 'web') {
     return (
       <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
         <View style={styles.wrap}>
           {React.createElement('iframe', {
-            src: `/agropilot-app.html?view=${vue}&embed=1`,
+            src: `/agropilot-app.html?${queryString}`,
             style: {
               width: '100%',
               height: '100%',
@@ -49,8 +83,7 @@ export const IframePage = ({ vue, titreFallback }: Props) => {
     )
   }
 
-  // Native (iOS / Android) : WebView vers le HTML hébergé.
-  const url = `${URL_HTML_NATIF}?view=${vue}&embed=1`
+  const url = `${URL_HTML_NATIF}?${queryString}`
   return (
     <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
       <View style={styles.wrap}>

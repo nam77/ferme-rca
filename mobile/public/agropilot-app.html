@@ -2533,7 +2533,22 @@ async function apiFetch(method, path, body) {
 }
 
 async function apiAuthLogin() {
-  // Auto-login admin (les credentials sont déjà ouvertes côté backend)
+  // Si un jeton a été injecté par le wrapper RN, on l'utilise directement.
+  if (typeof window !== 'undefined' && window._API_JETON_RN) {
+    API_JETON = window._API_JETON_RN;
+    // Petit ping pour vérifier que le jeton est valide
+    try {
+      const r = await fetch(API_BASE + '/auth/moi', {
+        headers: { 'Authorization': 'Bearer ' + API_JETON }
+      });
+      if (r.ok) {
+        API_DISPONIBLE = true;
+        return true;
+      }
+      console.warn('[api] jeton RN invalide, fallback auto-login admin');
+    } catch (e) { void e; }
+  }
+  // Fallback : auto-login admin (les credentials sont ouvertes côté backend)
   try {
     const r = await fetch(API_BASE + '/auth/connexion', {
       method: 'POST',
@@ -4472,12 +4487,37 @@ function requirePermission(perm, errorMsg) {
 
 /* ============ INIT ============ */
 async function init() {
-  // Auto-login admin pour l'embarquement en iframe React Native
-  if (!localStorage.getItem(SESSION_KEY)) {
+  // Récupère le jeton et l'utilisateur passés par le wrapper RN (IframePage)
+  // via query params : ?jeton=xxx&user=base64(JSON).
+  // Si présents, ils ont priorité sur l'auto-login admin de fallback.
+  let userFromParam = null;
+  let jetonFromParam = null;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    jetonFromParam = p.get('jeton');
+    const u = p.get('user');
+    if (u) {
+      // Décode base64 URL-safe
+      const b64 = u.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = b64.length % 4 ? '='.repeat(4 - (b64.length % 4)) : '';
+      userFromParam = JSON.parse(decodeURIComponent(escape(atob(b64 + pad))));
+    }
+  } catch (e) { void e; }
+
+  if (userFromParam) {
+    // Pré-remplit la session pour bypass le login
+    localStorage.setItem(SESSION_KEY, JSON.stringify(userFromParam));
+  } else if (!localStorage.getItem(SESSION_KEY)) {
+    // Fallback : auto-login admin (si l'iframe n'est pas dans un wrapper RN)
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       id: 'iframe-admin', name: 'Admin', role: 'admin'
     }));
   }
+  // Pré-injecte aussi le jeton API pour skipper apiAuthLogin()
+  if (jetonFromParam) {
+    window._API_JETON_RN = jetonFromParam;
+  }
+
   // 1) Test précoce du storage cloud : si indisponible, bascule immédiate sur localStorage
   await probeCloudStorage();
   // 2) Charger une session existante (si l'utilisateur s'était connecté précédemment)
