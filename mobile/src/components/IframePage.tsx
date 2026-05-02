@@ -16,7 +16,7 @@ import { useAuthStore } from '../store/authStore'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../constants/theme'
 
 type Props = {
-  vue: 'kanban' | 'activites' | 'cultures' | 'cheptel' | 'dashboard' | 'budget' | 'ferme'
+  vue: 'kanban' | 'activites' | 'cultures' | 'cheptel' | 'dashboard' | 'budget' | 'ferme' | 'cra'
   titreFallback: string
 }
 

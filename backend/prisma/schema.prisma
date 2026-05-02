@@ -114,6 +114,15 @@ enum TypeEvenementCulture {
   observation
 }
 
+enum TypeJourCRA {
+  travail
+  absence
+  conge
+  maladie
+  formation
+  ferie
+}
+
 model Utilisateur {
   id              String   @id @default(cuid())
   email           String   @unique
@@ -132,6 +141,7 @@ model Utilisateur {
   photosTelechargees Photo[]   @relation("PhotoUploader")
   mouvementsAnimauxCrees MouvementAnimal[] @relation("AuteurMouvementAnimal")
   evenementsCultureCrees EvenementCulture[] @relation("AuteurEvenementCulture")
+  saisiesCRA             SaisieJourCRA[]
 }
 
 model Tache {
@@ -290,6 +300,23 @@ model EvenementCulture {
   @@index([parcelleId])
   @@index([dateEvenement])
   @@index([type])
+}
+
+model SaisieJourCRA {
+  id            String      @id @default(cuid())
+  date          DateTime    @db.Date
+  type          TypeJourCRA @default(travail)
+  heures        Float       @default(8)
+  notes         String?
+  creeLe        DateTime    @default(now())
+  modifieLe     DateTime    @updatedAt
+
+  utilisateurId String
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@unique([utilisateurId, date])
+  @@index([date])
+  @@index([utilisateurId])
 }
 
 model BudgetLigne {

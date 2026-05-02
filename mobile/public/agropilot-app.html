@@ -1324,7 +1324,151 @@
   .act-item-actions .act-edit:hover { color: #1a6b8a; border-color: #1a6b8a; }
   .act-item-actions .act-dup:hover  { color: #4a8c3f; border-color: #4a8c3f; }
   .act-item-actions .act-del:hover  { color: #e74c3c; border-color: #e74c3c; }
+
+  /* ===== Graphiques dashboard ===== */
+  .dash-section {
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(45,31,14,0.06);
+    margin-bottom: 16px;
+  }
+  .dash-section h3 {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 17px; color: #2d1f0e;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dash-section h3 .icon { font-size: 20px; }
+  .dash-charts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 240px;
+  }
+  .chart-wrap.tall { height: 300px; }
+  .chart-mini-stat {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #8b5e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+  .chart-mini-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 24px;
+    color: #2d1f0e;
+  }
+
+  /* ===== CRA ===== */
+  .cra-toolbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .cra-toolbar select, .cra-toolbar input[type=month] {
+    padding: 7px 10px;
+    border: 1px solid rgba(92,61,30,0.20);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: #fff;
+  }
+  .cra-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 10px;
+    padding: 8px;
+  }
+  .cra-day-head {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-align: center;
+    color: #8b5e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 4px 0;
+  }
+  .cra-cell {
+    aspect-ratio: 1.2;
+    border: 1px solid rgba(92,61,30,0.10);
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    background: #faf6ee;
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    transition: all 0.12s;
+  }
+  .cra-cell:hover { transform: scale(1.04); }
+  .cra-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+  .cra-cell.weekend { background: rgba(92,61,30,0.04); }
+  .cra-cell.travail   { background: rgba(74,140,63,0.18);  border-color: rgba(74,140,63,0.50); }
+  .cra-cell.absence   { background: rgba(231,76,60,0.15);  border-color: rgba(231,76,60,0.50); }
+  .cra-cell.conge     { background: rgba(26,107,138,0.15); border-color: rgba(26,107,138,0.50); }
+  .cra-cell.maladie   { background: rgba(232,148,58,0.15); border-color: rgba(232,148,58,0.50); }
+  .cra-cell.formation { background: rgba(212,84,138,0.15); border-color: rgba(212,84,138,0.50); }
+  .cra-cell.ferie     { background: rgba(123,110,62,0.15); border-color: rgba(123,110,62,0.50); }
+  .cra-day-num {
+    font-weight: 700;
+    color: #2d1f0e;
+    font-size: 13px;
+  }
+  .cra-day-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #5c3d1e;
+    text-align: right;
+  }
+  .cra-legend {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #5c3d1e;
+  }
+  .cra-legend-item {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .cra-recap {
+    margin-top: 16px;
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .cra-recap table { width: 100%; border-collapse: collapse; }
+  .cra-recap th, .cra-recap td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(92,61,30,0.10);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+  }
+  .cra-recap th {
+    background: rgba(92,61,30,0.05);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #5c3d1e;
+  }
 </style>
+<!-- Chart.js pour graphiques dashboard -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1574,6 +1718,7 @@
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable"><span class="tab-icon">💰</span>Budget</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
+    <button data-view="cra"><span class="tab-icon">🕒</span>CRA</button>
   </nav>
   <div class="user-pill" id="user-pill">
     <span class="user-avatar" id="user-avatar">?</span>
@@ -1632,20 +1777,102 @@
     <div class="view-head">
       <div>
         <h2 class="view-title">Dashboard — <em>Pilotage en temps réel</em></h2>
-        <p class="view-sub">Indicateurs calculés à partir des tâches et du budget.</p>
+        <p class="view-sub">Indicateurs et graphiques calculés à partir des données BDD.</p>
       </div>
     </div>
 
     <div class="kpi-grid" id="kpi-grid"></div>
-    <div class="dash-grid">
-      <div class="card">
-        <h3 class="panel-title"><span class="icon">📈</span>Avancement par filière</h3>
-        <div class="filiere-bars" id="filiere-bars"></div>
+
+    <div class="dash-section">
+      <h3><span class="icon">📋</span>Activités</h3>
+      <div class="dash-charts-row">
+        <div class="chart-wrap"><canvas id="chart-act-filiere"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-act-statut"></canvas></div>
       </div>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">🌾</span>Cultures</h3>
+      <div class="dash-charts-row">
+        <div class="chart-wrap"><canvas id="chart-cult-evt"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-cult-recolte"></canvas></div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">🐾</span>Cheptel</h3>
+      <div class="dash-charts-row">
+        <div class="chart-wrap"><canvas id="chart-chep-mvts"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-chep-effectifs"></canvas></div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">💰</span>Budget — Pilotage & ajustement</h3>
+      <div class="dash-charts-row">
+        <div class="chart-wrap tall"><canvas id="chart-bud-prevu-reel"></canvas></div>
+        <div class="chart-wrap"><canvas id="chart-bud-phases"></canvas></div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
       <div class="card">
         <h3 class="panel-title"><span class="icon">⚠️</span>Tâches urgentes</h3>
         <ul class="urgent-list" id="urgent-list"></ul>
       </div>
+      <div class="card">
+        <h3 class="panel-title"><span class="icon">📈</span>Avancement par filière</h3>
+        <div class="filiere-bars" id="filiere-bars"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CRA — Compte Rendu d'Activité ============ -->
+  <section class="view" id="view-cra">
+    <div class="view-head">
+      <div>
+        <h2 class="view-title">CRA — <em>Compte rendu mensuel</em></h2>
+        <p class="view-sub">Saisie des jours travaillés / absences / congés. Cliquez une case pour cycler le statut.</p>
+      </div>
+    </div>
+
+    <div class="cra-toolbar">
+      <label style="font-family:'DM Mono',monospace;font-size:11px;color:#8b5e3c;letter-spacing:0.6px;text-transform:uppercase">Mois</label>
+      <input type="month" id="cra-mois">
+      <label style="font-family:'DM Mono',monospace;font-size:11px;color:#8b5e3c;letter-spacing:0.6px;text-transform:uppercase;margin-left:10px">Salarié</label>
+      <select id="cra-utilisateur"></select>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost btn-sm" id="cra-prev">◂ Mois préc.</button>
+      <button class="btn btn-ghost btn-sm" id="cra-next">Mois suiv. ▸</button>
+    </div>
+
+    <div class="cra-grid" id="cra-grid"></div>
+
+    <div class="cra-legend">
+      <span class="cra-legend-item" style="background:rgba(74,140,63,0.18);border:1px solid rgba(74,140,63,0.50)">▣ Travail</span>
+      <span class="cra-legend-item" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.50)">▣ Absence</span>
+      <span class="cra-legend-item" style="background:rgba(26,107,138,0.15);border:1px solid rgba(26,107,138,0.50)">▣ Congé</span>
+      <span class="cra-legend-item" style="background:rgba(232,148,58,0.15);border:1px solid rgba(232,148,58,0.50)">▣ Maladie</span>
+      <span class="cra-legend-item" style="background:rgba(212,84,138,0.15);border:1px solid rgba(212,84,138,0.50)">▣ Formation</span>
+      <span class="cra-legend-item" style="background:rgba(123,110,62,0.15);border:1px solid rgba(123,110,62,0.50)">▣ Férié</span>
+    </div>
+
+    <div class="cra-recap">
+      <table>
+        <thead>
+          <tr>
+            <th>Salarié</th>
+            <th>Travail</th>
+            <th>Absence</th>
+            <th>Congé</th>
+            <th>Maladie</th>
+            <th>Formation</th>
+            <th>Férié</th>
+            <th>Heures totales</th>
+          </tr>
+        </thead>
+        <tbody id="cra-recap-tbody"></tbody>
+      </table>
     </div>
   </section>
 
@@ -1941,7 +2168,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: true,      // SEUL admin peut supprimer des tâches/activités
     canResetData: true,
-    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra']
   },
   responsable: {
     label: 'Responsable', icon: '🛠️',
@@ -1952,7 +2179,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: false,     // ne peut PAS supprimer
     canResetData: false,
-    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra']
   },
   ouvrier: {
     label: 'Ouvrier', icon: '👷',
@@ -1963,7 +2190,7 @@ const ROLES = {
     canEditAnyTask: true,     // peut mettre à jour le statut/dates des tâches existantes
     canDeleteTask: false,
     canResetData: false,
-    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','ferme','cra']
   }
 };
 
@@ -2885,6 +3112,7 @@ function setupTabs() {
       if (view === 'activites') renderActivites();
       if (view === 'cultures') renderCultures();
       if (view === 'cheptel') renderCheptel();
+      if (view === 'cra') renderCRA();
       if (view === 'dashboard') renderDashboard();
       if (view === 'budget') renderBudget();
       if (view === 'ferme') renderFerme();
@@ -3878,6 +4106,9 @@ function renderDashboard() {
           <span class="meta">${FILIERES[t.filiere]?.icon || ''}</span>
         </li>`;
       }).join('') || '<div class="empty-state">Aucune urgence dans les 5 prochains jours.</div>';
+
+  // Graphiques (Chart.js)
+  renderDashboardCharts();
 }
 
 /* ============ BUDGET ============ */
@@ -4755,6 +4986,304 @@ function renderCulturesFilters() {
   });
 }
 
+/* ============ DASHBOARD — Graphiques ============ */
+const CHARTS = {};
+const PALETTE_FILIERES = {
+  pisciculture: '#1a6b8a', aviculture: '#e8943a', porcins: '#d4548a',
+  caprins: '#7b6e3e', cultures: '#4a8c3f', infrastructure: '#6b6b6b', habitat: '#5c3d1e',
+};
+const PALETTE_STATUTS = { a_faire: '#e74c3c', en_cours: '#e8943a', termine: '#4a8c3f' };
+
+function destroyChart(key) {
+  if (CHARTS[key]) { CHARTS[key].destroy(); delete CHARTS[key]; }
+}
+
+function chartBar(canvasId, labels, datasets, options = {}) {
+  destroyChart(canvasId);
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  CHARTS[canvasId] = new Chart(el.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: Object.assign({
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
+      scales: { y: { beginAtZero: true, ticks: { font: { family: 'DM Sans' } } },
+                x: { ticks: { font: { family: 'DM Sans', size: 10 } } } },
+    }, options),
+  });
+}
+
+function chartDoughnut(canvasId, labels, data, colors) {
+  destroyChart(canvasId);
+  const el = document.getElementById(canvasId);
+  if (!el || typeof Chart === 'undefined') return;
+  CHARTS[canvasId] = new Chart(el.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '55%',
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
+    },
+  });
+}
+
+function renderDashboardCharts() {
+  if (typeof Chart === 'undefined') return;
+
+  // === Activités ===
+  const filieresKeys = Object.keys(FILIERES);
+  const tachesParFiliere = filieresKeys.map(f =>
+    state.taches.filter(t => t.filiere === f).length);
+  chartBar('chart-act-filiere', filieresKeys.map(f => FILIERES[f].label), [{
+    label: 'Tâches', data: tachesParFiliere,
+    backgroundColor: filieresKeys.map(f => PALETTE_FILIERES[f]),
+  }], { plugins: { legend: { display: false }, title: { display: true, text: 'Tâches par filière', font: { family: 'Fraunces', size: 13 } } } });
+
+  const statutsKeys = Object.keys(STATUTS);
+  const tachesParStatut = statutsKeys.map(s => state.taches.filter(t => t.statut === s).length);
+  chartDoughnut('chart-act-statut',
+    statutsKeys.map(s => STATUTS[s].label),
+    tachesParStatut,
+    statutsKeys.map(s => PALETTE_STATUTS[s] || '#9e9e9e'));
+
+  // === Cultures ===
+  // Parcelles peuvent ne pas être chargées si renderDashboard appelé avant apiInit
+  const parcelles = state.parcelles || [];
+  const evtTypes = ['preparation_sol','semis','fertilisation','irrigation','traitement','desherbage','recolte','observation'];
+  const evtLabels = ['Prép. sol','Semis','Fertilis.','Irrigation','Traitement','Désherbage','Récolte','Observation'];
+  // Compter par type via les nombreEvenements (seul le total est dispo dans la liste)
+  // Pour avoir la répartition, on fait un estimate basé sur récolte vs autres
+  const totalEvts = parcelles.reduce((s,p) => s + (p.nombreEvenements||0), 0);
+  // Approche simple : barres des parcelles par récolte cumulée
+  chartBar('chart-cult-evt',
+    parcelles.map(p => p.nom.length > 18 ? p.nom.slice(0,18)+'…' : p.nom),
+    [{ label: 'Événements', data: parcelles.map(p => p.nombreEvenements||0), backgroundColor: '#4a8c3f' }],
+    { plugins: { legend: { display: false }, title: { display: true, text: `Événements par parcelle (${totalEvts} au total)`, font: { family: 'Fraunces', size: 13 } } } });
+
+  chartBar('chart-cult-recolte',
+    parcelles.map(p => p.nom.length > 18 ? p.nom.slice(0,18)+'…' : p.nom),
+    [
+      { label: 'Prévu (kg)', data: parcelles.map(p => p.rendementPrevuKg||0), backgroundColor: 'rgba(123,110,62,0.45)' },
+      { label: 'Récolté (kg)', data: parcelles.map(p => p.totalRecolteKg||0), backgroundColor: '#4a8c3f' },
+    ],
+    { plugins: { title: { display: true, text: 'Récolte prévue vs réelle (kg)', font: { family: 'Fraunces', size: 13 } } } });
+  // Suppress unused vars warning
+  void evtTypes; void evtLabels;
+
+  // === Cheptel ===
+  const lots = state.lots || [];
+  // Effectifs par espèce
+  const especesKeys = ESPECES.map(e => e.cle);
+  const effectifsParEspece = especesKeys.map(e =>
+    lots.filter(l => l.espece === e).reduce((s,l) => s + (l.effectif||0), 0));
+  chartDoughnut('chart-chep-effectifs',
+    ESPECES.map(e => e.label),
+    effectifsParEspece,
+    ESPECES.map(e => PALETTE_FILIERES[e.filiere] || '#6b6b6b'));
+
+  // Mouvements par type — note : on n'a pas chargé les mouvements détaillés
+  // ici, on dérive de nombreMouvements (tous types confondus). On affiche
+  // les lots avec le plus de mouvements pour donner un signal d'activité.
+  const lotsParMvt = lots.slice().sort((a,b) => (b.nombreMouvements||0) - (a.nombreMouvements||0)).slice(0, 8);
+  chartBar('chart-chep-mvts',
+    lotsParMvt.map(l => l.nom.length > 16 ? l.nom.slice(0,16)+'…' : l.nom),
+    [{ label: 'Mouvements', data: lotsParMvt.map(l => l.nombreMouvements||0),
+       backgroundColor: lotsParMvt.map(l => {
+         const e = ESPECES.find(x => x.cle === l.espece);
+         return PALETTE_FILIERES[e?.filiere] || '#6b6b6b';
+       }) }],
+    { indexAxis: 'y', plugins: { legend: { display: false }, title: { display: true, text: 'Activité par lot (mouvements totaux)', font: { family: 'Fraunces', size: 13 } } } });
+
+  // === Budget ===
+  const phases = ['1','2','3'];
+  const phasesLabels = ['P1 — Infrastructure','P2 — Lancement','P3 — Exploitation'];
+  const prevuParPhase = phases.map(p => state.budget.filter(b => b.phase === p).reduce((s,b)=>s+(+b.prevu||0),0));
+  const reelParPhase  = phases.map(p => state.budget.filter(b => b.phase === p).reduce((s,b)=>s+(+b.reel||0),0));
+  chartBar('chart-bud-prevu-reel', phasesLabels, [
+    { label: 'Prévu', data: prevuParPhase, backgroundColor: 'rgba(74,140,63,0.45)' },
+    { label: 'Réel', data: reelParPhase, backgroundColor: '#4a8c3f' },
+  ], { plugins: { title: { display: true, text: 'Budget : prévu vs réel par phase (FCFA)', font: { family: 'Fraunces', size: 13 } } } });
+
+  chartDoughnut('chart-bud-phases', phasesLabels, prevuParPhase, ['#1a6b8a','#e8943a','#4a8c3f']);
+}
+
+/* ============ CRA — Compte Rendu d'Activité ============ */
+state.craMois = new Date().toISOString().slice(0,7);
+state.craUtilisateurId = null;
+state.craUtilisateurs = [];
+state.craSaisies = [];
+
+const TYPES_CRA_ORDRE = ['travail','absence','conge','maladie','formation','ferie'];
+
+async function apiChargerCRAUtilisateurs() {
+  if (!API_DISPONIBLE) return [];
+  try { const r = await apiFetch('GET', '/cra/utilisateurs'); return r.donnees || []; }
+  catch { return []; }
+}
+async function apiChargerCRA(mois, utilisateurId) {
+  if (!API_DISPONIBLE) return [];
+  const params = new URLSearchParams({ mois });
+  if (utilisateurId) params.set('utilisateurId', utilisateurId);
+  try { const r = await apiFetch('GET', '/cra?' + params.toString()); return r.donnees || []; }
+  catch { return []; }
+}
+async function apiChargerCRARecap(mois) {
+  if (!API_DISPONIBLE) return [];
+  try { const r = await apiFetch('GET', '/cra/recap?mois=' + mois); return r.donnees || []; }
+  catch { return []; }
+}
+async function apiSauverCRAJour(date, type, utilisateurId) {
+  return apiFetch('POST', '/cra', { date, type, utilisateurId });
+}
+async function apiSupprimerCRAJour(id) {
+  return apiFetch('DELETE', '/cra/' + id);
+}
+
+async function renderCRA() {
+  // Initialisation des champs si premier appel
+  const moisInput = document.getElementById('cra-mois');
+  if (moisInput && !moisInput.value) moisInput.value = state.craMois;
+  const userSelect = document.getElementById('cra-utilisateur');
+
+  if (state.craUtilisateurs.length === 0) {
+    state.craUtilisateurs = await apiChargerCRAUtilisateurs();
+    if (userSelect) {
+      userSelect.innerHTML = state.craUtilisateurs.map(u =>
+        `<option value="${u.id}">${escapeHtml(u.prenom + ' ' + u.nom)} · ${u.role}</option>`
+      ).join('');
+      // Sélectionne par défaut l'utilisateur courant si possible
+      if (state.user) {
+        const me = state.craUtilisateurs.find(u => u.id === state.user.id);
+        if (me) userSelect.value = me.id;
+      }
+      state.craUtilisateurId = userSelect.value;
+    }
+  }
+
+  state.craSaisies = await apiChargerCRA(state.craMois, state.craUtilisateurId);
+
+  const grid = document.getElementById('cra-grid');
+  if (!grid) return;
+
+  // En-têtes jours de la semaine (lundi → dimanche)
+  const jours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  let html = jours.map(j => `<div class="cra-day-head">${j}</div>`).join('');
+
+  // Calcul du calendrier
+  const [y, m] = state.craMois.split('-').map(Number);
+  const premier = new Date(Date.UTC(y, m-1, 1));
+  const dernier = new Date(Date.UTC(y, m, 0));
+  // jour de semaine : 0=dim → on veut lundi=0
+  const offset = (premier.getUTCDay() + 6) % 7;
+
+  // Cellules vides avant le 1er
+  for (let i = 0; i < offset; i++) html += `<div class="cra-cell empty"></div>`;
+
+  // Index saisies par date YYYY-MM-DD
+  const saisiesParJour = {};
+  for (const s of state.craSaisies) {
+    const k = s.date.split('T')[0];
+    saisiesParJour[k] = s;
+  }
+
+  for (let d = 1; d <= dernier.getUTCDate(); d++) {
+    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const date = new Date(Date.UTC(y, m-1, d));
+    const dow = date.getUTCDay();
+    const isWeekend = (dow === 0 || dow === 6);
+    const s = saisiesParJour[dateStr];
+    const type = s?.type || (isWeekend ? '' : '');
+    const tagLabel = type ? type.slice(0,4).toUpperCase() : '';
+    const cls = type ? type : (isWeekend ? 'weekend' : '');
+    html += `
+      <div class="cra-cell ${cls}" data-date="${dateStr}" data-type="${type||''}" data-id="${s?.id||''}">
+        <div class="cra-day-num">${d}</div>
+        <div class="cra-day-tag">${tagLabel}</div>
+      </div>
+    `;
+  }
+
+  grid.innerHTML = html;
+  // Click handler : cycle entre les types
+  grid.querySelectorAll('.cra-cell[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => cycleCRACell(cell));
+  });
+
+  // Recap
+  const recap = await apiChargerCRARecap(state.craMois);
+  const tbody = document.getElementById('cra-recap-tbody');
+  if (tbody) {
+    if (recap.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b5e3c;font-style:italic">Aucune saisie pour ce mois.</td></tr>`;
+    } else {
+      tbody.innerHTML = recap.map(r => `
+        <tr>
+          <td><strong>${escapeHtml(r.utilisateur.prenom + ' ' + r.utilisateur.nom)}</strong> <span style="color:#8b5e3c;font-size:11px">${r.utilisateur.role}</span></td>
+          <td>${r.compteurs.travail}</td>
+          <td>${r.compteurs.absence}</td>
+          <td>${r.compteurs.conge}</td>
+          <td>${r.compteurs.maladie}</td>
+          <td>${r.compteurs.formation}</td>
+          <td>${r.compteurs.ferie}</td>
+          <td><strong>${r.heuresTotales.toFixed(1)} h</strong></td>
+        </tr>
+      `).join('');
+    }
+  }
+}
+
+async function cycleCRACell(cell) {
+  const dateStr = cell.dataset.date;
+  const current = cell.dataset.type;
+  // Cycle : '' → travail → absence → conge → maladie → formation → ferie → '' (suppression)
+  const idx = current ? TYPES_CRA_ORDRE.indexOf(current) : -1;
+  const next = idx === TYPES_CRA_ORDRE.length - 1 ? '' : TYPES_CRA_ORDRE[idx + 1];
+
+  try {
+    if (next === '') {
+      // Suppression de la saisie
+      const id = cell.dataset.id;
+      if (id) await apiSupprimerCRAJour(id);
+    } else {
+      await apiSauverCRAJour(dateStr, next, state.craUtilisateurId);
+    }
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+function setupCRA() {
+  const moisInput = document.getElementById('cra-mois');
+  if (moisInput) {
+    moisInput.value = state.craMois;
+    moisInput.addEventListener('change', () => {
+      state.craMois = moisInput.value;
+      renderCRA();
+    });
+  }
+  const userSelect = document.getElementById('cra-utilisateur');
+  if (userSelect) {
+    userSelect.addEventListener('change', () => {
+      state.craUtilisateurId = userSelect.value;
+      renderCRA();
+    });
+  }
+  const prev = document.getElementById('cra-prev');
+  const next = document.getElementById('cra-next');
+  if (prev) prev.addEventListener('click', () => { decalerCRAMois(-1); });
+  if (next) next.addEventListener('click', () => { decalerCRAMois(+1); });
+}
+
+function decalerCRAMois(delta) {
+  const [y,m] = state.craMois.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m-1+delta, 1));
+  state.craMois = d.toISOString().slice(0,7);
+  const inp = document.getElementById('cra-mois'); if (inp) inp.value = state.craMois;
+  renderCRA();
+}
+
 function renderCheptelFilters() {
   const wrap = document.getElementById('cheptel-filters');
   if (!wrap) return;
@@ -5286,6 +5815,7 @@ async function init() {
   setupActivites();
   setupCultures();
   setupCheptel();
+  setupCRA();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);
   }

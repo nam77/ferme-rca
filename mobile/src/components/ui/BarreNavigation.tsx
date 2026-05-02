@@ -21,6 +21,7 @@ const ITEMS: ItemNav[] = [
   { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
   { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
   { cle: 'budget', libelle: 'Budget', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
+  { cle: 'cra', libelle: 'CRA', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
 ]
 
 export const BarreNavigation = () => {
