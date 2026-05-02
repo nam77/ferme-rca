@@ -2041,8 +2041,9 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Produit</label>
-          <input type="text" id="v-produit" placeholder="Ex: Chèvre 18 kg, Maïs grain, Œufs frais..." maxlength="200">
+          <label>Produit <span class="hint">— tape pour autocompléter (prix RCA pré-rempli)</span></label>
+          <input type="text" id="v-produit" placeholder="Ex: Chèvre 18 kg, Maïs grain, Œufs frais..." maxlength="200" list="v-produit-suggestions" autocomplete="off">
+          <datalist id="v-produit-suggestions"></datalist>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -5215,6 +5216,59 @@ const UNITES_PRODUIT = [
   { cle:'caisse', label:'caisse' },
 ];
 
+/* Catalogue des produits de référence avec prix indicatifs RCA (Bangui).
+   Sources : FAO, WFP, observatoires marchés locaux. Valeurs médianes —
+   l'utilisateur peut toujours ajuster le prix unitaire dans la modal. */
+const PRODUITS_REF = [
+  // Animaux vivants
+  { nom:'Chèvre adulte (≈18 kg vif)',  categorie:'animal_vivant', unite:'tete',  prix:38000 },
+  { nom:'Mouton Djallonké adulte',     categorie:'animal_vivant', unite:'tete',  prix:48000 },
+  { nom:'Porc vif',                    categorie:'animal_vivant', unite:'kg',    prix:2400 },
+  { nom:'Porcelet sevré (≈10 kg)',     categorie:'animal_vivant', unite:'tete',  prix:32000 },
+  { nom:'Poulet vif Cobb 500',         categorie:'animal_vivant', unite:'kg',    prix:4000 },
+  { nom:'Poussin J1',                  categorie:'animal_vivant', unite:'tete',  prix:900 },
+  // Viande
+  { nom:'Viande de chèvre',            categorie:'viande',        unite:'kg',    prix:4000 },
+  { nom:'Viande de mouton',            categorie:'viande',        unite:'kg',    prix:4000 },
+  { nom:'Viande de porc',              categorie:'viande',        unite:'kg',    prix:4000 },
+  { nom:'Viande de poulet (carcasse)', categorie:'viande',        unite:'kg',    prix:4000 },
+  // Œufs
+  { nom:'Œufs frais',                  categorie:'oeuf',          unite:'unite',    prix:175 },
+  { nom:'Œufs frais',                  categorie:'oeuf',          unite:'douzaine', prix:2200 },
+  // Lait
+  { nom:'Lait de chèvre frais',        categorie:'lait',          unite:'litre', prix:1000 },
+  // Poisson
+  { nom:'Tilapia frais',               categorie:'poisson',       unite:'kg',    prix:3000 },
+  { nom:'Clarias (poisson-chat)',      categorie:'poisson',       unite:'kg',    prix:3500 },
+  { nom:'Tilapia fumé',                categorie:'poisson',       unite:'kg',    prix:7000 },
+  // Céréales
+  { nom:'Maïs grain (récolte)',        categorie:'cereale',       unite:'kg',    prix:325 },
+  { nom:'Maïs grain (soudure)',        categorie:'cereale',       unite:'kg',    prix:600 },
+  { nom:'Maïs en sac 50 kg',           categorie:'cereale',       unite:'sac',   prix:18000 },
+  { nom:'Arachide en coque',           categorie:'cereale',       unite:'kg',    prix:750 },
+  // Manioc
+  { nom:'Manioc tubercules frais',     categorie:'manioc',        unite:'kg',    prix:200 },
+  { nom:'Cossettes de manioc',         categorie:'manioc',        unite:'kg',    prix:425 },
+  { nom:'Farine de manioc',            categorie:'manioc',        unite:'kg',    prix:650 },
+  // Légumes
+  { nom:'Tomate fraîche',              categorie:'legume',        unite:'kg',    prix:1000 },
+  { nom:'Gombo frais',                 categorie:'legume',        unite:'kg',    prix:900 },
+  { nom:'Poivron',                     categorie:'legume',        unite:'kg',    prix:1200 },
+  { nom:'Aubergine africaine (gboma)', categorie:'legume',        unite:'kg',    prix:600 },
+  { nom:'Piment',                      categorie:'legume',        unite:'kg',    prix:2200 },
+  { nom:'Concombre',                   categorie:'legume',        unite:'kg',    prix:600 },
+  // Fruits
+  { nom:'Banane plantain',             categorie:'fruit',         unite:'kg',    prix:650 },
+  { nom:'Banane douce',                categorie:'fruit',         unite:'kg',    prix:500 },
+  { nom:'Papaye',                      categorie:'fruit',         unite:'kg',    prix:400 },
+  { nom:'Ananas',                      categorie:'fruit',         unite:'unite', prix:1000 },
+  // Fourrage
+  { nom:'Foin de Brachiaria',          categorie:'fourrage',      unite:'sac',   prix:4000 },
+  { nom:'Tourteau de soja',            categorie:'fourrage',      unite:'kg',    prix:425 },
+  { nom:'Son de manioc',               categorie:'fourrage',      unite:'kg',    prix:250 },
+  { nom:'Aliment poussin démarrage',   categorie:'fourrage',      unite:'kg',    prix:700 },
+];
+
 async function apiChargerVentes() {
   if (!API_DISPONIBLE) return { ventes: [], totalCA: 0, parCategorie: {} };
   try { const r = await apiFetch('GET', '/ventes'); return r.donnees || { ventes: [], totalCA: 0, parCategorie: {} }; }
@@ -5308,6 +5362,14 @@ function openVenteModal(id) {
   selCat.innerHTML = CATEGORIES_PRODUIT.map(c => `<option value="${c.cle}">${c.icone} ${c.label}</option>`).join('');
   const selUnite = document.getElementById('v-unite');
   selUnite.innerHTML = UNITES_PRODUIT.map(u => `<option value="${u.cle}">${u.label}</option>`).join('');
+  // Datalist : suggestions de produits avec prix indicatif RCA
+  const datalist = document.getElementById('v-produit-suggestions');
+  if (datalist) {
+    datalist.innerHTML = PRODUITS_REF.map(p => {
+      const u = UNITES_PRODUIT.find(x => x.cle === p.unite)?.label || p.unite;
+      return `<option value="${escapeAttr(p.nom)}" data-cat="${p.categorie}" data-unite="${p.unite}" data-prix="${p.prix}">${p.prix.toLocaleString('fr-FR')} FCFA / ${u}</option>`;
+    }).join('');
+  }
 
   if (id) {
     const v = state.ventes.find(x => x.id === id);
@@ -5408,6 +5470,19 @@ function setupVentes() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', recalculerTotalVente);
   });
+  // Quand on choisit un produit dans la datalist, on auto-remplit cat/unité/prix
+  const inputProduit = document.getElementById('v-produit');
+  if (inputProduit) {
+    inputProduit.addEventListener('input', () => {
+      const ref = PRODUITS_REF.find(p => p.nom === inputProduit.value);
+      if (ref) {
+        document.getElementById('v-categorie').value = ref.categorie;
+        document.getElementById('v-unite').value = ref.unite;
+        document.getElementById('v-prix').value = ref.prix;
+        recalculerTotalVente();
+      }
+    });
+  }
   document.querySelectorAll('#modal-vente [data-close-modal]').forEach(b => {
     b.addEventListener('click', () => document.getElementById('modal-vente').classList.remove('show'));
   });
