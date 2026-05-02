@@ -1523,6 +1523,7 @@
     <button data-view="kanban" class="active"><span class="tab-icon">📋</span>Kanban</button>
     <button data-view="activites"><span class="tab-icon">📅</span>Activités</button>
     <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
+    <button data-view="cheptel"><span class="tab-icon">🐾</span>Cheptel</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable"><span class="tab-icon">💰</span>Budget</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
@@ -1716,6 +1717,22 @@
     <div class="cultures-stats" id="cultures-stats"></div>
     <div class="cultures-grid" id="cultures-grid"></div>
   </section>
+
+  <!-- ============ CHEPTEL ============ -->
+  <section class="view" id="view-cheptel">
+    <div class="view-head">
+      <div>
+        <h2 class="view-title">Cheptel — <em>Effectifs & mouvements</em></h2>
+        <p class="view-sub">Suivi des lots d'animaux : achats, naissances, ventes, mortalités, transferts.</p>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" id="btn-new-lot">＋ Nouveau lot</button>
+      </div>
+    </div>
+
+    <div class="cultures-stats" id="cheptel-stats"></div>
+    <div class="cultures-grid" id="cheptel-grid"></div>
+  </section>
 </main>
 
 <!-- ===== MODAL TASK ===== -->
@@ -1902,7 +1919,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: true,      // SEUL admin peut supprimer des tâches/activités
     canResetData: true,
-    visibleTabs: ['kanban','activites','cultures','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme']
   },
   responsable: {
     label: 'Responsable', icon: '🛠️',
@@ -1913,7 +1930,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: false,     // ne peut PAS supprimer
     canResetData: false,
-    visibleTabs: ['kanban','activites','cultures','dashboard','budget','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme']
   },
   ouvrier: {
     label: 'Ouvrier', icon: '👷',
@@ -1924,7 +1941,7 @@ const ROLES = {
     canEditAnyTask: true,     // peut mettre à jour le statut/dates des tâches existantes
     canDeleteTask: false,
     canResetData: false,
-    visibleTabs: ['kanban','activites','cultures','dashboard','ferme']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','ferme']
   }
 };
 
@@ -2845,6 +2862,7 @@ function setupTabs() {
       // refresh à l'ouverture
       if (view === 'activites') renderActivites();
       if (view === 'cultures') renderCultures();
+      if (view === 'cheptel') renderCheptel();
       if (view === 'dashboard') renderDashboard();
       if (view === 'budget') renderBudget();
       if (view === 'ferme') renderFerme();
@@ -4738,6 +4756,168 @@ async function apiCreerParcelle(dto) {
   return apiFetch('POST', '/parcelles', dto);
 }
 
+/* ============ CHEPTEL — Lots animaux ============ */
+state.lots = [];
+
+const ESPECES = [
+  { cle:'poulet', label:'Poulets', icone:'🐓', filiere:'aviculture' },
+  { cle:'porc', label:'Porcs', icone:'🐷', filiere:'porcins' },
+  { cle:'caprin', label:'Caprins', icone:'🐐', filiere:'caprins' },
+  { cle:'ovin', label:'Ovins', icone:'🐑', filiere:'caprins' },
+  { cle:'tilapia', label:'Tilapia', icone:'🐟', filiere:'pisciculture' },
+  { cle:'clarias', label:'Clarias', icone:'🐠', filiere:'pisciculture' },
+];
+const TYPES_MOUVEMENT = [
+  { cle:'achat', label:'Achat', sens:'+', icone:'🛒' },
+  { cle:'naissance', label:'Naissance', sens:'+', icone:'🐣' },
+  { cle:'transfert_entree', label:'Transfert (entrée)', sens:'+', icone:'↘️' },
+  { cle:'vente', label:'Vente', sens:'-', icone:'💰' },
+  { cle:'mortalite', label:'Mortalité', sens:'-', icone:'⚰️' },
+  { cle:'consommation_interne', label:'Consommation interne', sens:'-', icone:'🍴' },
+  { cle:'reforme', label:'Réforme', sens:'-', icone:'🔚' },
+  { cle:'transfert_sortie', label:'Transfert (sortie)', sens:'-', icone:'↗️' },
+];
+function getEspeceMeta(cle) {
+  return ESPECES.find(e => e.cle === cle) || { cle, label: cle, icone: '🐾' };
+}
+
+async function apiChargerLots() {
+  if (!API_DISPONIBLE) return [];
+  try {
+    const r = await apiFetch('GET', '/lots');
+    return r.donnees || [];
+  } catch (e) {
+    console.warn('[api] lots indisponibles', e.message);
+    return [];
+  }
+}
+
+async function rechargerLots() {
+  state.lots = await apiChargerLots();
+  renderCheptel();
+}
+
+function renderCheptel() {
+  const stats = document.getElementById('cheptel-stats');
+  const grid = document.getElementById('cheptel-grid');
+  if (!stats || !grid) return;
+
+  const totalEffectif = state.lots.reduce((s, l) => s + (Number(l.effectif) || 0), 0);
+  // Groupage par espèce
+  const parEspece = {};
+  for (const l of state.lots) {
+    if (!parEspece[l.espece]) parEspece[l.espece] = { effectif: 0, lots: 0 };
+    parEspece[l.espece].effectif += Number(l.effectif) || 0;
+    parEspece[l.espece].lots += 1;
+  }
+  const especesAffichees = ESPECES.filter(e => parEspece[e.cle]);
+
+  stats.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-num">${totalEffectif}</div><div class="kpi-label">Animaux total</div></div>
+      <div class="kpi-card"><div class="kpi-num">${state.lots.length}</div><div class="kpi-label">Lots</div></div>
+      ${especesAffichees.map(e => `
+        <div class="kpi-card">
+          <div class="kpi-num">${e.icone} ${parEspece[e.cle].effectif}</div>
+          <div class="kpi-label">${e.label}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  if (state.lots.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <p>Aucun lot pour l'instant.</p>
+      <p class="hint">Cliquez sur « + Nouveau lot » pour commencer.</p>
+    </div>`;
+    return;
+  }
+
+  // Tri par espèce puis nom
+  const lotsTries = [...state.lots].sort((a, b) => {
+    if (a.espece !== b.espece) return a.espece.localeCompare(b.espece);
+    return (a.nom||'').localeCompare(b.nom||'');
+  });
+
+  grid.innerHTML = lotsTries.map(l => {
+    const m = getEspeceMeta(l.espece);
+    const sexe = l.sexe ? (l.sexe === 'male' ? '♂ Mâle' : l.sexe === 'femelle' ? '♀ Femelle' : '⚥ Mixte') : '—';
+    return `
+      <div class="parcelle-card" data-id="${l.id}">
+        <div class="parcelle-head">
+          <div class="parcelle-titre"><span class="parcelle-icone">${m.icone}</span><span>${escapeHtml(l.nom)}</span></div>
+          <div class="parcelle-tag" style="background:rgba(74,140,63,0.10);border:1px solid rgba(74,140,63,0.40);color:#4a8c3f">
+            ${l.effectif} tête${l.effectif > 1 ? 's' : ''}
+          </div>
+        </div>
+        <div class="parcelle-meta">${m.label} · ${sexe}</div>
+        <div class="parcelle-rows">
+          ${l.zone ? `<div class="parcelle-row"><span class="parcelle-label">Zone</span><span class="parcelle-val">📍 ${escapeHtml(l.zone.nom)}</span></div>` : ''}
+          <div class="parcelle-row"><span class="parcelle-label">Mouvements</span><span class="parcelle-val">${l.nombreMouvements || 0}</span></div>
+          ${l.notes ? `<div class="parcelle-row"><span class="parcelle-label">Notes</span><span class="parcelle-val" style="font-size:11px;text-align:right">${escapeHtml(l.notes.slice(0,80))}</span></div>` : ''}
+        </div>
+        <button class="btn btn-ghost btn-sm parcelle-evt" data-id="${l.id}">＋ Mouvement</button>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.parcelle-evt').forEach(btn => {
+    btn.addEventListener('click', () => openMouvementModal(btn.dataset.id));
+  });
+}
+
+function setupCheptel() {
+  const btn = document.getElementById('btn-new-lot');
+  if (btn) btn.addEventListener('click', openNouveauLotModal);
+}
+
+function openNouveauLotModal() {
+  const nom = prompt('Nom du lot (ex: "Cycle 2 — poulets de chair")');
+  if (!nom || nom.trim().length < 2) return;
+  const espece = prompt('Espèce : poulet, porc, caprin, ovin, tilapia, clarias', 'caprin');
+  if (!espece || !ESPECES.find(e => e.cle === espece)) {
+    toast('Espèce invalide', 'error');
+    return;
+  }
+  const sexeRaw = prompt('Sexe (optionnel) : male, femelle, mixte ou vide', 'femelle');
+  const sexe = ['male','femelle','mixte'].includes(sexeRaw) ? sexeRaw : null;
+  apiFetch('POST', '/lots', { nom: nom.trim(), espece, sexe })
+    .then(() => { rechargerLots(); toast('Lot créé', 'success'); })
+    .catch(e => toast('Erreur : ' + e.message, 'error'));
+}
+
+async function openMouvementModal(lotId) {
+  const lot = state.lots.find(l => l.id === lotId);
+  const effectifAct = lot ? lot.effectif : 0;
+  const type = prompt(
+    `Type de mouvement (effectif courant : ${effectifAct})\n` +
+    `Entrées : achat, naissance, transfert_entree\n` +
+    `Sorties : vente, mortalite, consommation_interne, reforme, transfert_sortie`,
+    'naissance'
+  );
+  if (!type) return;
+  const tm = TYPES_MOUVEMENT.find(t => t.cle === type);
+  if (!tm) { toast('Type invalide', 'error'); return; }
+  const qStr = prompt(`Quantité (${tm.sens})`, '1');
+  const quantite = parseInt(qStr, 10);
+  if (isNaN(quantite) || quantite <= 0) { toast('Quantité invalide', 'error'); return; }
+  const motif = prompt('Motif / commentaire (optionnel)') || null;
+  let coutTotal = null;
+  if (type === 'achat' || type === 'vente') {
+    const cStr = prompt(type === 'achat' ? 'Coût total (FCFA)' : 'Recette totale (FCFA)', '');
+    if (cStr) { coutTotal = parseFloat(cStr); if (isNaN(coutTotal)) coutTotal = null; }
+  }
+  try {
+    await apiFetch('POST', '/lots/' + lotId + '/mouvements', {
+      type, quantite, motif, coutTotal,
+    });
+    toast('Mouvement enregistré', 'success');
+    await rechargerLots();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
 async function openEvenementModal(parcelleId) {
   const type = prompt('Type d\'événement : preparation_sol, semis, fertilisation, irrigation, traitement, desherbage, recolte, observation', 'observation');
   if (!type) return;
@@ -4806,8 +4986,9 @@ async function init() {
   //        state.taches/budget par les vraies données BDD ; sinon on garde
   //        ce que loadState a chargé depuis le seed/localStorage.
   await apiInit();
-  // 5.ter) Charge les parcelles (API uniquement, pas de fallback localStorage)
+  // 5.ter) Charge les parcelles et les lots (API uniquement)
   state.parcelles = await apiChargerParcelles();
+  state.lots = await apiChargerLots();
   // État initial du filtre Activités
   state.actStatutFiltre = 'tous';
   setupTabs();
@@ -4816,6 +4997,7 @@ async function init() {
   setupBudgetModal();
   setupActivites();
   setupCultures();
+  setupCheptel();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);
   }

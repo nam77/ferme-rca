@@ -61,8 +61,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="dashboard" />
               <Stack.Screen name="budget" />
               <Stack.Screen name="ferme" />
-              <Stack.Screen name="cheptel/index" />
-              <Stack.Screen name="cheptel/[id]" />
+              <Stack.Screen name="cheptel" />
             </Stack>
           </View>
         </View>
