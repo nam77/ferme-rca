@@ -3,6 +3,8 @@ import { useRouter, usePathname } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useAuthStore } from '../../store/authStore'
+
+type RoleAutorise = 'admin' | 'responsable' | 'ouvrier' | 'investisseur'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../../constants/theme'
 
 type ItemNav = {
@@ -11,6 +13,7 @@ type ItemNav = {
   route: string
   icone: keyof typeof Ionicons.glyphMap
   prefixesActifs: string[]
+  rolesAutorises?: RoleAutorise[]
 }
 
 const ITEMS: ItemNav[] = [
@@ -20,8 +23,9 @@ const ITEMS: ItemNav[] = [
   { cle: 'cheptel', libelle: 'Cheptel', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
   { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
   { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
-  { cle: 'budget', libelle: 'Budget', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
+  { cle: 'budget', libelle: 'Budget et Ventes', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
   { cle: 'cra', libelle: 'CRA', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
+  { cle: 'deploiement', libelle: 'Déploiement', route: '/deploiement', icone: 'rocket-outline', prefixesActifs: ['/deploiement'], rolesAutorises: ['admin'] },
 ]
 
 export const BarreNavigation = () => {
@@ -57,7 +61,11 @@ export const BarreNavigation = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.menu}
       >
-        {ITEMS.map((item) => {
+        {ITEMS.filter((item) => {
+          if (!item.rolesAutorises) return true
+          if (!utilisateur) return false
+          return item.rolesAutorises.includes(utilisateur.role as RoleAutorise)
+        }).map((item) => {
           const actif = estActif(item)
           return (
             <Pressable

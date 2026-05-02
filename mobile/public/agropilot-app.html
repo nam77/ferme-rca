@@ -1484,6 +1484,32 @@
     letter-spacing: 0.5px;
     color: #5c3d1e;
   }
+
+  /* ===== Déploiement ===== */
+  .depl-output {
+    margin-top: 10px;
+    background: #1f2a17;
+    color: #d4e7c5;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+  }
+  .depl-output.show { display: block; }
+  .depl-output.error { background: #4a1a14; color: #ffd6cc; }
+  code {
+    background: rgba(92,61,30,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
 </style>
 <!-- Chart.js pour graphiques dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1734,9 +1760,10 @@
     <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
     <button data-view="cheptel"><span class="tab-icon">🐾</span>Cheptel</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
-    <button data-view="budget"><span class="tab-icon">💰</span>Budget &amp; Ventes</button>
+    <button data-view="budget"><span class="tab-icon">💰</span>Budget et Ventes</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
     <button data-view="cra"><span class="tab-icon">🕒</span>CRA</button>
+    <button data-view="deploiement" data-restrict="admin"><span class="tab-icon">🚀</span>Déploiement</button>
   </nav>
   <div class="user-pill" id="user-pill">
     <span class="user-avatar" id="user-avatar">?</span>
@@ -1917,7 +1944,7 @@
   <section class="view" id="view-budget">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Budget &amp; Ventes — <em>Pilotage financier</em></h2>
+        <h2 class="view-title">Budget et Ventes — <em>Pilotage financier</em></h2>
         <p class="view-sub">Budget par phase + chiffre d'affaires des ventes. Tous les montants en FCFA.</p>
       </div>
       <div class="row">
@@ -2181,6 +2208,73 @@
     <div class="cultures-stats" id="cheptel-stats"></div>
     <div class="cultures-grid" id="cheptel-grid"></div>
   </section>
+
+  <!-- ============ DÉPLOIEMENT (admin uniquement) ============ -->
+  <section class="view" id="view-deploiement">
+    <div class="view-head">
+      <div>
+        <h2 class="view-title">Déploiement — <em>Administration système</em></h2>
+        <p class="view-sub">Réservé à l'administrateur. Outils de mise en production : statut, sauvegarde BDD, seed, build, migration.</p>
+      </div>
+    </div>
+
+    <div class="cultures-stats" id="depl-statut"></div>
+
+    <div class="dash-section">
+      <h3><span class="icon">💾</span>Sauvegarde de la base de données</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
+        Télécharge un dump SQL complet (pg_dump) que tu pourras restaurer plus tard en cas de problème.
+        À faire <strong>avant tout déploiement</strong> et <strong>chaque semaine</strong>.
+      </p>
+      <button class="btn btn-primary" id="depl-backup">⬇ Télécharger sauvegarde SQL</button>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">🌱</span>Données de démonstration (seed)</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
+        Réinitialise les <strong>tâches, lots, mouvements, parcelles, événements et budget</strong> avec des données de démonstration.
+        Les <strong>comptes utilisateurs sont préservés</strong>. À ne <strong>pas</strong> exécuter en production sur des données réelles.
+      </p>
+      <button class="btn btn-primary" id="depl-seed" style="background:#e8943a">🔄 Relancer le seed</button>
+      <pre id="depl-seed-out" class="depl-output"></pre>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">📦</span>Build web (Expo Export)</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
+        Génère le dossier <code>mobile/dist/</code> à pousser sur Cloudflare Pages / Vercel / Netlify.
+        Peut prendre 1–3 minutes.
+      </p>
+      <button class="btn btn-primary" id="depl-build">🔨 Lancer expo export</button>
+      <pre id="depl-build-out" class="depl-output"></pre>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">🗄️</span>Migration Prisma</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:12px">
+        Applique les migrations Prisma à la BDD (<code>prisma migrate deploy</code>).
+        À utiliser sur la BDD de production lors d'une mise à jour du schéma.
+      </p>
+      <button class="btn btn-primary" id="depl-migration" style="background:#1a6b8a">🚀 Appliquer les migrations</button>
+      <pre id="depl-migration-out" class="depl-output"></pre>
+    </div>
+
+    <div class="dash-section">
+      <h3><span class="icon">📖</span>Checklist de mise en production</h3>
+      <ol style="font-family:'DM Sans',sans-serif;font-size:13.5px;color:#2d1f0e;line-height:1.7;padding-left:22px">
+        <li>Générer un vrai <code>JWT_SECRET</code> aléatoire (<code>openssl rand -base64 64</code>)</li>
+        <li>Changer les mots de passe des comptes seed (admin / responsable / ouvrier / investisseur)</li>
+        <li>Configurer une whitelist CORS dans <code>backend/src/index.ts</code> (au lieu de <code>cors()</code> ouvert)</li>
+        <li>Activer HTTPS (Cloudflare en frontal ou certbot sur VPS)</li>
+        <li>Cliquer <strong>« Télécharger sauvegarde SQL »</strong> ci-dessus pour avoir un backup avant tout</li>
+        <li>Cliquer <strong>« Lancer expo export »</strong> et déployer <code>mobile/dist/</code> sur Cloudflare Pages</li>
+        <li>Cliquer <strong>« Appliquer les migrations »</strong> sur la BDD de production</li>
+        <li>Définir <code>EXPO_PUBLIC_API_URL</code> et <code>EXPO_PUBLIC_HTML_URL</code> côté EAS</li>
+        <li>Tester chaque rôle (admin / responsable / ouvrier / investisseur)</li>
+        <li>Programmer un <code>pg_dump</code> quotidien automatique sur le serveur</li>
+      </ol>
+    </div>
+  </section>
 </main>
 
 <!-- ===== MODAL TASK ===== -->
@@ -2367,7 +2461,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: true,      // SEUL admin peut supprimer des tâches/activités
     canResetData: true,
-    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra']
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra','deploiement']
   },
   responsable: {
     label: 'Responsable', icon: '🛠️',
@@ -3312,6 +3406,7 @@ function setupTabs() {
       if (view === 'cultures') renderCultures();
       if (view === 'cheptel') renderCheptel();
       if (view === 'cra') renderCRA();
+      if (view === 'deploiement') renderDeploiement();
       if (view === 'dashboard') renderDashboard();
       if (view === 'budget') renderBudget();
       if (view === 'ferme') renderFerme();
@@ -5490,6 +5585,139 @@ function setupVentes() {
   if (back) back.addEventListener('click', e => { if (e.target === back) back.classList.remove('show'); });
 }
 
+/* ============ DÉPLOIEMENT (admin uniquement) ============ */
+async function renderDeploiement() {
+  if (!API_DISPONIBLE) {
+    const el = document.getElementById('depl-statut');
+    if (el) el.innerHTML = '<div class="empty-state">API indisponible.</div>';
+    return;
+  }
+  try {
+    const r = await apiFetch('GET', '/deploiement/statut');
+    const d = r.donnees || {};
+    const s = d.serveur || {};
+    const b = d.bdd || {};
+    const t = b.tables || {};
+    const target = document.getElementById('depl-statut');
+    if (target) {
+      target.innerHTML = `
+        <div class="kpi-grid">
+          <div class="kpi-card" style="border-left:3px solid #4a8c3f">
+            <div class="kpi-num">${formatUptime(s.uptime || 0)}</div>
+            <div class="kpi-label">Uptime serveur</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num" style="font-size:14px">${escapeHtml(s.environnement || '?')}</div>
+            <div class="kpi-label">Environnement</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num" style="font-size:14px">Node ${escapeHtml(s.nodeVersion || '?')}</div>
+            <div class="kpi-label">Plateforme ${escapeHtml(s.plateforme || '')}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-num">${s.memoireMo || 0} Mo</div>
+            <div class="kpi-label">Mémoire utilisée</div>
+          </div>
+          <div class="kpi-card" style="grid-column:span 2">
+            <div class="kpi-num" style="font-size:11px;font-family:'DM Mono',monospace">${escapeHtml(b.urlMasquee || 'BDD non configurée')}</div>
+            <div class="kpi-label">URL base de données (mot de passe masqué)</div>
+          </div>
+          <div class="kpi-card"><div class="kpi-num">${t.utilisateurs||0}</div><div class="kpi-label">Utilisateurs</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.taches||0}</div><div class="kpi-label">Tâches</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.lots||0}</div><div class="kpi-label">Lots animaux</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.mouvementsAnimaux||0}</div><div class="kpi-label">Mouvements</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.parcelles||0}</div><div class="kpi-label">Parcelles</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.evenementsCulture||0}</div><div class="kpi-label">Événements culture</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.lignesBudget||0}</div><div class="kpi-label">Lignes budget</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.ventes||0}</div><div class="kpi-label">Ventes</div></div>
+          <div class="kpi-card"><div class="kpi-num">${t.saisiesCRA||0}</div><div class="kpi-label">Saisies CRA</div></div>
+        </div>
+      `;
+    }
+  } catch (e) {
+    const el = document.getElementById('depl-statut');
+    if (el) el.innerHTML = `<div class="empty-state">Impossible de charger le statut : ${escapeHtml(e.message)}<br><span class="hint">Cette page est réservée aux administrateurs.</span></div>`;
+  }
+}
+
+function formatUptime(s) {
+  if (s < 60) return s + ' s';
+  if (s < 3600) return Math.floor(s/60) + ' min';
+  if (s < 86400) return Math.floor(s/3600) + ' h ' + Math.floor((s%3600)/60) + ' min';
+  return Math.floor(s/86400) + ' j ' + Math.floor((s%86400)/3600) + ' h';
+}
+
+async function deplLancerAction(boutonId, sortieId, endpoint, methode, libelle) {
+  const btn = document.getElementById(boutonId);
+  const out = document.getElementById(sortieId);
+  if (!btn || !out) return;
+  const labelOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ ' + libelle + ' en cours...';
+  out.classList.remove('error');
+  out.classList.add('show');
+  out.textContent = '⏳ Démarrage...\n';
+  try {
+    const r = await apiFetch(methode, endpoint);
+    out.textContent = (r.donnees?.stdout || '') + (r.donnees?.stderr ? '\n--- STDERR ---\n' + r.donnees.stderr : '');
+    if (!out.textContent.trim()) out.textContent = '✓ Terminé sans sortie.';
+    toast(libelle + ' terminé', 'success');
+    renderDeploiement();
+  } catch (e) {
+    out.classList.add('error');
+    out.textContent = '✗ ÉCHEC\n' + (e.message || 'Erreur inconnue');
+    toast(libelle + ' : échec', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelOriginal;
+  }
+}
+
+async function deplTelechargerBackup() {
+  const btn = document.getElementById('depl-backup');
+  if (!btn) return;
+  const labelOrig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération de la sauvegarde...';
+  try {
+    const r = await fetch(API_BASE + '/deploiement/backup', {
+      headers: { 'Authorization': 'Bearer ' + API_JETON },
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.message || ('HTTP ' + r.status));
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    a.href = url;
+    a.download = 'ferme-rca-backup-' + ts + '.sql';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    toast('Sauvegarde téléchargée', 'success');
+  } catch (e) {
+    toast('Erreur sauvegarde : ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = labelOrig;
+  }
+}
+
+function setupDeploiement() {
+  const seed = document.getElementById('depl-seed');
+  if (seed) seed.addEventListener('click', () =>
+    deplLancerAction('depl-seed', 'depl-seed-out', '/deploiement/seed', 'POST', 'Seed'));
+  const build = document.getElementById('depl-build');
+  if (build) build.addEventListener('click', () =>
+    deplLancerAction('depl-build', 'depl-build-out', '/deploiement/build-web', 'POST', 'Build web'));
+  const migration = document.getElementById('depl-migration');
+  if (migration) migration.addEventListener('click', () =>
+    deplLancerAction('depl-migration', 'depl-migration-out', '/deploiement/migration', 'POST', 'Migration'));
+  const backup = document.getElementById('depl-backup');
+  if (backup) backup.addEventListener('click', deplTelechargerBackup);
+}
+
 /* ============ DASHBOARD — Graphiques ============ */
 const CHARTS = {};
 const PALETTE_FILIERES = {
@@ -6690,6 +6918,7 @@ async function init() {
   setupCheptel();
   setupVentes();
   setupCRA();
+  setupDeploiement();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);
   }

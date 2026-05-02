@@ -11,6 +11,7 @@ import { routeurLots } from './routes/lots.js'
 import { routeurParcelles } from './routes/parcelles.js'
 import { routeurCRA } from './routes/cra.js'
 import { routeurVentes } from './routes/ventes.js'
+import { routeurDeploiement } from './routes/deploiement.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
@@ -60,6 +61,7 @@ app.use('/api/lots', routeurLots)
 app.use('/api/parcelles', routeurParcelles)
 app.use('/api/cra', routeurCRA)
 app.use('/api/ventes', routeurVentes)
+app.use('/api/deploiement', routeurDeploiement)
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ succes: false, message: 'Route inconnue' })
