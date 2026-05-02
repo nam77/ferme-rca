@@ -5334,7 +5334,7 @@ function openVenteModal(id) {
     document.getElementById('v-notes').value = '';
   }
   recalculerTotalVente();
-  modal.classList.add('open');
+  modal.classList.add('show');
 }
 
 function recalculerTotalVente() {
@@ -5365,7 +5365,7 @@ async function sauverVente() {
       await apiFetch('POST', '/ventes', dto);
       toast('Vente enregistrée', 'success');
     }
-    document.getElementById('modal-vente').classList.remove('open');
+    document.getElementById('modal-vente').classList.remove('show');
     _venteEnEdition = null;
     await rechargerVentes();
     if (typeof renderDashboardCharts === 'function' && document.getElementById('view-dashboard').classList.contains('active')) {
@@ -5409,10 +5409,10 @@ function setupVentes() {
     if (el) el.addEventListener('input', recalculerTotalVente);
   });
   document.querySelectorAll('#modal-vente [data-close-modal]').forEach(b => {
-    b.addEventListener('click', () => document.getElementById('modal-vente').classList.remove('open'));
+    b.addEventListener('click', () => document.getElementById('modal-vente').classList.remove('show'));
   });
   const back = document.getElementById('modal-vente');
-  if (back) back.addEventListener('click', e => { if (e.target === back) back.classList.remove('open'); });
+  if (back) back.addEventListener('click', e => { if (e.target === back) back.classList.remove('show'); });
 }
 
 /* ============ DASHBOARD — Graphiques ============ */
@@ -6373,12 +6373,12 @@ function setupCheptel() {
   // Boutons fermer (data-close-modal) du modal mouvement (couverts par
   // l'écouteur global plus bas, mais on s'en assure)
   document.querySelectorAll('#modal-mvt-cheptel [data-close-modal]').forEach(b => {
-    b.addEventListener('click', () => document.getElementById('modal-mvt-cheptel').classList.remove('open'));
+    b.addEventListener('click', () => document.getElementById('modal-mvt-cheptel').classList.remove('show'));
   });
   // Click sur le backdrop pour fermer
   const back = document.getElementById('modal-mvt-cheptel');
   if (back) back.addEventListener('click', e => {
-    if (e.target === back) back.classList.remove('open');
+    if (e.target === back) back.classList.remove('show');
   });
 }
 
@@ -6437,7 +6437,7 @@ function openMouvementModal(lotId) {
   selType.onchange = () => adapterChampsMouvement(selType.value);
   adapterChampsMouvement('naissance');
 
-  modal.classList.add('open');
+  modal.classList.add('show');
 }
 
 function adapterChampsMouvement(type) {
@@ -6523,7 +6523,7 @@ async function sauverMouvement() {
   try {
     await apiFetch('POST', '/lots/' + _mvtLotCourant + '/mouvements', dto);
     toast('Mouvement enregistré', 'success');
-    document.getElementById('modal-mvt-cheptel').classList.remove('open');
+    document.getElementById('modal-mvt-cheptel').classList.remove('show');
     _mvtLotCourant = null;
     await rechargerLots();
   } catch (e) {
