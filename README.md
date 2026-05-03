@@ -43,3 +43,4 @@ npx expo start
 Lancer `claude` à la racine du projet, activer le Plan Mode (Shift+Tab),
 puis demander à Claude Code de construire le projet en suivant CLAUDE.md
 et les skills.
+# ferme-rca
