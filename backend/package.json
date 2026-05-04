@@ -2,6 +2,7 @@
   "name": "ferme-rca-backend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "API Express + Prisma de la Ferme Agropastorale RCA",
   "main": "src/index.ts",
   "scripts": {
