@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuthOptionnel, protegerMutations } from '../middleware/auth.js'
 import { Filiere, Role } from '../generated/prisma/enums.js'
 
 export const routeurZones = Router()
@@ -24,7 +24,7 @@ const inclurePhotos = {
   photos: { orderBy: { creeLe: 'desc' as const } },
 }
 
-routeurZones.use(verifierAuth)
+routeurZones.use(verifierAuthOptionnel, protegerMutations)
 
 routeurZones.get('/', async (_req: Request, res: Response) => {
   try {

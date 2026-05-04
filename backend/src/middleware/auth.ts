@@ -25,6 +25,35 @@ export const verifierAuth = (req: Request, res: Response, next: NextFunction): v
   }
 }
 
+// Décode le JWT s'il est présent, mais laisse passer les requêtes anonymes.
+// Utilisé sur les routes lisibles publiquement (mode consultatif).
+export const verifierAuthOptionnel = (req: Request, _res: Response, next: NextFunction): void => {
+  const entete = req.headers.authorization
+  if (entete && entete.startsWith('Bearer ')) {
+    const jeton = entete.slice('Bearer '.length).trim()
+    try {
+      req.utilisateur = verifierJeton(jeton)
+    } catch {
+      // Jeton invalide → on ignore et on continue en anonyme.
+    }
+  }
+  next()
+}
+
+// Bloque toute méthode mutante (POST/PUT/PATCH/DELETE) si pas authentifié.
+// À chaîner après verifierAuthOptionnel sur les routeurs publics en lecture.
+export const protegerMutations = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    next()
+    return
+  }
+  if (!req.utilisateur) {
+    res.status(401).json({ succes: false, message: 'Authentification requise pour cette action' })
+    return
+  }
+  next()
+}
+
 export const verifierRole = (...rolesAutorises: Role[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.utilisateur) {

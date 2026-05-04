@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuthOptionnel, protegerMutations } from '../middleware/auth.js'
 import { Filiere, Priorite, Statut } from '../generated/prisma/enums.js'
 
 export const routeurTaches = Router()
@@ -33,7 +33,9 @@ const inclureRelations = {
   sousTaches: { orderBy: { ordre: 'asc' as const } },
 } as const
 
-routeurTaches.use(verifierAuth)
+// Mode consultatif : GET ouvert au public anonyme,
+// mutations bloquées (401) sans authentification.
+routeurTaches.use(verifierAuthOptionnel, protegerMutations)
 
 routeurTaches.get('/', async (req: Request, res: Response) => {
   const { filiere, statut, responsable } = req.query

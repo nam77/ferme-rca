@@ -1180,6 +1180,49 @@
     border-color:rgba(192,57,43,0.7);
   }
 
+  /* ========== MODE CONSULTATIF (visiteur public, non connecté) ==========
+     Inspiration Jira public projects : on affiche les vues mais on cache
+     toute action mutante (boutons CRUD, drag-and-drop, ouverture modales). */
+  .bandeau-consultatif{
+    position:sticky;top:0;z-index:900;
+    background:linear-gradient(90deg, #f4d35e 0%, #ee964b 100%);
+    color:#3a2a08;
+    padding:9px 18px;
+    font-size:13.5px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+    border-bottom:1px solid rgba(0,0,0,0.1);
+  }
+  .bandeau-consultatif .ic{font-size:16px}
+  .bandeau-consultatif button{
+    background:#3a2a08;color:#f4d35e;
+    border:none;padding:6px 14px;border-radius:18px;
+    font-size:12px;font-weight:700;letter-spacing:0.04em;
+    cursor:pointer;text-transform:uppercase;
+    transition:all 0.15s;
+  }
+  .bandeau-consultatif button:hover{background:#1a1404;color:#fff}
+  body.mode-consultatif .role-hide-visiteur,
+  body.mode-consultatif [data-action-mutation],
+  body.mode-consultatif .row-act,
+  body.mode-consultatif .parcelle-evt,
+  body.mode-consultatif .col-add,
+  body.mode-consultatif .task-actions,
+  body.mode-consultatif .act-new-form,
+  body.mode-consultatif .btn-supprimer,
+  body.mode-consultatif #btn-reset-data,
+  body.mode-consultatif #btn-new-task,
+  body.mode-consultatif #btn-new-activite,
+  body.mode-consultatif #btn-new-budget,
+  body.mode-consultatif #btn-new-vente,
+  body.mode-consultatif #btn-new-lot,
+  body.mode-consultatif #btn-new-parcelle,
+  body.mode-consultatif #btn-new-cra,
+  body.mode-consultatif #btn-deploiement-go,
+  body.mode-consultatif .user-logout-text{display:none !important}
+  body.mode-consultatif .task-card{cursor:default !important}
+  body.mode-consultatif .task-card[draggable="true"]{cursor:default !important}
+
   /* ========== ÉLÉMENTS RESTREINTS PAR RÔLE ========== */
   /* Boutons d'action masqués pour les rôles non autorisés */
   body.role-ouvrier .role-hide-ouvrier,
@@ -1822,9 +1865,9 @@
     <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
     <button data-view="cheptel"><span class="tab-icon">🐾</span>Cheptel</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
-    <button data-view="budget"><span class="tab-icon">💰</span>Budget et Ventes</button>
+    <button data-view="budget" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">💰</span>Budget et Ventes</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
-    <button data-view="cra"><span class="tab-icon">🕒</span>CRA</button>
+    <button data-view="cra" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">🕒</span>CRA</button>
     <button data-view="deploiement" data-restrict="admin"><span class="tab-icon">🚀</span>Déploiement</button>
   </nav>
   <div class="user-pill" id="user-pill">
@@ -1836,6 +1879,13 @@
     <button class="user-logout" id="user-logout" title="Se déconnecter">⏻</button>
   </div>
 </header>
+
+<!-- Bandeau Mode Consultatif (affiché uniquement si visiteur public non connecté) -->
+<div class="bandeau-consultatif" id="bandeau-consultatif" style="display:none">
+  <span class="ic">👁️</span>
+  <span>Mode consultation — vous parcourez l'application en lecture seule.</span>
+  <button id="btn-bandeau-connexion" type="button">Se connecter</button>
+</div>
 
 <main>
   <!-- ============ KANBAN ============ -->
@@ -2532,6 +2582,20 @@ const ROLES = {
     canDeleteTask: false,
     canResetData: false,
     visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','ferme','cra']
+  },
+  // Rôle virtuel attribué à tout visiteur public non connecté.
+  // Toutes les permissions sont à false : Jira public-style.
+  visiteur: {
+    label: 'Visiteur', icon: '👁️',
+    desc: 'Consultation publique. Connectez-vous pour modifier.',
+    consultatif: true,
+    canEditBudget: false,
+    canDeleteBudget: false,
+    canCreateTask: false,
+    canEditAnyTask: false,
+    canDeleteTask: false,
+    canResetData: false,
+    visibleTabs: ['kanban','activites','cultures','cheptel','dashboard','ferme']
   }
 };
 
@@ -3245,7 +3309,6 @@ async function apiAuthLogin() {
   // Si un jeton a été injecté par le wrapper RN, on l'utilise directement.
   if (typeof window !== 'undefined' && window._API_JETON_RN) {
     API_JETON = window._API_JETON_RN;
-    // Petit ping pour vérifier que le jeton est valide
     try {
       const r = await fetch(API_BASE + '/auth/moi', {
         headers: { 'Authorization': 'Bearer ' + API_JETON }
@@ -3254,26 +3317,42 @@ async function apiAuthLogin() {
         API_DISPONIBLE = true;
         return true;
       }
-      console.warn('[api] jeton RN invalide, fallback auto-login admin');
+      console.warn('[api] jeton RN invalide');
     } catch (e) { void e; }
   }
-  // Fallback : auto-login admin (les credentials sont ouvertes côté backend)
-  try {
-    const r = await fetch(API_BASE + '/auth/connexion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@ferme.rca', motDePasse: 'admin123' }),
-    });
-    if (!r.ok) throw new Error('login → ' + r.status);
-    const d = await r.json();
-    API_JETON = d.donnees?.jeton;
-    API_DISPONIBLE = !!API_JETON;
-    return API_DISPONIBLE;
-  } catch (e) {
-    console.warn('[api] login impossible — fallback localStorage', e.message);
-    API_DISPONIBLE = false;
-    return false;
+  // Si une session locale existe (utilisateur s'est connecté via le
+  // formulaire de démo), on récupère un vrai jeton API mappé au rôle.
+  if (state.user && state.user.role) {
+    const credsParRole = {
+      admin:       { email: 'admin@ferme.rca',        motDePasse: 'admin123' },
+      responsable: { email: 'pisciculture@ferme.rca', motDePasse: 'responsable123' },
+      ouvrier:     { email: 'ouvrier@ferme.rca',      motDePasse: 'ouvrier123' },
+    };
+    const creds = credsParRole[state.user.role];
+    if (creds) {
+      try {
+        const r = await fetch(API_BASE + '/auth/connexion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(creds),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          API_JETON = d.donnees?.jeton || null;
+          API_DISPONIBLE = true;
+          return true;
+        }
+      } catch (e) {
+        console.warn('[api] connexion impossible', e.message);
+      }
+    }
   }
+  // Mode consultatif : pas de jeton. Les GET passent en anonyme grâce au
+  // middleware verifierAuthOptionnel côté backend ; les mutations sont
+  // bloquées (401) — ce qui est l'effet recherché.
+  API_JETON = null;
+  API_DISPONIBLE = true;
+  return true;
 }
 
 async function apiChargerTaches() {
@@ -4124,25 +4203,30 @@ function renderKanbanBoard() {
       <div class="kanban-col-list" data-status="${statut}">
         ${taches.map(renderTaskCard).join('')}
       </div>
-      <button class="col-add" data-add-statut="${statut}">＋ Ajouter une tâche</button>
+      ${estModeConsultatif() ? '' : `<button class="col-add" data-add-statut="${statut}">＋ Ajouter une tâche</button>`}
     </div>`;
   }).join('');
 
-  // listeners
+  // listeners — désactivés en mode consultatif (drag/drop + ouverture modale)
+  const consultatifListeners = estModeConsultatif();
   board.querySelectorAll('.task-card').forEach(card => {
-    card.addEventListener('dragstart', onDragStart);
-    card.addEventListener('dragend', onDragEnd);
-    card.addEventListener('click', e => {
-      // Si clic sur un bouton d'action, ne pas ouvrir la modal
-      if (e.target.closest('.task-actions')) return;
-      openTaskModal(card.dataset.id);
+    if (!consultatifListeners) {
+      card.addEventListener('dragstart', onDragStart);
+      card.addEventListener('dragend', onDragEnd);
+      card.addEventListener('click', e => {
+        // Si clic sur un bouton d'action, ne pas ouvrir la modal
+        if (e.target.closest('.task-actions')) return;
+        openTaskModal(card.dataset.id);
+      });
+    }
+  });
+  if (!consultatifListeners) {
+    board.querySelectorAll('.kanban-col').forEach(col => {
+      col.addEventListener('dragover', onDragOver);
+      col.addEventListener('dragleave', onDragLeave);
+      col.addEventListener('drop', onDrop);
     });
-  });
-  board.querySelectorAll('.kanban-col').forEach(col => {
-    col.addEventListener('dragover', onDragOver);
-    col.addEventListener('dragleave', onDragLeave);
-    col.addEventListener('drop', onDrop);
-  });
+  }
   board.querySelectorAll('[data-add-statut]').forEach(b => {
     b.addEventListener('click', () => openTaskModal(null, b.dataset.addStatut));
   });
@@ -4174,12 +4258,13 @@ function renderTaskCard(t) {
   const catLabel = zone ? zone.nom : null;
   // Icône thématique grande (poulet, poisson, porc, chèvre, plante verte, etc.)
   const themeIcon = FILIERE_ICONS[t.filiere] || fil.icon;
-  return `<div class="task-card" draggable="true" data-id="${t.id}" data-filiere="${t.filiere}">
-    <div class="task-actions">
+  const consultatif = estModeConsultatif();
+  return `<div class="task-card" ${consultatif ? '' : 'draggable="true"'} data-id="${t.id}" data-filiere="${t.filiere}">
+    ${consultatif ? '' : `<div class="task-actions">
       <button class="act-edit" data-edit="${t.id}" title="Modifier">✎</button>
       <button class="act-dup"  data-dup="${t.id}"  title="Dupliquer">⎘</button>
       <button class="act-del"  data-del="${t.id}"  title="Supprimer">✕</button>
-    </div>
+    </div>`}
     <div class="task-top">
       <span class="theme-icon theme-${t.filiere}" title="${fil.label}">${themeIcon}</span>
       <span class="filiere-badge badge-${t.filiere}">${fil.label}</span>
@@ -4288,6 +4373,7 @@ function populateCategorieSelect(filiere, currentValue) {
 }
 
 function openTaskModal(id, defaultStatut) {
+  if (bloquerSiConsultatif()) return;
   state.editingTaskId = id;
   const t = id ? state.taches.find(x => x.id === id) : null;
   document.getElementById('modal-task-title').textContent = id ? 'Modifier la tâche' : 'Nouvelle tâche';
@@ -4570,6 +4656,7 @@ function setupBudgetModal() {
 }
 
 function openBudgetModal(id) {
+  if (bloquerSiConsultatif()) return;
   editingBudgetId = id;
   const l = id ? state.budget.find(x => x.id === id) : null;
   document.getElementById('modal-budget-title').textContent = id ? 'Modifier la ligne' : 'Nouvelle ligne de budget';
@@ -5117,8 +5204,27 @@ function setupLogin() {
     if (e.key === 'Enter') tryLogin();
   });
 
-  // Bouton de déconnexion dans le header
-  document.getElementById('user-logout').addEventListener('click', logout);
+  // Bouton du header : déconnexion si connecté, sinon ouverture du login
+  document.getElementById('user-logout').addEventListener('click', () => {
+    if (state.user) {
+      logout();
+    } else {
+      ouvrirLoginScreen();
+    }
+  });
+
+  // Bouton du bandeau "Mode consultation" → ouvre le login
+  const btnBandeau = document.getElementById('btn-bandeau-connexion');
+  if (btnBandeau) btnBandeau.addEventListener('click', ouvrirLoginScreen);
+}
+
+// Affiche le login screen pour qu'un visiteur puisse passer en mode connecté.
+function ouvrirLoginScreen() {
+  state.selectedRole = null;
+  document.getElementById('login-step-role').style.display = '';
+  document.getElementById('login-step-form').style.display = 'none';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-screen').classList.remove('hidden');
 }
 
 function showLoginStepForm() {
@@ -5175,6 +5281,8 @@ function tryLogin() {
   };
   saveSession();
   applyAuthState();
+  // Récupère un jeton API valide en arrière-plan pour autoriser les mutations.
+  apiAuthLogin().catch(e => console.warn('[api] post-login échec:', e.message));
   toast(`Bienvenue ${displayName} !`, 'success');
 }
 
@@ -5189,14 +5297,16 @@ async function logout() {
   if (!ok) return;
   state.user = null;
   state.selectedRole = null;
+  API_JETON = null;
   // Effacer la session persistée (sans toucher aux données métier)
   try { localStorage.removeItem(SESSION_KEY); } catch {}
   // Reset UI de login
   document.getElementById('login-step-role').style.display = '';
   document.getElementById('login-step-form').style.display = 'none';
   document.getElementById('login-error').style.display = 'none';
+  // Mode consultatif rétabli (pas de réaffichage du login screen)
   applyAuthState();
-  toast('Déconnexion réussie', 'success');
+  toast('Vous êtes en mode consultation', 'success');
 }
 
 function saveSession() {
@@ -5215,34 +5325,51 @@ function loadSession() {
   } catch {}
 }
 
-/* Applique l'état d'authentification : affiche login OU app, met à jour
-   les permissions UI selon le rôle de l'utilisateur connecté. */
+/* Applique l'état d'authentification :
+   - Connecté → app complète selon les permissions du rôle.
+   - Non connecté → MODE CONSULTATIF (visiteur public en lecture seule).
+   On n'affiche plus jamais le login screen automatiquement : il devient
+   une vue accessible via le bouton « Se connecter » du bandeau. */
 function applyAuthState() {
   const loginScreen = document.getElementById('login-screen');
-  if (!state.user) {
-    // Non connecté → afficher login, masquer le contenu
-    loginScreen.classList.remove('hidden');
-    return;
-  }
+  if (loginScreen) loginScreen.classList.add('hidden');
 
-  // Connecté → masquer login
-  loginScreen.classList.add('hidden');
-
-  const role = ROLES[state.user.role];
+  // Si pas de session, on bascule sur le rôle virtuel "visiteur".
+  const utilisateur = state.user || {
+    id: 'visiteur', username: 'visiteur', name: 'Visiteur', role: 'visiteur'
+  };
+  const role = ROLES[utilisateur.role];
   if (!role) return;
 
   // Mettre à jour le user-pill
-  document.getElementById('user-name').textContent = state.user.name;
+  document.getElementById('user-name').textContent = utilisateur.name;
   document.getElementById('user-role').textContent = role.label;
-  document.getElementById('user-avatar').textContent = initials(state.user.name);
+  document.getElementById('user-avatar').textContent = initials(utilisateur.name);
 
   // Classes sur le body pour activer les règles CSS conditionnelles
   document.body.className = '';
-  document.body.classList.add('role-' + state.user.role);
+  document.body.classList.add('role-' + utilisateur.role);
+  if (role.consultatif) document.body.classList.add('mode-consultatif');
 
-  // Onglets : masquer ceux qui ne sont pas autorisés
+  // Bandeau jaune : visible uniquement en mode consultatif
+  const bandeau = document.getElementById('bandeau-consultatif');
+  if (bandeau) bandeau.style.display = role.consultatif ? '' : 'none';
+
+  // Bouton header : « Se déconnecter » pour les connectés, « Se connecter » pour le visiteur
+  const btnLogout = document.getElementById('user-logout');
+  if (btnLogout) {
+    if (role.consultatif) {
+      btnLogout.textContent = '🔑';
+      btnLogout.title = 'Se connecter';
+    } else {
+      btnLogout.textContent = '⏻';
+      btnLogout.title = 'Se déconnecter';
+    }
+  }
+
+  // Onglets : masquer ceux qui ne sont pas autorisés pour ce rôle
   document.querySelectorAll('nav.tabs button[data-restrict]').forEach(btn => {
-    const allowed = btn.dataset.restrict.split(',').includes(state.user.role);
+    const allowed = btn.dataset.restrict.split(',').includes(utilisateur.role);
     btn.dataset.hidden = allowed ? 'false' : 'true';
     if (!allowed && btn.classList.contains('active')) {
       // si l'utilisateur était sur cet onglet, on bascule sur Kanban
@@ -5260,12 +5387,21 @@ function applyAuthState() {
   applyPermissionsToUI(role);
 }
 
-function applyPermissionsToUI(_role) {
-  // Toutes les actions UI sont ouvertes (cohérent avec l'API REST où
-  // les restrictions de rôle ont aussi été retirées). Les rôles
-  // continuent de donner du contexte (label, icône, visibleTabs) mais
-  // ne masquent plus les boutons d'action.
+function applyPermissionsToUI(role) {
   document.body.classList.remove('budget-readonly');
+  // En mode consultatif, on cache explicitement tous les boutons d'action
+  // connus. Les sélecteurs CSS data-action-mutation absorbent le reste.
+  const consultatif = !!(role && role.consultatif);
+  const idsAction = [
+    'btn-reset-data', 'btn-new-task', 'btn-new-activite', 'btn-new-budget',
+    'btn-new-vente', 'btn-new-lot', 'btn-new-parcelle',
+    'btn-new-mouvement', 'btn-new-cra', 'btn-deploiement-go'
+  ];
+  idsAction.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = consultatif ? 'none' : '';
+  });
+  if (consultatif) document.body.classList.add('budget-readonly');
 }
 
 /* Helpers pour vérifier une permission depuis le code */
@@ -5281,6 +5417,22 @@ function requirePermission(perm, errorMsg) {
     return false;
   }
   return true;
+}
+
+// True si l'application tourne en mode consultatif (visiteur public,
+// pas de session). Utilisé pour bloquer toute action mutante côté UI.
+function estModeConsultatif() {
+  return !state.user;
+}
+
+// Centralise le blocage des actions mutantes en mode consultatif.
+// Affiche un toast invitant à se connecter et retourne true si bloqué.
+function bloquerSiConsultatif() {
+  if (estModeConsultatif()) {
+    toast('Mode consultation : connectez-vous pour modifier', '');
+    return true;
+  }
+  return false;
 }
 
 /* ============ INIT ============ */
@@ -5497,6 +5649,7 @@ function renderVentes() {
 let _venteEnEdition = null;
 
 function openVenteModal(id) {
+  if (bloquerSiConsultatif()) return;
   const modal = document.getElementById('modal-vente');
   if (!modal) return;
   _venteEnEdition = id || null;
@@ -6618,6 +6771,7 @@ function setupCultures() {
 }
 
 function openNouvelleParcelleModal() {
+  if (bloquerSiConsultatif()) return;
   const nom = prompt('Nom de la parcelle (ex: "Maïs Champ Nord")');
   if (!nom || nom.trim().length < 2) return;
   const type = prompt('Type de culture : mais, manioc, arachide, legumes, brachiaria, bananier, jachere', 'mais');
@@ -6836,6 +6990,7 @@ function setupCheptel() {
 }
 
 function openNouveauLotModal() {
+  if (bloquerSiConsultatif()) return;
   const nom = prompt('Nom du lot (ex: "Cycle 2 — poulets de chair")');
   if (!nom || nom.trim().length < 2) return;
   const espece = prompt('Espèce : poulet, porc, caprin, ovin, tilapia, clarias', 'caprin');
@@ -6854,6 +7009,7 @@ function openNouveauLotModal() {
 let _mvtLotCourant = null;
 
 function openMouvementModal(lotId) {
+  if (bloquerSiConsultatif()) return;
   _mvtLotCourant = lotId;
   const lot = state.lots.find(l => l.id === lotId);
   if (!lot) return;
@@ -6985,6 +7141,7 @@ async function sauverMouvement() {
 }
 
 async function openEvenementModal(parcelleId) {
+  if (bloquerSiConsultatif()) return;
   const type = prompt('Type d\'événement : preparation_sol, semis, fertilisation, irrigation, traitement, desherbage, recolte, observation', 'observation');
   if (!type) return;
   const description = prompt('Description (optionnel)') || null;
@@ -7024,19 +7181,21 @@ async function init() {
     }
   } catch (e) { void e; }
 
+  // Détection du contexte d'embarquement : si la page est ouverte par le
+  // wrapper React Native (paramètres ?user=... ou ?jeton=...), on respecte
+  // l'identité injectée. Sinon, l'application démarre en MODE CONSULTATIF
+  // (visiteur public non connecté) — toute mutation est interdite.
+  const estEmbarqueRN = !!(userFromParam || jetonFromParam);
   if (userFromParam) {
     // Pré-remplit la session pour bypass le login
     localStorage.setItem(SESSION_KEY, JSON.stringify(userFromParam));
-  } else if (!localStorage.getItem(SESSION_KEY)) {
-    // Fallback : auto-login admin (si l'iframe n'est pas dans un wrapper RN)
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      id: 'iframe-admin', name: 'Admin', role: 'admin'
-    }));
   }
   // Pré-injecte aussi le jeton API pour skipper apiAuthLogin()
   if (jetonFromParam) {
     window._API_JETON_RN = jetonFromParam;
   }
+  // Important : on n'injecte PAS de session admin par défaut côté web.
+  // L'utilisateur doit explicitement passer par le login pour modifier.
 
   // 1) Test précoce du storage cloud : si indisponible, bascule immédiate sur localStorage
   await probeCloudStorage();
@@ -7076,9 +7235,11 @@ async function init() {
   renderDashboard();
   renderBudget();
   renderFerme();
-  // Re-appliquer les permissions une fois que tout est rendu
-  // (les boutons newTask, newBudget existaient mais setupTabs les remplit)
-  if (state.user) applyPermissionsToUI(ROLES[state.user.role]);
+  // Re-appliquer les permissions une fois que tout est rendu : les boutons
+  // newTask/newBudget/etc. ont été créés par les setupXxx ci-dessus, donc on
+  // doit les filtrer maintenant. Vaut aussi pour le visiteur (rôle virtuel).
+  const roleEffectif = ROLES[(state.user && state.user.role) || 'visiteur'];
+  if (roleEffectif) applyPermissionsToUI(roleEffectif);
   // Démarrer l'animation des engrenages du logo
   startLogoAnimation();
 
@@ -7099,6 +7260,10 @@ async function init() {
       document.body.style.background = 'transparent';
       const main = document.querySelector('main');
       if (main) main.style.paddingTop = '0';
+      // En mode embarqué, le bandeau "Mode consultation" n'a pas de sens :
+      // l'utilisateur est déjà authentifié via le wrapper natif.
+      const bandeau = document.getElementById('bandeau-consultatif');
+      if (bandeau) bandeau.style.display = 'none';
     }
   } catch (e) {
     void e;

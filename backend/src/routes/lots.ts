@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuthOptionnel, protegerMutations } from '../middleware/auth.js'
 import {
   Espece,
   SexeAnimal,
@@ -94,7 +94,7 @@ const inclureMouvementsComplets = {
   zone: { select: { id: true, nom: true } },
 } as const
 
-routeurLots.use(verifierAuth)
+routeurLots.use(verifierAuthOptionnel, protegerMutations)
 
 routeurLots.get('/', async (req: Request, res: Response) => {
   try {

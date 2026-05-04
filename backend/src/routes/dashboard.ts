@@ -1,11 +1,11 @@
 import { Router, type Request, type Response } from 'express'
 import { prisma } from '../lib/prisma.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuthOptionnel, protegerMutations } from '../middleware/auth.js'
 import { Statut } from '../generated/prisma/enums.js'
 
 export const routeurDashboard = Router()
 
-routeurDashboard.use(verifierAuth)
+routeurDashboard.use(verifierAuthOptionnel, protegerMutations)
 
 routeurDashboard.get('/', async (_req: Request, res: Response) => {
   try {

@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuthOptionnel, protegerMutations } from '../middleware/auth.js'
 import {
   TypeCulture,
   StatutParcelle,
@@ -55,7 +55,7 @@ const inclureEvenementsComplets = {
   zone: { select: { id: true, nom: true } },
 } as const
 
-routeurParcelles.use(verifierAuth)
+routeurParcelles.use(verifierAuthOptionnel, protegerMutations)
 
 routeurParcelles.get('/', async (req: Request, res: Response) => {
   try {
