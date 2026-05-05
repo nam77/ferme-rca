@@ -32,3 +32,10 @@ build/
 # Sauvegardes
 *.bak
 deploiements/
+
+# Captures d'échange et prototypes laissés à la racine
+# (screenshots collés en cours de session, brouillons HTML).
+# Pattern ancré à la racine : n'affecte pas mobile/assets/images/*.png
+# ni les autres PNG de sous-dossiers.
+/*.png
+/prototype*.html
