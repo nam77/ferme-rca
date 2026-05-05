@@ -11,12 +11,14 @@ import {
   ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { useAuthStore } from '@src/store/authStore'
 import { COULEURS } from '@src/constants/couleurs'
 
 export default function EcranConnexion() {
-  const [email, setEmail] = useState('admin@ferme.rca')
-  const [motDePasse, setMotDePasse] = useState('admin123')
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [motDePasse, setMotDePasse] = useState('')
   const enChargement = useAuthStore((s) => s.enChargement)
   const erreur = useAuthStore((s) => s.erreur)
   const connexion = useAuthStore((s) => s.connexion)
@@ -95,13 +97,36 @@ export default function EcranConnexion() {
             )}
           </Pressable>
 
-          <View style={styles.aide}>
-            <Text style={styles.aideTitre}>Comptes de démonstration</Text>
-            <Text style={styles.aideLigne}>admin@ferme.rca · admin123</Text>
-            <Text style={styles.aideLigne}>pisciculture@ferme.rca · responsable123</Text>
-            <Text style={styles.aideLigne}>ouvrier@ferme.rca · ouvrier123</Text>
-            <Text style={styles.aideLigne}>investisseur@ferme.rca · investisseur123</Text>
+          <View style={styles.liensSecondaires}>
+            <Pressable
+              onPress={() => router.push('/inscription')}
+              accessibilityLabel="Créer un compte"
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.lien, pressed && styles.lienPresse]}
+            >
+              <Text style={styles.lienTexte}>Créer un compte</Text>
+            </Pressable>
+            <Text style={styles.separateur}>·</Text>
+            <Pressable
+              onPress={() => router.push('/mot-de-passe-oublie')}
+              accessibilityLabel="Mot de passe oublié"
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.lien, pressed && styles.lienPresse]}
+            >
+              <Text style={styles.lienTexte}>Mot de passe oublié ?</Text>
+            </Pressable>
           </View>
+
+          <Pressable
+            onPress={() => router.replace('/')}
+            accessibilityLabel="Continuer en mode consultation"
+            accessibilityRole="link"
+            style={({ pressed }) => [styles.lienConsultation, pressed && styles.lienPresse]}
+          >
+            <Text style={styles.lienConsultationTexte}>
+              Continuer en mode consultation →
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -160,19 +185,37 @@ const styles = StyleSheet.create({
   boutonDesactive: { opacity: 0.5 },
   boutonPresse: { opacity: 0.85 },
   boutonTexte: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  aide: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: COULEURS.carte,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COULEURS.bordure,
+  liensSecondaires: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    flexWrap: 'wrap',
   },
-  aideTitre: {
+  lien: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
+  lienTexte: {
     fontSize: 14,
+    color: COULEURS.vert,
     fontWeight: '600',
-    color: COULEURS.texteSecondaire,
-    marginBottom: 8,
   },
-  aideLigne: { fontSize: 13, color: COULEURS.texteSecondaire, marginVertical: 2 },
+  separateur: {
+    color: COULEURS.texteSecondaire,
+    fontSize: 14,
+  },
+  lienConsultation: {
+    marginTop: 12,
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  lienPresse: { opacity: 0.6 },
+  lienConsultationTexte: {
+    fontSize: 15,
+    color: COULEURS.vert,
+    fontWeight: '600',
+  },
 })

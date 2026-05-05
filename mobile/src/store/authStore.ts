@@ -1,7 +1,13 @@
 import { create } from 'zustand'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { CLE_JETON } from '../api/client'
-import { recupererProfil, seConnecter } from '../api/auth.api'
+import {
+  demanderReinitialisation,
+  recupererProfil,
+  seConnecter,
+  sInscrire,
+  type DonneesInscription,
+} from '../api/auth.api'
 import type { Utilisateur } from '../types/auth.types'
 
 const CLE_UTILISATEUR = 'ferme_rca_utilisateur'
@@ -14,6 +20,8 @@ type EtatAuth = {
   erreur: string | null
   initialiser: () => Promise<void>
   connexion: (email: string, motDePasse: string) => Promise<void>
+  inscription: (donnees: DonneesInscription) => Promise<void>
+  demanderReset: (email: string) => Promise<string>
   deconnexion: () => Promise<void>
 }
 
@@ -57,6 +65,33 @@ export const useAuthStore = create<EtatAuth>((set) => ({
       set({ utilisateur, jeton, enChargement: false })
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Erreur de connexion'
+      set({ erreur: message, enChargement: false })
+      throw e
+    }
+  },
+
+  inscription: async (donnees) => {
+    set({ enChargement: true, erreur: null })
+    try {
+      const { utilisateur, jeton } = await sInscrire(donnees)
+      await AsyncStorage.setItem(CLE_JETON, jeton)
+      await AsyncStorage.setItem(CLE_UTILISATEUR, JSON.stringify(utilisateur))
+      set({ utilisateur, jeton, enChargement: false })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Erreur d'inscription"
+      set({ erreur: message, enChargement: false })
+      throw e
+    }
+  },
+
+  demanderReset: async (email) => {
+    set({ enChargement: true, erreur: null })
+    try {
+      const message = await demanderReinitialisation(email)
+      set({ enChargement: false })
+      return message
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Erreur de demande'
       set({ erreur: message, enChargement: false })
       throw e
     }

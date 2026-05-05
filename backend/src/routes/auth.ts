@@ -29,6 +29,10 @@ const schemaConnexion = z.object({
   motDePasse: z.string().min(1),
 })
 
+const schemaMotDePasseOublie = z.object({
+  email: z.string().email(),
+})
+
 const profilPublic = (u: {
   id: string
   email: string
@@ -103,6 +107,33 @@ routeurAuth.post('/connexion', async (req: Request, res: Response) => {
     res.json({ succes: true, donnees: { utilisateur: profilPublic(utilisateur), jeton } })
   } catch (erreur) {
     console.error('Erreur connexion:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+routeurAuth.post('/mot-de-passe-oublie', async (req: Request, res: Response) => {
+  const parsed = schemaMotDePasseOublie.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Email invalide' })
+    return
+  }
+  const { email } = parsed.data
+  try {
+    const utilisateur = await prisma.utilisateur.findUnique({ where: { email } })
+    if (utilisateur) {
+      console.warn(
+        `[auth] Demande de réinitialisation du mot de passe pour ${email} (id=${utilisateur.id}). ` +
+          `Aucune infrastructure email n'est disponible : un administrateur doit réinitialiser ` +
+          `manuellement via Prisma Studio (champ motDePasseHash).`,
+      )
+    }
+    res.json({
+      succes: true,
+      message:
+        "Si un compte existe pour cette adresse, un administrateur sera notifié et pourra réinitialiser votre mot de passe.",
+    })
+  } catch (erreur) {
+    console.error('Erreur mot-de-passe-oublie:', erreur)
     res.status(500).json({ succes: false, message: 'Erreur serveur' })
   }
 })

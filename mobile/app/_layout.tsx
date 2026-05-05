@@ -26,10 +26,12 @@ export default function LayoutRoot() {
 
   useEffect(() => {
     if (!pretInitial) return
-    const surConnexion = segments[0] === 'connexion'
-    if (!utilisateur && !surConnexion) {
-      router.replace('/connexion')
-    } else if (utilisateur && surConnexion) {
+    const segmentAuth = segments[0]
+    const surEcranAuth =
+      segmentAuth === 'connexion' ||
+      segmentAuth === 'inscription' ||
+      segmentAuth === 'mot-de-passe-oublie'
+    if (utilisateur && surEcranAuth) {
       router.replace('/')
     }
   }, [pretInitial, utilisateur, segments, router])
@@ -42,8 +44,9 @@ export default function LayoutRoot() {
     )
   }
 
-  const surConnexion = segments[0] === 'connexion'
-  const afficherNav = utilisateur && !surConnexion
+  const ECRANS_AUTH = ['connexion', 'inscription', 'mot-de-passe-oublie']
+  const surEcranAuth = ECRANS_AUTH.includes(segments[0] ?? '')
+  const afficherNav = !surEcranAuth
 
   return (
     <GestureHandlerRootView style={styles.flex}>
@@ -55,6 +58,8 @@ export default function LayoutRoot() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="connexion" />
+              <Stack.Screen name="inscription" />
+              <Stack.Screen name="mot-de-passe-oublie" />
               <Stack.Screen name="kanban" />
               <Stack.Screen name="activite" />
               <Stack.Screen name="cultures" />

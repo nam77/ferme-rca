@@ -90,38 +90,47 @@ export default function EcranAccueil() {
   const deconnexion = useAuthStore((s) => s.deconnexion)
   const router = useRouter()
 
-  if (!utilisateur) {
-    return null
-  }
-
-  const filiereCouleur = utilisateur.filiere
+  const filiereCouleur = utilisateur?.filiere
     ? COULEURS_FILIERES[utilisateur.filiere as Filiere]
     : COULEURS_TOKEN.earth
 
   return (
     <SafeAreaView style={styles.conteneur} edges={['left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={styles.contenu}>
-        <Hero
-          tag="AGROPASTORALE RCA · 8 HECTARES"
-          titre="Bonjour"
-          titreEmphase={utilisateur.prenom}
-          sousTitre={"Pilotage en temps réel de la ferme : tâches, cheptel, budget et plan d’aménagement."}
-        >
-          <View style={styles.metaHero}>
-            <Pastille variante="paille">{LIBELLES_ROLES[utilisateur.role]}</Pastille>
-            {utilisateur.filiere ? (
-              <Pastille
-                couleurPersonnalisee={{
-                  fond: filiereCouleur + '22',
-                  bordure: filiereCouleur,
-                  texte: filiereCouleur,
-                }}
-              >
-                {`${ICONES_FILIERES[utilisateur.filiere as Filiere]} ${LIBELLES_FILIERES[utilisateur.filiere as Filiere]}`}
-              </Pastille>
-            ) : null}
-          </View>
-        </Hero>
+        {utilisateur ? (
+          <Hero
+            tag="AGROPASTORALE RCA · 8 HECTARES"
+            titre="Bonjour"
+            titreEmphase={utilisateur.prenom}
+            sousTitre={"Pilotage en temps réel de la ferme : tâches, cheptel, budget et plan d’aménagement."}
+          >
+            <View style={styles.metaHero}>
+              <Pastille variante="paille">{LIBELLES_ROLES[utilisateur.role]}</Pastille>
+              {utilisateur.filiere ? (
+                <Pastille
+                  couleurPersonnalisee={{
+                    fond: filiereCouleur + '22',
+                    bordure: filiereCouleur,
+                    texte: filiereCouleur,
+                  }}
+                >
+                  {`${ICONES_FILIERES[utilisateur.filiere as Filiere]} ${LIBELLES_FILIERES[utilisateur.filiere as Filiere]}`}
+                </Pastille>
+              ) : null}
+            </View>
+          </Hero>
+        ) : (
+          <Hero
+            tag="AGROPASTORALE RCA · 8 HECTARES"
+            titre="Bienvenue sur"
+            titreEmphase="AGROPILOT"
+            sousTitre={"Découvrez en lecture seule le pilotage de la ferme : tâches, cheptel, budget et plan d’aménagement."}
+          >
+            <View style={styles.metaHero}>
+              <Pastille variante="paille">👁️ Mode consultation</Pastille>
+            </View>
+          </Hero>
+        )}
 
         <View style={styles.corps}>
           <View style={styles.entete}>
@@ -159,13 +168,27 @@ export default function EcranAccueil() {
           </View>
 
           <View style={styles.basDePage}>
-            <Bouton
-              libelle="Se déconnecter"
-              variante="rouge"
-              onPress={deconnexion}
-              pleinement
-            />
-            <Text style={styles.email}>{utilisateur.email}</Text>
+            {utilisateur ? (
+              <>
+                <Bouton
+                  libelle="Se déconnecter"
+                  variante="rouge"
+                  onPress={deconnexion}
+                  pleinement
+                />
+                <Text style={styles.email}>{utilisateur.email}</Text>
+              </>
+            ) : (
+              <>
+                <Bouton
+                  libelle="Se connecter"
+                  variante="primaire"
+                  onPress={() => router.push('/connexion')}
+                  pleinement
+                />
+                <Text style={styles.email}>Accédez aux fonctions d&apos;édition</Text>
+              </>
+            )}
           </View>
         </View>
       </ScrollView>

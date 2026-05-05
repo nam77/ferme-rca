@@ -7397,6 +7397,19 @@ async function init() {
   // l'identité injectée. Sinon, l'application démarre en MODE CONSULTATIF
   // (visiteur public non connecté) — toute mutation est interdite.
   const estEmbarqueRN = !!(userFromParam || jetonFromParam);
+  // En embarquement RN sans identité fournie, on FORCE le mode visiteur :
+  // on purge tout jeton/session laissé par une ancienne connexion via la
+  // page HTML standalone. Sans cela, l'iframe se reconnecterait silencieusement
+  // comme l'utilisateur précédent et autoriserait les mutations alors que le
+  // wrapper RN affiche « Mode consultation ».
+  try {
+    const embedParam = new URLSearchParams(window.location.search).get('embed') === '1';
+    if (embedParam && !userFromParam && !jetonFromParam) {
+      try { localStorage.removeItem(JETON_KEY); } catch {}
+      try { localStorage.removeItem(SESSION_KEY); } catch {}
+      window._API_JETON_RN = null;
+    }
+  } catch (e) { void e; }
   if (userFromParam) {
     // Pré-remplit la session pour bypass le login
     localStorage.setItem(SESSION_KEY, JSON.stringify(userFromParam));
