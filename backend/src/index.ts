@@ -14,6 +14,7 @@ import { routeurParcelles } from './routes/parcelles.js'
 import { routeurCRA } from './routes/cra.js'
 import { routeurVentes } from './routes/ventes.js'
 import { routeurDeploiement } from './routes/deploiement.js'
+import { routeurAdminDeploy } from './routes/admin-deploy.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
@@ -75,6 +76,10 @@ app.use('/api/parcelles', routeurParcelles)
 app.use('/api/cra', routeurCRA)
 app.use('/api/ventes', routeurVentes)
 app.use('/api/deploiement', routeurDeploiement)
+// Nouveau pipeline de déploiement automatisé (script whitelisté + SSE).
+// Remplace progressivement /api/deploiement (qui ne fait que générer des
+// artefacts locaux). L'IHM admin de la page /deploiement appelle ces routes.
+app.use('/api/admin', routeurAdminDeploy)
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ succes: false, message: 'Route inconnue' })

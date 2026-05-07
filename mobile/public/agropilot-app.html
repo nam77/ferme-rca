@@ -2072,6 +2072,26 @@
     font-family: 'DM Mono', monospace;
     font-size: 12px;
   }
+  /* Liste d'étapes du nouveau pipeline déploiement (admin) */
+  .depl-etape {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    border-left: 3px solid transparent;
+    background: rgba(92,61,30,0.04);
+    margin-bottom: 4px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .depl-etape[data-status="running"] {
+    border-left-color: #e8943a;
+    background: rgba(232,148,58,0.10);
+    animation: pulse-step 1s ease-in-out infinite alternate;
+  }
+  .depl-etape[data-status="ok"]    { border-left-color: #4a8c3f; background: rgba(74,140,63,0.06); }
+  .depl-etape[data-status="fail"]  { border-left-color: #e74c3c; background: rgba(231,76,60,0.08); }
+  .depl-etape-icone { font-size: 14px; width: 18px; text-align: center; }
+  .depl-etape-label { flex: 1; }
+  .depl-etape-duree { font-family: 'DM Mono', monospace; font-size: 11px; color: #8b5e3c; }
 </style>
 <!-- Chart.js pour graphiques dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2956,14 +2976,12 @@
 
     <div class="dash-section">
       <h3><span class="icon">🚀</span>Lancer un déploiement complet</h3>
-      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:14px">
-        L'assistant exécute en série : création d'un dossier daté, sauvegarde BDD, build web, migration (optionnels). Les artefacts (backup.sql, web/, logs, RECAP.txt) sont écrits dans <code>deploiements/deploy-AAAA-MM-JJ_HH-MM-SS/</code>.
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:6px">
+        L'assistant enchaîne automatiquement les 9 étapes du déploiement : backup BDD, <code>git pull</code>, build & reload backend, build & upload frontend Cloudflare, tests post-déploiement. Durée estimée : <strong>4–6 minutes</strong>.
       </p>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-build" checked> 📦 Build web (Expo Export)</label>
-        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-seed"> 🌱 Réinitialiser le seed</label>
-        <label style="display:inline-flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px"><input type="checkbox" id="opt-migration"> 🗄️ Appliquer migrations Prisma</label>
-      </div>
+      <p style="font-family:'DM Sans',sans-serif;font-size:12.5px;color:#8b5e3c;margin-bottom:14px">
+        Pré-requis : les commits à déployer doivent déjà être poussés sur <code>origin/main</code>. Le serveur fait <code>git pull --ff-only</code> sans rebase.
+      </p>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="btn btn-primary" id="depl-orchestrer" style="background:#2d5a27">▶ Lancer le déploiement</button>
         <button class="btn btn-ghost btn-sm" id="depl-backup">⬇ Télécharger sauvegarde SQL seule</button>
@@ -2980,19 +2998,8 @@
     </div>
 
     <div class="dash-section">
-      <h3><span class="icon">📖</span>Checklist de mise en production</h3>
-      <ol style="font-family:'DM Sans',sans-serif;font-size:13.5px;color:#2d1f0e;line-height:1.7;padding-left:22px">
-        <li>Générer un vrai <code>JWT_SECRET</code> aléatoire (<code>openssl rand -base64 64</code>)</li>
-        <li>Changer les mots de passe des comptes seed (admin / responsable / ouvrier / investisseur)</li>
-        <li>Configurer une whitelist CORS dans <code>backend/src/index.ts</code></li>
-        <li>Activer HTTPS (Cloudflare en frontal ou certbot)</li>
-        <li>Lancer <strong>« ▶ Lancer le déploiement »</strong> pour générer le dossier <code>deploiements/deploy-…</code></li>
-        <li>Pousser <code>web/</code> sur Cloudflare Pages / Vercel / Netlify</li>
-        <li>Importer <code>backup.sql</code> dans la BDD de production si nécessaire</li>
-        <li>Définir <code>EXPO_PUBLIC_API_URL</code> et <code>EXPO_PUBLIC_HTML_URL</code> côté EAS</li>
-        <li>Tester chaque rôle (admin / responsable / ouvrier / investisseur)</li>
-        <li>Programmer un <code>pg_dump</code> quotidien automatique sur le serveur</li>
-      </ol>
+      <h3><span class="icon">📜</span>Historique des déploiements</h3>
+      <div id="depl-historique"></div>
     </div>
   </section>
 </main>
@@ -4062,7 +4069,15 @@ async function apiFetch(method, path, body) {
   const r = await fetch(API_BASE + path, opts);
   if (!r.ok) {
     const txt = await r.text().catch(() => '');
-    throw new Error(`API ${method} ${path} → ${r.status} ${txt.slice(0,120)}`);
+    let parsedBody = null;
+    try { parsedBody = JSON.parse(txt); } catch {}
+    const err = new Error(`API ${method} ${path} → ${r.status} ${txt.slice(0,120)}`);
+    err.status = r.status;
+    if (parsedBody) {
+      err.body = parsedBody;
+      if (parsedBody.donnees) err.donnees = parsedBody.donnees;
+    }
+    throw err;
   }
   return r.json();
 }
@@ -6974,6 +6989,8 @@ async function renderDeploiement() {
     const el = document.getElementById('depl-statut');
     if (el) el.innerHTML = `<div class="empty-state">Impossible de charger le statut : ${escapeHtml(e.message)}<br><span class="hint">Cette page est réservée aux administrateurs.</span></div>`;
   }
+  // Charge l'historique en parallèle (admin only — silencieux si non autorisé)
+  deplChargerHistorique();
 }
 
 function formatUptime(s) {
@@ -7047,112 +7064,193 @@ function setupDeploiement() {
   if (orch) orch.addEventListener('click', deplOrchestrer);
 }
 
-let _deplPollTimer = null;
+// ───── Nouveau pipeline auto (script bash + SSE) ─────
+const DEPL_ETAPES = [
+  { id: 'backup-db',       label: 'Sauvegarde de la base de données' },
+  { id: 'git-pull',        label: 'Mise à jour du code (git pull)' },
+  { id: 'backend-deps',    label: 'Dépendances backend (npm ci + Prisma)' },
+  { id: 'backend-build',   label: 'Build TypeScript backend' },
+  { id: 'backend-reload',  label: 'Reload PM2 (zéro downtime)' },
+  { id: 'frontend-deps',   label: 'Dépendances frontend (npm ci)' },
+  { id: 'frontend-build',  label: 'Build Expo Web' },
+  { id: 'frontend-deploy', label: 'Upload Cloudflare Pages' },
+  { id: 'tests-prod',      label: 'Tests post-déploiement' },
+  { id: 'done',            label: 'Finalisation' },
+];
+
+let _deplSSE = null;
 
 async function deplOrchestrer() {
   const btn = document.getElementById('depl-orchestrer');
   if (!btn) return;
+  if (!confirm("Lancer un déploiement complet en production ?\n\nLe serveur va :\n• git pull origin/main\n• migrer la BDD (avec backup auto)\n• rebuild + reload le backend (zéro downtime)\n• rebuild + uploader le frontend Cloudflare\n• exécuter les tests post-déploiement\n\nDurée estimée : 4-6 min.")) return;
+
   btn.disabled = true;
-  const labelOrig = btn.textContent;
-  btn.textContent = '⏳ Orchestration en cours...';
-
-  const options = {
-    seed: document.getElementById('opt-seed').checked,
-    build: document.getElementById('opt-build').checked,
-    migration: document.getElementById('opt-migration').checked,
-  };
-
+  btn.textContent = '⏳ Démarrage…';
   try {
-    const r = await apiFetch('POST', '/deploiement/orchestrer', options);
-    const id = r.donnees?.id;
-    const dossier = r.donnees?.dossier;
-    if (!id) throw new Error('ID de déploiement manquant');
-    // Affiche la section progression et démarre le polling
-    document.getElementById('depl-progression-section').style.display = '';
-    document.getElementById('depl-progression-titre').innerHTML =
-      `<span class="icon">⏳</span>Déploiement en cours · <code style="font-size:12px">${escapeHtml(dossier)}</code>`;
-    document.getElementById('depl-journal').textContent = '';
-    document.getElementById('depl-etapes').innerHTML = '';
-    if (_deplPollTimer) clearInterval(_deplPollTimer);
-    _deplPollTimer = setInterval(() => deplPollerEtat(id), 800);
-    deplPollerEtat(id);
+    const r = await apiFetch('POST', '/admin/deploy');
+    const runId = r.donnees && r.donnees.runId;
+    if (!runId) throw new Error('runId manquant');
+    deplDemarrerVue(runId);
   } catch (e) {
-    toast('Erreur orchestration : ' + e.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = labelOrig;
-  }
-}
-
-async function deplPollerEtat(id) {
-  try {
-    const r = await apiFetch('GET', '/deploiement/etat/' + id);
-    const e = r.donnees;
-    if (!e) return;
-    deplAfficherEtat(e);
-    if (e.termine) {
-      clearInterval(_deplPollTimer); _deplPollTimer = null;
-      const titre = document.getElementById('depl-progression-titre');
-      if (titre) {
-        titre.innerHTML = e.reussi
-          ? `<span class="icon">✅</span>Déploiement réussi · <code style="font-size:12px">${escapeHtml(e.dossier)}</code>`
-          : `<span class="icon">❌</span>Déploiement avec erreurs · <code style="font-size:12px">${escapeHtml(e.dossier)}</code>`;
+    // 409 = un run est déjà en cours
+    if (e && e.status === 409 && e.donnees && e.donnees.runId) {
+      if (confirm("Un déploiement est déjà en cours. Suivre sa progression ?")) {
+        deplDemarrerVue(e.donnees.runId);
+        return;
       }
-      toast(e.reussi ? '✓ Déploiement réussi' : '✗ Déploiement avec erreurs', e.reussi ? 'success' : 'error');
-      renderDeploiement(); // refresh stats serveur
     }
-  } catch (err) {
-    console.warn('[depl] poll error', err.message);
+    toast('Erreur : ' + (e.message || 'inconnue'), 'error');
+    btn.disabled = false;
+    btn.textContent = '▶ Lancer le déploiement';
   }
 }
 
-function deplAfficherEtat(e) {
-  // Barre de progression
-  const totEt = e.etapes.length;
-  const okEt = e.etapes.filter(et => et.statut === 'reussi').length;
-  const echEt = e.etapes.filter(et => et.statut === 'echec').length;
-  const enCours = e.etapes.find(et => et.statut === 'en_cours');
-  const pct = totEt > 0 ? Math.round(((okEt + echEt) / totEt) * 100) : 0;
-  const echec = !e.reussi && e.termine;
+function deplDemarrerVue(runId) {
+  document.getElementById('depl-progression-section').style.display = '';
+  document.getElementById('depl-progression-titre').innerHTML =
+    `<span class="icon">⏳</span>Déploiement en cours… <code style="font-size:11px;color:#8b5e3c">${escapeHtml(runId)}</code>`;
+  document.getElementById('depl-journal').textContent = '';
+  deplInitEtapes();
+  deplOuvrirSSE(runId);
+}
+
+function deplInitEtapes() {
+  const dest = document.getElementById('depl-etapes');
+  if (!dest) return;
+  dest.innerHTML = DEPL_ETAPES.map(s => `
+    <div class="depl-etape" data-step="${s.id}">
+      <span class="depl-etape-icone">⏸</span>
+      <span class="depl-etape-label">${escapeHtml(s.label)}</span>
+      <span class="depl-etape-duree"></span>
+    </div>
+  `).join('');
+  deplMajBarre();
+}
+
+function deplOuvrirSSE(runId) {
+  if (_deplSSE) { try { _deplSSE.close(); } catch {} _deplSSE = null; }
+  // EventSource ne supporte pas les headers custom : on passe le JWT en
+  // query string. Acceptable car la route est admin-only et le JWT
+  // expire en 7j. Le backend valide token + rôle avant le stream.
+  const url = API_BASE + '/admin/deploy/stream/' + encodeURIComponent(runId)
+            + '?jeton=' + encodeURIComponent(API_JETON);
+  const sse = new EventSource(url);
+  _deplSSE = sse;
+
+  sse.addEventListener('state', ev => deplAppliquerEtat(JSON.parse(ev.data)));
+  sse.addEventListener('step',  ev => { deplMajEtape(JSON.parse(ev.data)); deplMajBarre(); });
+  sse.addEventListener('log',   ev => deplAjouterLog(JSON.parse(ev.data)));
+  sse.addEventListener('end',   ev => {
+    const state = JSON.parse(ev.data);
+    deplAppliquerEtat(state);
+    deplTerminer(state);
+    sse.close(); _deplSSE = null;
+  });
+  sse.onerror = err => console.warn('[deploy SSE] error', err);
+}
+
+function deplAppliquerEtat(state) {
+  if (!state || !state.steps) return;
+  state.steps.forEach(deplMajEtape);
+  if (state.log && state.log.length > 0) {
+    const journal = document.getElementById('depl-journal');
+    if (journal) {
+      journal.textContent = state.log
+        .map(l => `[${new Date(l.ts).toLocaleTimeString('fr-FR')}] ${l.line}`)
+        .join('\n');
+      journal.scrollTop = journal.scrollHeight;
+    }
+  }
+  deplMajBarre();
+}
+
+function deplMajEtape(step) {
+  const dest = document.querySelector('[data-step="' + step.id + '"]');
+  if (!dest) return;
+  const icones  = { pending:'⏸', running:'⏳', ok:'✓', fail:'✗' };
+  const couleurs= { pending:'#999', running:'#e8943a', ok:'#4a8c3f', fail:'#c0392b' };
+  const ic = dest.querySelector('.depl-etape-icone');
+  if (ic) ic.textContent = icones[step.status] || '⏸';
+  dest.style.color = couleurs[step.status] || '#5c3d1e';
+  dest.dataset.status = step.status;
+  if (step.endedAt && step.startedAt) {
+    const sec = Math.round((step.endedAt - step.startedAt) / 1000);
+    const dur = dest.querySelector('.depl-etape-duree');
+    if (dur) dur.textContent = ' (' + sec + 's)';
+  }
+}
+
+function deplMajBarre() {
+  const etapes = document.querySelectorAll('.depl-etape');
+  const total = etapes.length;
+  let ok = 0, fail = 0, running = 0;
+  etapes.forEach(et => {
+    const s = et.dataset.status;
+    if (s === 'ok') ok++;
+    else if (s === 'fail') fail++;
+    else if (s === 'running') running++;
+  });
+  const pct = total > 0 ? Math.round(((ok + fail) / total) * 100) : 0;
   const bar = document.getElementById('depl-progression-bar');
-  if (bar) bar.innerHTML = `<div class="progress-bar"><div class="progress-fill ${echec ? 'echec' : ''}" style="width:${pct}%"></div></div>`;
+  if (bar) bar.innerHTML = `<div class="progress-bar"><div class="progress-fill${fail > 0 ? ' echec' : ''}" style="width:${pct}%"></div></div>`;
   const meta = document.getElementById('depl-progression-meta');
-  if (meta) {
-    const dureeS = ((e.finMs || Date.now()) - e.debutMs) / 1000;
-    meta.innerHTML = `${okEt}/${totEt} étapes terminées · ${echEt} échec(s) · ${dureeS.toFixed(1)} s écoulées${enCours ? ' · ▶ ' + escapeHtml(enCours.titre) : ''}`;
-  }
+  if (meta) meta.textContent = `${ok}/${total} étape(s) terminée(s) · ${fail} échec(s)${running > 0 ? ' · ⏳ en cours' : ''}`;
+}
 
-  // Cartes étapes
-  const cont = document.getElementById('depl-etapes');
-  if (cont) {
-    cont.innerHTML = e.etapes.map(et => {
-      const numero = et.numero === 99 ? '✓' : String(et.numero);
-      const dureeStr = et.dureeMs != null ? `${et.dureeMs} ms` : '—';
-      const horodatage = et.debutMs ? new Date(et.debutMs).toLocaleTimeString('fr-FR') : '';
-      const details = et.details ? `<pre style="margin-top:6px;background:rgba(92,61,30,0.06);padding:8px;border-radius:6px;font-size:11px;color:#5c3d1e;max-height:120px;overflow:auto">${escapeHtml(et.details.slice(-1500))}</pre>` : '';
-      return `
-        <div class="etape-card ${et.statut}">
-          <div class="etape-icone">${numero}</div>
-          <div class="etape-corps">
-            <div class="etape-titre">${escapeHtml(et.titre)}</div>
-            <div class="etape-meta">${horodatage ? horodatage + ' · ' : ''}${et.statut.toUpperCase()} · durée ${dureeStr}</div>
-            ${et.message ? `<div class="etape-message">${escapeHtml(et.message)}</div>` : ''}
-            ${details}
-          </div>
-        </div>
-      `;
+function deplAjouterLog(entry) {
+  const journal = document.getElementById('depl-journal');
+  if (!journal) return;
+  const ts = new Date(entry.ts).toLocaleTimeString('fr-FR');
+  journal.textContent += `[${ts}] ${entry.line}\n`;
+  journal.scrollTop = journal.scrollHeight;
+}
+
+function deplTerminer(state) {
+  const btn = document.getElementById('depl-orchestrer');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '▶ Lancer le déploiement';
+  }
+  const titre = document.getElementById('depl-progression-titre');
+  if (titre) {
+    if (state.status === 'success') {
+      titre.innerHTML = '<span class="icon">✅</span>Déploiement réussi';
+    } else {
+      const msg = state.failureMessage ? ' — ' + escapeHtml(state.failureMessage) : '';
+      titre.innerHTML = '<span class="icon">❌</span>Déploiement échoué' + msg;
+    }
+  }
+  toast(state.status === 'success' ? '✓ Déploiement réussi' : '✗ Déploiement échoué', state.status === 'success' ? 'success' : 'error');
+  renderDeploiement();
+  deplChargerHistorique();
+}
+
+async function deplChargerHistorique() {
+  const dest = document.getElementById('depl-historique');
+  if (!dest) return;
+  try {
+    const r = await apiFetch('GET', '/admin/deploy/runs');
+    const runs = r.donnees || [];
+    if (runs.length === 0) {
+      dest.innerHTML = '<div class="empty-state" style="font-size:13px;color:#8b5e3c">Aucun déploiement enregistré pour l\'instant.</div>';
+      return;
+    }
+    dest.innerHTML = runs.slice(0, 10).map(run => {
+      const debut = new Date(run.startedAt).toLocaleString('fr-FR');
+      const duree = run.endedAt ? Math.round((run.endedAt - run.startedAt) / 1000) + 's' : '⏳';
+      const ic    = { running:'⏳', success:'✅', failed:'❌' }[run.status] || '?';
+      const cls   = { running:'#e8943a', success:'#4a8c3f', failed:'#c0392b' }[run.status] || '#5c3d1e';
+      return `<div class="depl-run-item" style="display:flex;gap:14px;padding:8px 10px;border-bottom:1px solid rgba(92,61,30,0.10);font-family:'DM Mono',monospace;font-size:12px;color:#2d1f0e;align-items:center">
+        <span style="color:${cls};font-size:14px;width:20px">${ic}</span>
+        <span style="flex:1;min-width:140px">${escapeHtml(debut)}</span>
+        <span style="width:60px;text-align:right;color:#8b5e3c">${duree}</span>
+        <span style="flex:1;color:#5c3d1e;font-size:11px">par ${escapeHtml(run.declencheurEmail || '?')}</span>
+        ${run.failureMessage ? `<span style="color:#c0392b;font-size:11px;flex-basis:100%;padding-left:34px;font-family:'DM Sans',sans-serif">${escapeHtml(run.failureMessage)}</span>` : ''}
+      </div>`;
     }).join('');
-  }
-
-  // Journal d'événements
-  const journ = document.getElementById('depl-journal');
-  if (journ) {
-    journ.textContent = e.journal.map(j => {
-      const t = new Date(j.ts).toLocaleTimeString('fr-FR');
-      const prefix = j.type === 'succes' ? '[OK]' : j.type === 'erreur' ? '[ERR]' : '[..]';
-      return `${t}  ${prefix}  ${j.texte}`;
-    }).join('\n');
-    journ.scrollTop = journ.scrollHeight;
+  } catch (e) {
+    dest.innerHTML = `<div class="empty-state" style="font-size:13px;color:#c0392b">Impossible de charger l'historique : ${escapeHtml(e.message || 'erreur')}.</div>`;
   }
 }
 

@@ -8,3 +8,6 @@ node_modules
 # Le dossier reste suivi grâce à .gitkeep.
 /uploads/*
 !/uploads/.gitkeep
+
+# Logs structurés (audit déploiements, etc.) — créés au runtime.
+/logs

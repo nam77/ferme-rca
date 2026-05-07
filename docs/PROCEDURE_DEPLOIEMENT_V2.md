@@ -572,6 +572,9 @@ grep -i "ERROR" ~/import.log
 
 ```bash
 cd ~/apps/agri-pilot/backend
+npx prisma generate    # CRITIQUE — sans ça, le build TS échoue car
+                       # src/generated/prisma/ est gitignoré et donc
+                       # absent après npm ci
 npm run build
 ls dist/    # doit contenir index.js à la racine
 ```
@@ -872,7 +875,7 @@ app.use(cors({
 Commit + push, puis sur le serveur :
 ```bash
 cd ~/apps/agri-pilot && git pull
-cd backend && npm ci && npm run build
+cd backend && npm ci && npx prisma generate && npm run build
 pm2 restart agri-pilot-api
 ```
 
@@ -1037,7 +1040,11 @@ git fetch
 git log HEAD..origin/main --oneline    # voir ce qui va arriver
 git pull
 cd backend
-npm ci          # si le package.json a changé
+npm ci                  # si le package.json a changé
+npx prisma generate     # CRITIQUE si schema.prisma a changé — sans ça
+                        # le build TS échoue car src/generated/prisma/
+                        # est gitignoré (lesson learned 2026-05-07)
+npx prisma db push      # si schema.prisma a changé (rétrocompatible)
 npm run build
 pm2 reload agri-pilot-api    # reload sans downtime
 ```
