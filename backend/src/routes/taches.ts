@@ -18,6 +18,8 @@ const schemaCreation = z.object({
   dateLimite: z.string().datetime().optional().nullable(),
   responsableId: z.string().optional().nullable(),
   zoneId: z.string().optional().nullable(),
+  montantBudget: z.number().nonnegative().max(999_999_999.99).optional().nullable(),
+  montantDepense: z.number().nonnegative().max(999_999_999.99).optional().nullable(),
 })
 
 const schemaMiseAJour = schemaCreation.partial()
@@ -74,6 +76,8 @@ routeurTaches.post('/', async (req: Request, res: Response) => {
         dateLimite: parsed.data.dateLimite ? new Date(parsed.data.dateLimite) : null,
         responsableId: parsed.data.responsableId ?? null,
         zoneId: parsed.data.zoneId ?? null,
+        montantBudget: parsed.data.montantBudget ?? null,
+        montantDepense: parsed.data.montantDepense ?? null,
         createurId: req.utilisateur!.utilisateurId,
       },
       include: inclureRelations,
@@ -154,6 +158,8 @@ routeurTaches.patch('/:id', async (req: Request, res: Response) => {
     }
     if (parsed.data.responsableId !== undefined) data.responsableId = parsed.data.responsableId
     if (parsed.data.zoneId !== undefined) data.zoneId = parsed.data.zoneId
+    if (parsed.data.montantBudget !== undefined) data.montantBudget = parsed.data.montantBudget
+    if (parsed.data.montantDepense !== undefined) data.montantDepense = parsed.data.montantDepense
 
     const misAJour = await prisma.tache.update({
       where: { id },

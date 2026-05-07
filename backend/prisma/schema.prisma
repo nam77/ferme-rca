@@ -158,6 +158,9 @@ model Utilisateur {
   motDePasseHash  String
   prenom          String
   nom             String
+  // Numéro de téléphone du salarié (au format libre, ex : "+236 75 12 34 56").
+  // Optionnel pour les comptes existants qui n'en ont pas.
+  telephone       String?
   role            Role     @default(ouvrier)
   filiere         Filiere?
   actif           Boolean  @default(true)
@@ -171,6 +174,7 @@ model Utilisateur {
   mouvementsAnimauxCrees MouvementAnimal[] @relation("AuteurMouvementAnimal")
   evenementsCultureCrees EvenementCulture[] @relation("AuteurEvenementCulture")
   saisiesCRA             SaisieJourCRA[]
+  saisiesCRASupervisees  SaisieJourCRA[]    @relation("ResponsableCRA")
   ventesEnregistrees     Vente[]            @relation("EnregistreurVente")
 }
 
@@ -184,6 +188,11 @@ model Tache {
   dateLimite    DateTime?
   dateDebut     DateTime?
   dateFinReelle DateTime?
+  // Suivi financier par tâche (XAF, sans centimes — Decimal pour cohérence
+  // avec LigneBudget). montantBudget = enveloppe allouée à la tâche.
+  // montantDepense = total dépensé. Le solde se calcule côté client.
+  montantBudget   Decimal? @db.Decimal(12, 2)
+  montantDepense  Decimal? @db.Decimal(12, 2)
   creeLe        DateTime @default(now())
   modifieLe     DateTime @updatedAt
 
@@ -369,15 +378,25 @@ model SaisieJourCRA {
   type          TypeJourCRA @default(travail)
   heures        Float       @default(8)
   notes         String?
+  // Description libre de l'activité réalisée (planté maïs, vacciné poulets...)
+  activite      String?
+  // URL relative servies par /uploads/photos-cra/...
+  photoDebut    String?
+  photoFin      String?
   creeLe        DateTime    @default(now())
   modifieLe     DateTime    @updatedAt
 
   utilisateurId String
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
+  // Superviseur qui a validé la journée (optionnel)
+  responsableCRAId String?
+  responsableCRA   Utilisateur? @relation("ResponsableCRA", fields: [responsableCRAId], references: [id], onDelete: SetNull)
+
   @@unique([utilisateurId, date])
   @@index([date])
   @@index([utilisateurId])
+  @@index([responsableCRAId])
 }
 
 model BudgetLigne {

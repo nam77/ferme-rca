@@ -2,6 +2,8 @@ import 'dotenv/config'
 import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import rateLimit from 'express-rate-limit'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { routeurAuth } from './routes/auth.js'
 import { routeurTaches } from './routes/taches.js'
 import { routeurDashboard } from './routes/dashboard.js'
@@ -51,6 +53,17 @@ app.get('/api/sante', (_req: Request, res: Response) => {
     heure: new Date().toISOString(),
   })
 })
+
+// Sert les photos uploadées (CRA, etc.) depuis backend/uploads/
+// En prod, NGINX peut servir directement ce dossier (plus performant)
+// mais Express le sert aussi pour le dev local et le fallback.
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const uploadsDir = path.resolve(__dirname, '..', 'uploads')
+app.use('/uploads', express.static(uploadsDir, {
+  maxAge: '7d',
+  fallthrough: true,
+}))
 
 app.use('/api/auth', limiteurAuth, routeurAuth)
 app.use('/api/taches', routeurTaches)

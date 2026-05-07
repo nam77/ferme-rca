@@ -444,6 +444,25 @@
   }
   .task-categorie .pin{font-size:10px}
 
+  .task-budget{
+    display:flex;justify-content:space-between;gap:6px;
+    margin:8px 0 2px;padding:6px 8px;
+    background:rgba(74,140,63,0.08);
+    border:1px solid rgba(74,140,63,0.18);
+    border-radius:6px;
+    font-family:var(--mono);font-size:10.5px;
+  }
+  .task-budget .tb-item{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+  .task-budget .tb-lbl{
+    color:var(--clay);font-size:9px;letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  .task-budget .tb-val{
+    color:var(--soil);font-weight:600;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .task-budget .tb-neg .tb-val{color:var(--red)}
+
   .col-add{
     width:100%;background:transparent;border:1.5px dashed var(--border);
     color:var(--clay);padding:9px;border-radius:8px;font-size:12.5px;
@@ -1635,6 +1654,336 @@
     letter-spacing: 0.5px;
     color: #5c3d1e;
   }
+  .cra-recap-titre {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    color: #2d1f0e;
+    padding: 14px 14px 8px;
+    margin: 0;
+  }
+  .cra-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #8b5e3c;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-left: 10px;
+  }
+  .cra-vue-toggle {
+    display: inline-flex;
+    border: 1px solid rgba(92,61,30,0.20);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .cra-vue-btn {
+    background: #fff;
+    border: 0;
+    padding: 7px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #5c3d1e;
+    cursor: pointer;
+    border-right: 1px solid rgba(92,61,30,0.20);
+  }
+  .cra-vue-btn:last-child { border-right: 0; }
+  .cra-vue-btn.active {
+    background: #4a8c3f;
+    color: #fff;
+    font-weight: 600;
+  }
+  .cra-cell.has-photo::after {
+    content: '📷';
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 11px;
+  }
+  .cra-cell.has-activite::before {
+    content: '✎';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 10px;
+    color: #5c3d1e;
+    opacity: 0.6;
+  }
+  .cra-cell { position: relative; }
+  .cra-photo-input {
+    width: 100%;
+    padding: 6px;
+    border: 1px dashed rgba(92,61,30,0.30);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    background: #faf6ee;
+  }
+  .cra-photo-preview {
+    margin-top: 6px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cra-photo-preview img {
+    max-width: 120px;
+    max-height: 90px;
+    border-radius: 6px;
+    border: 1px solid rgba(92,61,30,0.20);
+    object-fit: cover;
+  }
+  .cra-photo-preview .cra-photo-vide {
+    color: #8b5e3c;
+    font-size: 11px;
+    font-style: italic;
+  }
+  .cra-recap-semaine-table {
+    width: 100%; border-collapse: collapse;
+  }
+  .cra-recap-semaine-table th,
+  .cra-recap-semaine-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(92,61,30,0.10);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    text-align: left;
+  }
+  .cra-recap-semaine-table th {
+    background: rgba(92,61,30,0.05);
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: #5c3d1e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .cra-recap-semaine-table .col-sal { text-align: left; min-width: 180px; }
+  .cra-recap-semaine-table .cell-sem { text-align: center; }
+  .cra-recap-semaine-table .cell-sem .nb-jrs { font-weight: 600; color: #2d1f0e; }
+  .cra-recap-semaine-table .cell-sem .nb-h { font-size: 10.5px; color: #8b5e3c; display: block; }
+
+  /* ===== Pointage CRA (nouveau) ===== */
+  .cra-inscription {
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .cra-insc-form {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center;
+  }
+  .cra-insc-form input,
+  .cra-insc-form select {
+    padding: 8px 10px;
+    border: 1px solid rgba(92,61,30,0.20);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: #fff;
+  }
+  .cra-insc-form input { min-width: 140px; }
+  .cra-pointage-wrap {
+    overflow-x: auto;
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  .cra-pointage-table {
+    border-collapse: collapse;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+  }
+  .cra-pointage-table th,
+  .cra-pointage-table td {
+    border-bottom: 1px solid rgba(92,61,30,0.08);
+    border-right: 1px solid rgba(92,61,30,0.05);
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  .cra-pointage-table thead th {
+    background: rgba(92,61,30,0.05);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #5c3d1e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 4px;
+    position: sticky; top: 0;
+    z-index: 1;
+  }
+  .cra-pointage-table thead th.weekend {
+    background: rgba(231,76,60,0.05);
+    color: #b34534;
+  }
+  .cra-pointage-table .col-sal {
+    text-align: left;
+    min-width: 180px;
+    padding-left: 12px;
+    background: #fafafa;
+    position: sticky; left: 0;
+    z-index: 2;
+    font-weight: 500;
+  }
+  .cra-pointage-table thead .col-sal { z-index: 3; }
+  .cra-pointage-table .col-total {
+    background: rgba(74,140,63,0.06);
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
+    color: #2d1f0e;
+    min-width: 70px;
+    position: sticky; right: 180px;
+  }
+  .cra-pointage-table .col-montant {
+    background: rgba(232,148,58,0.10);
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
+    color: #2d1f0e;
+    min-width: 110px;
+    position: sticky; right: 60px;
+    text-align: right;
+    padding-right: 10px;
+  }
+  .cra-pointage-table .col-action {
+    min-width: 60px;
+    position: sticky; right: 0;
+    background: #fff;
+  }
+  .cra-pointage-table thead .col-total,
+  .cra-pointage-table thead .col-montant,
+  .cra-pointage-table thead .col-action { z-index: 3; }
+  .cra-pointage-table tr.cra-ligne-total {
+    background: rgba(74,140,63,0.10);
+    font-weight: 700;
+  }
+  .cra-pointage-table tr.cra-ligne-total .col-sal {
+    background: rgba(74,140,63,0.10);
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    color: #2d1f0e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cra-pointage-table tr.cra-ligne-total .col-total,
+  .cra-pointage-table tr.cra-ligne-total .col-montant {
+    background: rgba(74,140,63,0.18);
+    font-size: 13px;
+  }
+  .cra-cell-pointage {
+    width: 38px; height: 38px;
+    padding: 2px;
+    position: relative;
+  }
+  .cra-cell-pointage select {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(92,61,30,0.15);
+    border-radius: 5px;
+    background: #faf6ee;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #2d1f0e;
+    text-align: center;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .cra-cell-pointage select:focus { outline: 2px solid #4a8c3f; }
+  .cra-cell-pointage.val-1 select { background: rgba(74,140,63,0.20); border-color: rgba(74,140,63,0.50); font-weight: 600; }
+  .cra-cell-pointage.val-half select { background: rgba(232,148,58,0.18); border-color: rgba(232,148,58,0.50); font-weight: 600; }
+  .cra-cell-pointage.val-0 select { background: rgba(231,76,60,0.08); border-color: rgba(231,76,60,0.25); }
+  .cra-cell-pointage.weekend { background: rgba(92,61,30,0.03); }
+  .cra-cell-pointage .photo-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    background: #fff;
+    border-radius: 50%;
+    border: 1px solid rgba(92,61,30,0.20);
+    width: 14px; height: 14px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .cra-cell-pointage.has-photo .photo-badge { background: #4a8c3f; color: #fff; border-color: #4a8c3f; }
+  .cra-pointage-table .row-modifiee .col-sal::after {
+    content: '●';
+    color: #e8943a;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+  .cra-btn-save-row {
+    padding: 6px 10px;
+    font-size: 11px;
+    background: #4a8c3f;
+    color: #fff;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .cra-btn-save-row:hover { background: #3d7234; }
+  .cra-btn-save-row:disabled { background: #b8b8b8; cursor: not-allowed; }
+
+  .cra-actions-sal {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .cra-actions-sal button {
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.25);
+    border-radius: 5px;
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    font-size: 13px;
+    color: #5c3d1e;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .cra-actions-sal button:hover { background: #faf6ee; transform: scale(1.08); }
+  .cra-actions-sal button.act-add { color: #4a8c3f; border-color: rgba(74,140,63,0.40); font-weight: 700; }
+  .cra-actions-sal button.act-add:hover { background: rgba(74,140,63,0.10); }
+  .cra-actions-sal button.act-edit { color: #1a6b8a; }
+  .cra-actions-sal button.act-edit:hover { background: rgba(26,107,138,0.10); border-color: rgba(26,107,138,0.40); }
+  .cra-actions-sal button.act-del { color: #e74c3c; }
+  .cra-actions-sal button.act-del:hover { background: rgba(231,76,60,0.08); border-color: rgba(231,76,60,0.40); }
+
+  .cra-nom-clic {
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .cra-nom-clic:hover { color: #4a8c3f; text-decoration: underline; }
+
+  .btn-remplir-grand {
+    flex: 1;
+    background: #faf6ee;
+    border: 2px solid rgba(92,61,30,0.20);
+    border-radius: 10px;
+    padding: 18px 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    color: #2d1f0e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-remplir-grand:hover {
+    background: rgba(74,140,63,0.10);
+    border-color: #4a8c3f;
+    transform: translateY(-1px);
+  }
+  .btn-remplir-grand[data-val="0.5"]:hover { background: rgba(232,148,58,0.15); border-color: #e8943a; }
 
   /* ===== Déploiement ===== */
   .depl-output {
@@ -2129,54 +2478,198 @@
     </div>
   </section>
 
-  <!-- ============ CRA — Compte Rendu d'Activité ============ -->
+  <!-- ============ CRA — Pointage mensuel ============ -->
   <section class="view" id="view-cra">
     <div class="view-head">
       <div>
-        <h2 class="view-title">CRA — <em>Compte rendu mensuel</em></h2>
-        <p class="view-sub">Saisie des jours travaillés / absences / congés. Cliquez une case pour cycler le statut.</p>
+        <h2 class="view-title">CRA — <em>Pointage mensuel</em></h2>
+        <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve.</p>
+      </div>
+    </div>
+
+    <!-- Formulaire d'inscription d'un salarié (admin/responsable) -->
+    <div class="cra-inscription">
+      <h3 class="cra-recap-titre" style="padding:0;margin:0 0 8px">Ajouter un salarié au pointage</h3>
+      <div class="cra-insc-form">
+        <input type="text" id="insc-prenom" placeholder="Prénom" maxlength="60">
+        <input type="text" id="insc-nom" placeholder="Nom" maxlength="60">
+        <input type="tel" id="insc-telephone" placeholder="Téléphone (ex : +236 75 12 34 56)" maxlength="40">
+        <select id="insc-role">
+          <option value="ouvrier">Ouvrier</option>
+          <option value="responsable">Responsable</option>
+          <option value="admin">Administrateur</option>
+          <option value="investisseur">Investisseur</option>
+        </select>
+        <select id="insc-filiere">
+          <option value="">— Filière (optionnel) —</option>
+          <option value="pisciculture">Pisciculture</option>
+          <option value="aviculture">Aviculture</option>
+          <option value="porcins">Porcins</option>
+          <option value="caprins">Caprins/Ovins</option>
+          <option value="cultures">Cultures</option>
+          <option value="infrastructure">Infrastructure</option>
+          <option value="habitat">Habitat</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="insc-ajouter">+ Ajouter</button>
       </div>
     </div>
 
     <div class="cra-toolbar">
-      <label style="font-family:'DM Mono',monospace;font-size:11px;color:#8b5e3c;letter-spacing:0.6px;text-transform:uppercase">Mois</label>
+      <label class="cra-lbl">Mois</label>
       <input type="month" id="cra-mois">
-      <label style="font-family:'DM Mono',monospace;font-size:11px;color:#8b5e3c;letter-spacing:0.6px;text-transform:uppercase;margin-left:10px">Salarié</label>
-      <select id="cra-utilisateur"></select>
+      <span style="flex:1"></span>
+      <label class="cra-lbl" style="margin-left:0">TJM (XAF)</label>
+      <input type="number" id="cra-tjm" min="0" step="500" value="5000" style="width:110px;padding:7px 10px;border:1px solid rgba(92,61,30,0.20);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;background:#fff;text-align:right" title="Taux journalier moyen appliqué à tous les salariés">
       <span style="flex:1"></span>
       <button class="btn btn-ghost btn-sm" id="cra-prev">◂ Mois préc.</button>
       <button class="btn btn-ghost btn-sm" id="cra-next">Mois suiv. ▸</button>
     </div>
 
-    <div class="cra-grid" id="cra-grid"></div>
+    <div class="cra-pointage-wrap">
+      <table class="cra-pointage-table" id="cra-pointage-table"></table>
+    </div>
 
     <div class="cra-legend">
-      <span class="cra-legend-item" style="background:rgba(74,140,63,0.18);border:1px solid rgba(74,140,63,0.50)">▣ Travail</span>
-      <span class="cra-legend-item" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.50)">▣ Absence</span>
-      <span class="cra-legend-item" style="background:rgba(26,107,138,0.15);border:1px solid rgba(26,107,138,0.50)">▣ Congé</span>
-      <span class="cra-legend-item" style="background:rgba(232,148,58,0.15);border:1px solid rgba(232,148,58,0.50)">▣ Maladie</span>
-      <span class="cra-legend-item" style="background:rgba(212,84,138,0.15);border:1px solid rgba(212,84,138,0.50)">▣ Formation</span>
-      <span class="cra-legend-item" style="background:rgba(123,110,62,0.15);border:1px solid rgba(123,110,62,0.50)">▣ Férié</span>
-    </div>
-
-    <div class="cra-recap">
-      <table>
-        <thead>
-          <tr>
-            <th>Salarié</th>
-            <th>Travail</th>
-            <th>Absence</th>
-            <th>Congé</th>
-            <th>Maladie</th>
-            <th>Formation</th>
-            <th>Férié</th>
-            <th>Heures totales</th>
-          </tr>
-        </thead>
-        <tbody id="cra-recap-tbody"></tbody>
-      </table>
+      <span class="cra-legend-item" style="background:rgba(74,140,63,0.18);border:1px solid rgba(74,140,63,0.50)">1 — Journée complète (8 h)</span>
+      <span class="cra-legend-item" style="background:rgba(232,148,58,0.15);border:1px solid rgba(232,148,58,0.50)">0.5 — Demi-journée (4 h)</span>
+      <span class="cra-legend-item" style="background:rgba(231,76,60,0.10);border:1px solid rgba(231,76,60,0.30)">0 — Absent</span>
+      <span class="cra-legend-item" style="background:#fff;border:1px solid rgba(92,61,30,0.20)">📷 Photos preuve disponibles</span>
     </div>
   </section>
+
+  <!-- ===== MODAL CRA Édition salarié ===== -->
+  <div class="modal-backdrop" id="modal-cra-salarie">
+    <div class="modal modal-task" style="max-width:560px">
+      <div class="modal-head">
+        <div>
+          <span class="modal-tag">CRA · SALARIÉ</span>
+          <h3 class="modal-title" id="cra-sal-title">Modifier le salarié</h3>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Fermer">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" id="cra-sal-prenom" maxlength="60">
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" id="cra-sal-nom" maxlength="60">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" id="cra-sal-telephone" maxlength="40" placeholder="+236 75 12 34 56">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Rôle</label>
+            <select id="cra-sal-role">
+              <option value="ouvrier">Ouvrier</option>
+              <option value="responsable">Responsable</option>
+              <option value="admin">Administrateur</option>
+              <option value="investisseur">Investisseur</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Filière</label>
+            <select id="cra-sal-filiere">
+              <option value="">— Aucune —</option>
+              <option value="pisciculture">Pisciculture</option>
+              <option value="aviculture">Aviculture</option>
+              <option value="porcins">Porcins</option>
+              <option value="caprins">Caprins/Ovins</option>
+              <option value="cultures">Cultures</option>
+              <option value="infrastructure">Infrastructure</option>
+              <option value="habitat">Habitat</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="cra-sal-supprimer" style="color:#e74c3c">Supprimer ce salarié</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" data-close-modal>Annuler</button>
+        <button class="btn btn-primary" id="cra-sal-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CRA Remplir tout le mois ===== -->
+  <div class="modal-backdrop" id="modal-cra-remplir">
+    <div class="modal modal-task" style="max-width:440px">
+      <div class="modal-head">
+        <div>
+          <span class="modal-tag">CRA · REMPLISSAGE RAPIDE</span>
+          <h3 class="modal-title" id="cra-remplir-title">Remplir tout le mois</h3>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Fermer">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:#5c3d1e;margin:0 0 14px">
+          Affecte la valeur choisie à <strong>tous les jours du mois</strong> pour ce salarié, week-ends compris.
+          Les jours déjà pointés seront <strong>écrasés</strong>.
+        </p>
+        <div style="display:flex;gap:12px;margin-bottom:14px">
+          <button class="btn-remplir-grand" data-val="0.5">
+            <span style="font-size:32px;font-weight:700">0.5</span>
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Demi-journée<br>(4 h)</span>
+          </button>
+          <button class="btn-remplir-grand" data-val="1">
+            <span style="font-size:32px;font-weight:700">1</span>
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px">Journée pleine<br>(8 h)</span>
+          </button>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5c3d1e">
+          <input type="checkbox" id="cra-remplir-skip-we" checked>
+          Ignorer les week-ends (samedi + dimanche)
+        </label>
+      </div>
+      <div class="modal-foot">
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CRA Photos preuve (joint à un jour pointé) ===== -->
+  <div class="modal-backdrop" id="modal-cra-photos">
+    <div class="modal modal-task" style="max-width:600px">
+      <div class="modal-head">
+        <div>
+          <span class="modal-tag">CRA · PHOTOS PREUVE</span>
+          <h3 class="modal-title" id="cra-photos-title">Photos preuve de la journée</h3>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Fermer">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:#5c3d1e;margin:0 0 12px">
+          Le responsable prend en photo le début ET la fin des travaux pour attester la présence du salarié.
+        </p>
+        <p style="font-size:11px;color:#8b5e3c;margin:0 0 8px;font-style:italic">
+          Sur smartphone : prendre une photo OU choisir une image existante.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>📷 Photo début</label>
+            <input type="file" id="cra-photo-debut" accept="image/*" class="cra-photo-input">
+            <div class="cra-photo-preview" id="cra-preview-debut"></div>
+          </div>
+          <div class="form-group">
+            <label>📷 Photo fin</label>
+            <input type="file" id="cra-photo-fin" accept="image/*" class="cra-photo-input">
+            <div class="cra-photo-preview" id="cra-preview-fin"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span style="flex:1"></span>
+        <button class="btn btn-ghost" data-close-modal>Annuler</button>
+        <button class="btn btn-primary" id="cra-photos-save">Enregistrer les photos</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ BUDGET ============ -->
   <section class="view" id="view-budget">
@@ -2249,6 +2742,9 @@
       <div>
         <h2 class="view-title">La Ferme — <em>Plan & zones</em></h2>
         <p class="view-sub">Vue illustrée à gauche · Plan technique à droite. Flèches animées = flux d'économie circulaire. Cliquez sur une zone.</p>
+      </div>
+      <div id="ferme-actions-admin" style="display:none">
+        <button class="btn btn-primary btn-sm" id="ferme-btn-creer-zone">+ Nouvelle zone</button>
       </div>
     </div>
 
@@ -2559,6 +3055,16 @@
           <option value="termine">Terminé</option>
         </select>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Budget alloué (XAF) — <span class="hint">Combien prévu ?</span></label>
+          <input type="number" id="f-budget" min="0" step="500" placeholder="Ex: 50000">
+        </div>
+        <div class="form-group">
+          <label>Dépense (XAF) — <span class="hint">Combien dépensé ?</span></label>
+          <input type="number" id="f-depense" min="0" step="500" placeholder="Ex: 12500">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" data-close-modal>Annuler</button>
@@ -2578,8 +3084,99 @@
       <button class="modal-close" data-close-modal>×</button>
     </div>
     <div class="modal-body" id="zone-body"></div>
-    <div class="modal-foot">
+    <div class="modal-foot" id="zone-foot-admin">
+      <button class="btn btn-danger" id="zone-btn-supprimer" style="display:none">✕ Supprimer</button>
+      <span style="flex:1"></span>
       <button class="btn btn-ghost" data-close-modal>Fermer</button>
+      <button class="btn btn-primary" id="zone-btn-modifier" style="display:none">✎ Modifier</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ÉDITION D'UNE ZONE (admin) ===== -->
+<div class="modal-backdrop" id="modal-zone-edit">
+  <div class="modal modal-zone">
+    <div class="modal-head">
+      <h2 id="zone-edit-title">Modifier la zone</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="ze-nom" maxlength="120">
+        </div>
+        <div class="form-group">
+          <label>Statut</label>
+          <select id="ze-statut">
+            <option value="planifie">Planifié</option>
+            <option value="construction">En construction</option>
+            <option value="operationnel">Opérationnel</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Filière</label>
+          <select id="ze-filiere">
+            <option value="pisciculture">🐟 Pisciculture</option>
+            <option value="aviculture">🐓 Aviculture</option>
+            <option value="porcins">🐷 Porcins</option>
+            <option value="caprins">🐐 Caprins/Ovins</option>
+            <option value="cultures">🌾 Cultures</option>
+            <option value="infrastructure">🏗️ Infrastructure</option>
+            <option value="habitat">🏠 Habitat/Stock</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Superficie</label>
+          <input type="text" id="ze-superficie" placeholder="Ex: 200 m² ou 3 ha">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dimensions (optionnel)</label>
+        <input type="text" id="ze-dimensions" placeholder="Ex: 20 m × 10 m">
+      </div>
+      <div class="form-group">
+        <label>Contenu</label>
+        <input type="text" id="ze-contenu" placeholder="Ex: 2000 poulets de chair">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="ze-description"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Conseil agronome (optionnel)</label>
+        <textarea id="ze-tip"></textarea>
+      </div>
+      <div id="ze-bloc-position" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Position X (0-1000 px)</label>
+            <input type="number" id="ze-x" min="0" max="1000">
+          </div>
+          <div class="form-group">
+            <label>Position Y (0-800 px)</label>
+            <input type="number" id="ze-y" min="0" max="800">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Largeur (px)</label>
+            <input type="number" id="ze-w" min="40" max="800">
+          </div>
+          <div class="form-group">
+            <label>Hauteur (px)</label>
+            <input type="number" id="ze-h" min="40" max="600">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="ze-restaurer" style="color:#5c3d1e" title="Restaurer toutes les zones supprimées et annuler tous les changements locaux">↺ Restaurer toutes les zones</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="ze-save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -3365,8 +3962,20 @@ async function saveBudget() { await storageSet(KEYS.BUDGET, state.budget); }
    - Fallback localStorage si API indisponible.
 */
 const API_BASE = (() => {
-  // En iframe servie par Expo (port 8081), on parle au backend sur 3001
+  // Priorité 1 : ?api=... transmis par le wrapper React Native
+  // (IframePage.tsx) — c'est la vraie URL de l'API en production
+  // (https://api.agri-pilot.com) ou en dev (http://localhost:3001).
+  // Priorité 2 : devine via window.location.hostname:3001 (utile
+  // uniquement quand on ouvre le HTML directement dans un onglet,
+  // hors wrapper RN, ce qui n'arrive qu'en debug).
   try {
+    const params = new URLSearchParams(window.location.search || '');
+    let urlInjectee = params.get('api');
+    if (urlInjectee) {
+      urlInjectee = urlInjectee.trim().replace(/\/+$/, '');
+      if (!/\/api$/.test(urlInjectee)) urlInjectee += '/api';
+      return urlInjectee;
+    }
     const host = window.location.hostname || 'localhost';
     return 'http://' + host + ':3001/api';
   } catch { return 'http://localhost:3001/api'; }
@@ -3404,6 +4013,10 @@ function tacheApiVersHtml(t) {
     dateFin: t.dateLimite ? t.dateLimite.split('T')[0] : null,
     comment: '',
     categorie: t.zoneId ?? null,
+    // Decimal Prisma sérialisé en string par JSON → on convertit en Number.
+    // null/undefined → null (champ vide).
+    budget: t.montantBudget != null ? Number(t.montantBudget) : null,
+    depense: t.montantDepense != null ? Number(t.montantDepense) : null,
     _apiId: t.id,
   };
 }
@@ -3415,6 +4028,8 @@ function tacheHtmlVersApi(t) {
     priorite: t.priorite || 'moyenne',
     statut: t.statut || 'a_faire',
     dateLimite: t.dateFin ? new Date(t.dateFin + 'T00:00:00Z').toISOString() : null,
+    montantBudget: t.budget != null && t.budget !== '' ? Number(t.budget) : null,
+    montantDepense: t.depense != null && t.depense !== '' ? Number(t.depense) : null,
   };
 }
 function budgetApiVersHtml(b) {
@@ -3560,6 +4175,13 @@ async function apiSauvegarderTaches() {
       });
       if ((t.dateFin||null) !== (ancien.dateFin||null)) {
         champsChanges.dateLimite = t.dateFin ? new Date(t.dateFin+'T00:00:00Z').toISOString() : null;
+      }
+      const numOuNull = (v) => (v == null || v === '' ? null : Number(v));
+      if (numOuNull(t.budget) !== numOuNull(ancien.budget)) {
+        champsChanges.montantBudget = numOuNull(t.budget);
+      }
+      if (numOuNull(t.depense) !== numOuNull(ancien.depense)) {
+        champsChanges.montantDepense = numOuNull(t.depense);
       }
       if (t.statut !== ancien.statut) {
         // Route dédiée pour le statut (passe par le mouvement)
@@ -4468,6 +5090,7 @@ function renderTaskCard(t) {
     <div class="task-title">${escapeHtml(t.titre)}</div>
     ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
     ${catLabel ? `<div class="task-categorie"><span class="pin">📍</span>${escapeHtml(catLabel)}</div>` : ''}
+    ${renderTaskBudget(t)}
     <div class="task-foot">
       <div class="task-resp">
         <span class="resp-avatar">${initials(t.responsable)}</span>
@@ -4480,6 +5103,26 @@ function renderTaskCard(t) {
 
 function escapeHtml(s) {
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtXAF(n) {
+  return Number(n || 0).toLocaleString('fr-FR') + ' XAF';
+}
+
+// Bandeau Budget / Dépense / Solde sur la carte. N'affiche rien si les
+// deux champs sont vides (la majorité des tâches existantes n'auront pas
+// de montant). Solde = Budget - Dépense ; rouge si négatif.
+function renderTaskBudget(t) {
+  const b = t.budget != null && t.budget !== '' ? Number(t.budget) : null;
+  const d = t.depense != null && t.depense !== '' ? Number(t.depense) : null;
+  if (b == null && d == null) return '';
+  const solde = (b ?? 0) - (d ?? 0);
+  const negatif = solde < 0;
+  return `<div class="task-budget">
+    <span class="tb-item"><span class="tb-lbl">Budget</span><span class="tb-val">${b != null ? fmtXAF(b) : '—'}</span></span>
+    <span class="tb-item"><span class="tb-lbl">Dépensé</span><span class="tb-val">${d != null ? fmtXAF(d) : '—'}</span></span>
+    <span class="tb-item${negatif ? ' tb-neg' : ''}"><span class="tb-lbl">Solde</span><span class="tb-val">${fmtXAF(solde)}</span></span>
+  </div>`;
 }
 
 /* ===== DRAG & DROP ===== */
@@ -4581,6 +5224,8 @@ function openTaskModal(id, defaultStatut) {
   document.getElementById('f-date').value = t ? (t.dateFin || '') : '';
   document.getElementById('f-comment').value = t ? (t.comment || '') : '';
   document.getElementById('f-statut').value = t ? t.statut : (defaultStatut || 'a_faire');
+  document.getElementById('f-budget').value = t && t.budget != null ? t.budget : '';
+  document.getElementById('f-depense').value = t && t.depense != null ? t.depense : '';
   // Remplir le select catégorie filtré par la filière, et sélectionner la valeur courante
   populateCategorieSelect(filiere, t ? (t.categorie || '') : '');
   document.getElementById('modal-task').classList.add('show');
@@ -4592,6 +5237,12 @@ async function saveTaskFromModal() {
   if (!titre) { toast('Le titre est requis', 'error'); return; }
   // Si c'est une création (pas d'editingTaskId), il faut canCreateTask
   if (!state.editingTaskId && !requirePermission('canCreateTask', 'Vous ne pouvez pas créer de nouvelle tâche')) return;
+  const lireMontant = (id) => {
+    const v = document.getElementById(id).value;
+    if (v === '' || v == null) return null;
+    const n = Number(v);
+    return isFinite(n) && n >= 0 ? n : null;
+  };
   const data = {
     titre,
     description: document.getElementById('f-desc').value.trim(),
@@ -4601,7 +5252,9 @@ async function saveTaskFromModal() {
     responsable: document.getElementById('f-resp').value.trim(),
     dateFin:   document.getElementById('f-date').value || null,
     comment:   document.getElementById('f-comment').value.trim(),
-    statut:    document.getElementById('f-statut').value
+    statut:    document.getElementById('f-statut').value,
+    budget:    lireMontant('f-budget'),
+    depense:   lireMontant('f-depense'),
   };
   if (state.editingTaskId) {
     Object.assign(state.taches.find(t => t.id === state.editingTaskId), data);
@@ -4917,8 +5570,32 @@ async function deleteBudgetLigne(id) {
 
 /* ============ FERME — VUES SVG ============ */
 function renderFerme() {
+  // Applique les overrides locaux (édition / création / suppression admin)
+  appliquerZonesLocales();
+
   document.getElementById('svg-illustree').innerHTML = buildIllustration();
   document.getElementById('svg-technique').innerHTML = buildTechnique();
+
+  // Cache visuellement les zones marquées supprimées (codées en dur dans le SVG)
+  const idsSupprimes = ZONES.filter(z => z._supprimee).map(z => z.id);
+  for (const id of idsSupprimes) {
+    document.querySelectorAll(`.zone-clickable[data-id="${id}"]`).forEach(el => {
+      el.style.display = 'none';
+    });
+  }
+
+  // Insère dans les 2 SVG les zones créées localement (rectangles simples)
+  const zonesCreees = ZONES.filter(z => z._creeeLocale && !z._supprimee);
+  if (zonesCreees.length > 0) {
+    const svgIll = document.querySelector('#svg-illustree svg');
+    const svgTech = document.querySelector('#svg-technique svg');
+    for (const z of zonesCreees) {
+      const groupe = svgGroupeZoneCustom(z);
+      if (svgIll) svgIll.insertAdjacentHTML('beforeend', groupe);
+      if (svgTech) svgTech.insertAdjacentHTML('beforeend', groupe);
+    }
+  }
+
   // Légende filières
   const lg = document.getElementById('ferme-legend');
   lg.innerHTML = Object.entries(FILIERES).map(([k,v]) =>
@@ -4926,10 +5603,32 @@ function renderFerme() {
   ).join('');
   // Légende des flux
   renderFluxLegend();
-  // Click handlers (sur les deux SVG)
+  // Bouton admin "+ Nouvelle zone"
+  const actionsAdmin = document.getElementById('ferme-actions-admin');
+  if (actionsAdmin) actionsAdmin.style.display = estAdmin() ? '' : 'none';
+
+  // Click handlers (sur les deux SVG, après insertion des zones custom)
   document.querySelectorAll('.zone-clickable').forEach(el => {
     el.addEventListener('click', () => openZoneModal(el.dataset.id));
   });
+}
+
+// Rendu SVG d'une zone créée localement (rectangle stylisé selon filière)
+function svgGroupeZoneCustom(z) {
+  const fil = FILIERES[z.filiere] || FILIERES.infrastructure;
+  const opacity = z.statut === 'planifie' ? 0.5 : (z.statut === 'construction' ? 0.78 : 1);
+  const dash = z.statut === 'planifie' ? '5 4' : '0';
+  return `<g class="zone-clickable" data-id="${z.id}">
+    <rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="8"
+          fill="${fil.color}" fill-opacity="0.22"
+          stroke="${fil.color}" stroke-width="2.5" stroke-dasharray="${dash}" opacity="${opacity}"/>
+    <text x="${z.x + z.w/2}" y="${z.y + 22}" text-anchor="middle"
+          font-family="DM Sans" font-size="13" font-weight="700" fill="${fil.color}">${fil.icon} ${escapeHtml(z.nom)}</text>
+    ${z.superficie ? `<text x="${z.x + z.w/2}" y="${z.y + 40}" text-anchor="middle"
+          font-family="DM Mono" font-size="10" fill="#5c3d1e" opacity="0.75">${escapeHtml(z.superficie)}</text>` : ''}
+    ${z.contenu ? `<text x="${z.x + z.w/2}" y="${z.y + z.h - 10}" text-anchor="middle"
+          font-family="DM Sans" font-size="11" fill="#2d1f0e">${escapeHtml(z.contenu)}</text>` : ''}
+  </g>`;
 }
 
 function renderFluxLegend() {
@@ -5327,6 +6026,59 @@ function zoneTech(z) {
 }
 
 /* === Modal zone === */
+// ─── CRUD zones admin (persistance localStorage) ───
+const CLE_ZONES_OVERRIDES = 'agropilot_zones_overrides';   // { id: {champs surchargés} }
+const CLE_ZONES_SUPPRIMEES = 'agropilot_zones_supprimees'; // [id, ...]
+const CLE_ZONES_CREEES = 'agropilot_zones_creees';         // [{...zone}, ...]
+
+function chargerZonesLocales() {
+  try {
+    const overrides = JSON.parse(localStorage.getItem(CLE_ZONES_OVERRIDES) || '{}');
+    const supprimees = JSON.parse(localStorage.getItem(CLE_ZONES_SUPPRIMEES) || '[]');
+    const creees = JSON.parse(localStorage.getItem(CLE_ZONES_CREEES) || '[]');
+    return { overrides, supprimees, creees };
+  } catch {
+    return { overrides: {}, supprimees: [], creees: [] };
+  }
+}
+function sauverZonesLocales(local) {
+  try {
+    localStorage.setItem(CLE_ZONES_OVERRIDES, JSON.stringify(local.overrides || {}));
+    localStorage.setItem(CLE_ZONES_SUPPRIMEES, JSON.stringify(local.supprimees || []));
+    localStorage.setItem(CLE_ZONES_CREEES, JSON.stringify(local.creees || []));
+  } catch {}
+}
+
+// Applique les overrides locaux au tableau ZONES en mémoire (mutation in-place
+// des éléments + ajout des zones créées + marquage des supprimées via _supprimee).
+// Appelée au démarrage et après chaque modification.
+function appliquerZonesLocales() {
+  const local = chargerZonesLocales();
+  // Reset : enlève toutes les marques + zones précédemment créées
+  for (let i = ZONES.length - 1; i >= 0; i--) {
+    if (ZONES[i]._creeeLocale) ZONES.splice(i, 1);
+    else delete ZONES[i]._supprimee;
+  }
+  // Applique les overrides
+  for (const [id, champs] of Object.entries(local.overrides || {})) {
+    const z = ZONES.find(x => x.id === id);
+    if (z) Object.assign(z, champs);
+  }
+  // Marque les supprimées
+  for (const id of local.supprimees || []) {
+    const z = ZONES.find(x => x.id === id);
+    if (z) z._supprimee = true;
+  }
+  // Ajoute les zones créées
+  for (const z of local.creees || []) {
+    ZONES.push({ ...z, _creeeLocale: true });
+  }
+}
+
+function estAdmin() {
+  return state.user?.role === 'admin';
+}
+
 function openZoneModal(id) {
   const z = ZONES.find(x => x.id === id);
   if (!z) return;
@@ -5351,7 +6103,179 @@ function openZoneModal(id) {
     ${detailsHtml ? `<div class="zone-section-title">Détails</div>${detailsHtml}` : ''}
     ${z.tip ? `<div class="zone-section-title">💡 Conseil agronome</div><div class="zone-tip">${escapeHtml(z.tip)}</div>` : ''}
   `;
+  // Boutons admin (modifier / supprimer) — visibles uniquement pour admin
+  const btnEdit = document.getElementById('zone-btn-modifier');
+  const btnDel = document.getElementById('zone-btn-supprimer');
+  if (estAdmin()) {
+    btnEdit.style.display = '';
+    btnDel.style.display = '';
+    btnEdit.dataset.zid = id;
+    btnDel.dataset.zid = id;
+  } else {
+    btnEdit.style.display = 'none';
+    btnDel.style.display = 'none';
+  }
   document.getElementById('modal-zone').classList.add('show');
+}
+
+// ─── Modal édition / création ───
+state.zoneEditId = null;     // null = création, sinon = id à éditer
+state.zoneEditCreate = false;
+
+function ouvrirEditZone(id) {
+  if (!estAdmin()) { toast('Réservé aux administrateurs', 'error'); return; }
+  const z = ZONES.find(x => x.id === id);
+  if (!z) return;
+  state.zoneEditId = id;
+  state.zoneEditCreate = false;
+  document.getElementById('zone-edit-title').textContent = `Modifier — ${z.nom}`;
+  document.getElementById('ze-nom').value = z.nom || '';
+  document.getElementById('ze-statut').value = z.statut || 'planifie';
+  document.getElementById('ze-filiere').value = z.filiere || 'infrastructure';
+  document.getElementById('ze-superficie').value = z.superficie || '';
+  document.getElementById('ze-dimensions').value = z.dimensions || '';
+  document.getElementById('ze-contenu').value = z.contenu || '';
+  document.getElementById('ze-description').value = z.description || '';
+  document.getElementById('ze-tip').value = z.tip || '';
+  // Bloc position visible uniquement pour les zones créées localement
+  document.getElementById('ze-bloc-position').style.display = z._creeeLocale ? '' : 'none';
+  if (z._creeeLocale) {
+    document.getElementById('ze-x').value = z.x;
+    document.getElementById('ze-y').value = z.y;
+    document.getElementById('ze-w').value = z.w;
+    document.getElementById('ze-h').value = z.h;
+  }
+  // Ferme le modal de lecture s'il est ouvert
+  document.getElementById('modal-zone').classList.remove('show');
+  document.getElementById('modal-zone-edit').classList.add('show');
+}
+
+function ouvrirCreerZone() {
+  if (!estAdmin()) { toast('Réservé aux administrateurs', 'error'); return; }
+  state.zoneEditId = null;
+  state.zoneEditCreate = true;
+  document.getElementById('zone-edit-title').textContent = 'Nouvelle zone';
+  document.getElementById('ze-nom').value = '';
+  document.getElementById('ze-statut').value = 'planifie';
+  document.getElementById('ze-filiere').value = 'infrastructure';
+  document.getElementById('ze-superficie').value = '';
+  document.getElementById('ze-dimensions').value = '';
+  document.getElementById('ze-contenu').value = '';
+  document.getElementById('ze-description').value = '';
+  document.getElementById('ze-tip').value = '';
+  document.getElementById('ze-bloc-position').style.display = '';
+  document.getElementById('ze-x').value = 400;
+  document.getElementById('ze-y').value = 350;
+  document.getElementById('ze-w').value = 160;
+  document.getElementById('ze-h').value = 100;
+  document.getElementById('modal-zone-edit').classList.add('show');
+}
+
+function sauverEditZone() {
+  if (!estAdmin()) return;
+  const champs = {
+    nom: document.getElementById('ze-nom').value.trim(),
+    statut: document.getElementById('ze-statut').value,
+    filiere: document.getElementById('ze-filiere').value,
+    superficie: document.getElementById('ze-superficie').value.trim(),
+    dimensions: document.getElementById('ze-dimensions').value.trim(),
+    contenu: document.getElementById('ze-contenu').value.trim(),
+    description: document.getElementById('ze-description').value.trim(),
+    tip: document.getElementById('ze-tip').value.trim(),
+  };
+  if (!champs.nom) { toast('Le nom est obligatoire', 'error'); return; }
+
+  const local = chargerZonesLocales();
+  if (state.zoneEditCreate) {
+    // Création : génère un id local + récupère x/y/w/h
+    const id = 'zl-' + Date.now().toString(36);
+    const x = parseInt(document.getElementById('ze-x').value, 10) || 400;
+    const y = parseInt(document.getElementById('ze-y').value, 10) || 350;
+    const w = parseInt(document.getElementById('ze-w').value, 10) || 160;
+    const h = parseInt(document.getElementById('ze-h').value, 10) || 100;
+    local.creees.push({ id, x, y, w, h, ...champs });
+    sauverZonesLocales(local);
+    appliquerZonesLocales();
+    toast('Zone créée', 'success');
+  } else {
+    // Modification : enregistre dans overrides
+    if (!local.overrides) local.overrides = {};
+    local.overrides[state.zoneEditId] = champs;
+    // Si c'est une zone créée localement, mets à jour aussi sa fiche dans creees + position
+    const idxCree = (local.creees || []).findIndex(c => c.id === state.zoneEditId);
+    if (idxCree >= 0) {
+      local.creees[idxCree] = {
+        ...local.creees[idxCree],
+        ...champs,
+        x: parseInt(document.getElementById('ze-x').value, 10) || local.creees[idxCree].x,
+        y: parseInt(document.getElementById('ze-y').value, 10) || local.creees[idxCree].y,
+        w: parseInt(document.getElementById('ze-w').value, 10) || local.creees[idxCree].w,
+        h: parseInt(document.getElementById('ze-h').value, 10) || local.creees[idxCree].h,
+      };
+    }
+    sauverZonesLocales(local);
+    appliquerZonesLocales();
+    toast('Zone modifiée', 'success');
+  }
+  document.getElementById('modal-zone-edit').classList.remove('show');
+  renderFerme();
+}
+
+async function supprimerZoneCourante() {
+  if (!estAdmin()) return;
+  const id = document.getElementById('zone-btn-supprimer').dataset.zid;
+  if (!id) return;
+  const z = ZONES.find(x => x.id === id);
+  const ok = await confirmAction(
+    `Supprimer la zone « ${z?.nom || id} » du plan ?\n\nLa zone sera cachée mais peut être restaurée plus tard.`,
+    'Supprimer'
+  );
+  if (!ok) return;
+  const local = chargerZonesLocales();
+  if (z?._creeeLocale) {
+    // Zone locale : on la retire complètement de la liste créée
+    local.creees = (local.creees || []).filter(c => c.id !== id);
+  } else {
+    // Zone codée en dur : on la marque comme supprimée
+    if (!local.supprimees.includes(id)) local.supprimees.push(id);
+    if (local.overrides) delete local.overrides[id];
+  }
+  sauverZonesLocales(local);
+  appliquerZonesLocales();
+  toast('Zone supprimée', 'success');
+  document.getElementById('modal-zone').classList.remove('show');
+  renderFerme();
+}
+
+// Câble les boutons d'admin de la page ferme une seule fois au boot
+function setupFermeAdmin() {
+  const btnCreer = document.getElementById('ferme-btn-creer-zone');
+  if (btnCreer) btnCreer.addEventListener('click', ouvrirCreerZone);
+  const btnEdit = document.getElementById('zone-btn-modifier');
+  if (btnEdit) btnEdit.addEventListener('click', () => ouvrirEditZone(btnEdit.dataset.zid));
+  const btnDel = document.getElementById('zone-btn-supprimer');
+  if (btnDel) btnDel.addEventListener('click', supprimerZoneCourante);
+  const btnSave = document.getElementById('ze-save');
+  if (btnSave) btnSave.addEventListener('click', sauverEditZone);
+  const btnRestaurer = document.getElementById('ze-restaurer');
+  if (btnRestaurer) btnRestaurer.addEventListener('click', restaurerToutesZones);
+}
+
+async function restaurerToutesZones() {
+  const ok = await confirmAction(
+    'Restaurer toutes les zones initiales et annuler tous vos changements locaux (créations, modifications, suppressions) ?',
+    'Restaurer tout'
+  );
+  if (!ok) return;
+  try {
+    localStorage.removeItem(CLE_ZONES_OVERRIDES);
+    localStorage.removeItem(CLE_ZONES_SUPPRIMEES);
+    localStorage.removeItem(CLE_ZONES_CREEES);
+  } catch {}
+  appliquerZonesLocales();
+  toast('Zones restaurées', 'success');
+  document.getElementById('modal-zone-edit').classList.remove('show');
+  renderFerme();
 }
 
 /* ============ RESET ============ */
@@ -6562,13 +7486,23 @@ function renderDashboardCharts() {
   }], { plugins: { title: { display: true, text: 'CA cumulé sur 30 jours', font: { family: 'Fraunces', size: 13 } } } });
 }
 
-/* ============ CRA — Compte Rendu d'Activité ============ */
+/* ============ CRA — Pointage mensuel ============ */
 state.craMois = new Date().toISOString().slice(0,7);
-state.craUtilisateurId = null;
 state.craUtilisateurs = [];
-state.craSaisies = [];
-
-const TYPES_CRA_ORDRE = ['travail','absence','conge','maladie','formation','ferie'];
+state.craSaisies = []; // toutes les saisies du mois, tous salariés confondus
+state.craModifications = {}; // { utilisateurId: { 'YYYY-MM-DD': 0|0.5|1 } }
+state.craPhotosEdit = null;  // { utilisateurId, date, photoDebut, photoFin }
+// TJM (Taux Journalier Moyen) en XAF, persisté dans localStorage.
+// Valeur unique appliquée à tous les salariés.
+const CLE_TJM = 'cra_tjm_xaf';
+state.craTjm = (() => {
+  try {
+    const v = parseInt(localStorage.getItem(CLE_TJM) || '5000', 10);
+    return isNaN(v) || v < 0 ? 5000 : v;
+  } catch { return 5000; }
+})();
+// Conservé pour rétro-compat avec d'autres parties qui pourraient y accéder
+state.craUtilisateurId = null;
 
 async function apiChargerCRAUtilisateurs() {
   if (!API_DISPONIBLE) return [];
@@ -6587,191 +7521,572 @@ async function apiChargerCRARecap(mois) {
   try { const r = await apiFetch('GET', '/cra/recap?mois=' + mois); return r.donnees || []; }
   catch { return []; }
 }
-async function apiSauverCRAJour(date, type, utilisateurId) {
-  return apiFetch('POST', '/cra', { date, type, utilisateurId });
-}
 async function apiSupprimerCRAJour(id) {
   return apiFetch('DELETE', '/cra/' + id);
 }
 
+// Upload d'une photo CRA → renvoie l'URL relative à stocker.
+// Compresse l'image avant upload pour limiter la bande passante (smartphones photographient en 4-12 Mo).
+async function apiUploadPhotoCRA(fichier) {
+  if (!API_DISPONIBLE) throw new Error('API indisponible');
+  const fichierCompresse = await compresserImage(fichier, 1280, 0.82);
+  const fd = new FormData();
+  fd.append('photo', fichierCompresse, fichierCompresse.name || 'photo.jpg');
+  const opts = { method: 'POST', body: fd, headers: {} };
+  if (API_JETON) opts.headers['Authorization'] = 'Bearer ' + API_JETON;
+  const r = await fetch(API_BASE + '/cra/photo', opts);
+  if (!r.ok) {
+    const txt = await r.text().catch(() => '');
+    throw new Error(`Upload échoué (${r.status}) ${txt.slice(0,120)}`);
+  }
+  const data = await r.json();
+  return data.donnees?.url;
+}
+
+// Compresse une image via canvas. maxLargeur en pixels, qualite 0..1 pour JPEG.
+async function compresserImage(fichier, maxLargeur, qualite) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const lecteur = new FileReader();
+    lecteur.onload = () => { img.src = lecteur.result; };
+    lecteur.onerror = () => reject(new Error('Lecture fichier impossible'));
+    img.onload = () => {
+      const ratio = Math.min(1, maxLargeur / img.width);
+      const w = Math.round(img.width * ratio);
+      const h = Math.round(img.height * ratio);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        if (!blob) { reject(new Error('Compression échouée')); return; }
+        resolve(new File([blob], (fichier.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }));
+      }, 'image/jpeg', qualite);
+    };
+    img.onerror = () => reject(new Error('Image illisible'));
+    lecteur.readAsDataURL(fichier);
+  });
+}
+
+// Construit l'URL complète à afficher : si l'URL stockée commence par
+// '/uploads', on préfixe par l'origine de l'API (en retirant /api).
+function urlPhotoComplete(url) {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  const origineApi = API_BASE.replace(/\/api$/, '');
+  return origineApi + url;
+}
+
+// ─── Utilitaires CRA ───
+function lundiDeLaSemaine(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m-1, d));
+  const dow = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() - (dow - 1));
+  return date;
+}
+function ajouterJours(date, n) {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d;
+}
+
+// Convertit l'enregistrement API → valeur 0/0.5/1 affichée dans la cellule.
+function heuresEnPresence(h) {
+  if (h == null || h === 0) return 0;
+  if (h <= 5) return 0.5;   // tolérance 1-5 h → demi-journée
+  return 1;
+}
+
+// Formate un nombre en monnaie XAF (sans décimales, séparateur d'espaces).
+function formatXAF(n) {
+  return Number(n || 0).toLocaleString('fr-FR') + ' XAF';
+}
+
+async function apiInscrireSalarie(prenom, nom, telephone, role, filiere) {
+  const dto = { prenom, nom, role };
+  if (telephone) dto.telephone = telephone;
+  if (filiere) dto.filiere = filiere;
+  return apiFetch('POST', '/cra/inscrire-salarie', dto);
+}
+
+async function apiSauverLot(utilisateurId, saisies) {
+  return apiFetch('POST', '/cra/lot', { utilisateurId, saisies });
+}
+
+// ─── Rendu principal du tableau de pointage ───
 async function renderCRA() {
-  // Initialisation des champs si premier appel
   const moisInput = document.getElementById('cra-mois');
   if (moisInput && !moisInput.value) moisInput.value = state.craMois;
-  const userSelect = document.getElementById('cra-utilisateur');
 
+  // Charge la liste des salariés une fois
   if (state.craUtilisateurs.length === 0) {
     state.craUtilisateurs = await apiChargerCRAUtilisateurs();
-    if (userSelect) {
-      userSelect.innerHTML = state.craUtilisateurs.map(u =>
-        `<option value="${u.id}">${escapeHtml(u.prenom + ' ' + u.nom)} · ${u.role}</option>`
-      ).join('');
-      // Sélectionne par défaut l'utilisateur courant si possible
-      if (state.user) {
-        const me = state.craUtilisateurs.find(u => u.id === state.user.id);
-        if (me) userSelect.value = me.id;
-      }
-      state.craUtilisateurId = userSelect.value;
-    }
   }
+  // Charge toutes les saisies du mois (tous salariés)
+  state.craSaisies = await apiChargerCRA(state.craMois, null);
 
-  state.craSaisies = await apiChargerCRA(state.craMois, state.craUtilisateurId);
+  renderCRAPointageTable();
+}
 
-  const grid = document.getElementById('cra-grid');
-  if (!grid) return;
-
-  // En-têtes jours de la semaine (lundi → dimanche)
-  const jours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  let html = jours.map(j => `<div class="cra-day-head">${j}</div>`).join('');
-
-  // Calcul du calendrier
+function renderCRAPointageTable() {
+  const table = document.getElementById('cra-pointage-table');
+  if (!table) return;
   const [y, m] = state.craMois.split('-').map(Number);
-  const premier = new Date(Date.UTC(y, m-1, 1));
-  const dernier = new Date(Date.UTC(y, m, 0));
-  // jour de semaine : 0=dim → on veut lundi=0
-  const offset = (premier.getUTCDay() + 6) % 7;
+  const dernier = new Date(Date.UTC(y, m, 0)).getUTCDate();
 
-  // Cellules vides avant le 1er
-  for (let i = 0; i < offset; i++) html += `<div class="cra-cell empty"></div>`;
-
-  // Index saisies par date YYYY-MM-DD
-  const saisiesParJour = {};
-  for (const s of state.craSaisies) {
-    const k = s.date.split('T')[0];
-    saisiesParJour[k] = s;
-  }
-
-  for (let d = 1; d <= dernier.getUTCDate(); d++) {
-    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  // En-têtes : Salarié | 01 | 02 | … | 31 | Total | Action
+  const enTetesJours = [];
+  for (let d = 1; d <= dernier; d++) {
     const date = new Date(Date.UTC(y, m-1, d));
     const dow = date.getUTCDay();
     const isWeekend = (dow === 0 || dow === 6);
-    const s = saisiesParJour[dateStr];
-    const type = s?.type || '';
-    const heures = s?.heures != null ? s.heures : (type === 'travail' ? 8 : 0);
-    const tagLabel = type ? type.slice(0,4).toUpperCase() : '';
-    const cls = type ? type : (isWeekend ? 'weekend' : '');
-    const heuresInput = type
-      ? `<input type="number" class="cra-heures-input" data-date="${dateStr}" value="${heures}" min="0" max="24" step="0.5" title="Heures travaillées" />`
-      : '';
-    html += `
-      <div class="cra-cell ${cls}" data-date="${dateStr}" data-type="${type||''}" data-id="${s?.id||''}">
-        <div class="cra-day-top">
-          <span class="cra-day-num">${d}</span>
-          <span class="cra-day-tag">${tagLabel}</span>
-        </div>
-        ${heuresInput}
-      </div>
-    `;
+    const lib = ['D','L','M','M','J','V','S'][dow];
+    enTetesJours.push(`<th class="${isWeekend?'weekend':''}" title="${date.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',timeZone:'UTC'})}">
+      ${String(d).padStart(2,'0')}<br><span style="font-weight:400;font-size:9px">${lib}</span>
+    </th>`);
+  }
+  const enTete = `<thead><tr>
+    <th class="col-sal">Salarié</th>
+    ${enTetesJours.join('')}
+    <th class="col-total">Total</th>
+    <th class="col-montant">Montant</th>
+    <th class="col-action">—</th>
+  </tr></thead>`;
+
+  // Index saisies : { utilisateurId: { 'YYYY-MM-DD': { heures, photoDebut, photoFin } } }
+  const idx = {};
+  for (const s of state.craSaisies) {
+    const dateK = s.date.split('T')[0];
+    if (!idx[s.utilisateurId]) idx[s.utilisateurId] = {};
+    idx[s.utilisateurId][dateK] = s;
   }
 
-  grid.innerHTML = html;
-  // Click handler : cycle entre les types (sauf sur l'input heures)
-  grid.querySelectorAll('.cra-cell[data-date]').forEach(cell => {
-    cell.addEventListener('click', (e) => {
-      if (e.target.classList.contains('cra-heures-input')) return;
-      cycleCRACell(cell);
-    });
-  });
-  // Saisie des heures
-  grid.querySelectorAll('.cra-heures-input').forEach(input => {
-    input.addEventListener('click', e => e.stopPropagation());
-    input.addEventListener('change', async e => {
-      e.stopPropagation();
-      const cell = input.closest('.cra-cell');
-      const dateStr = input.dataset.date;
-      const heures = parseFloat(input.value);
-      if (isNaN(heures) || heures < 0 || heures > 24) {
-        toast('Heures invalides (0–24)', 'error');
-        renderCRA();
-        return;
-      }
-      try {
-        await apiFetch('POST', '/cra', {
-          date: dateStr,
-          type: cell.dataset.type || 'travail',
-          heures,
-          utilisateurId: state.craUtilisateurId,
-        });
-        toast(`${heures} h enregistrées`, 'success');
-        await renderCRA();
-      } catch (err) {
-        toast('Erreur : ' + err.message, 'error');
-      }
-    });
-  });
+  if (state.craUtilisateurs.length === 0) {
+    table.innerHTML = enTete + `<tbody><tr><td colspan="${dernier + 4}" style="padding:24px;text-align:center;color:#8b5e3c;font-style:italic">Aucun salarié inscrit. Utilisez le formulaire ci-dessus pour en ajouter un.</td></tr></tbody>`;
+    return;
+  }
 
-  // Recap
-  const recap = await apiChargerCRARecap(state.craMois);
-  const tbody = document.getElementById('cra-recap-tbody');
-  if (tbody) {
-    if (recap.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#8b5e3c;font-style:italic">Aucune saisie pour ce mois.</td></tr>`;
-    } else {
-      tbody.innerHTML = recap.map(r => `
-        <tr>
-          <td><strong>${escapeHtml(r.utilisateur.prenom + ' ' + r.utilisateur.nom)}</strong> <span style="color:#8b5e3c;font-size:11px">${r.utilisateur.role}</span></td>
-          <td>${r.compteurs.travail}</td>
-          <td>${r.compteurs.absence}</td>
-          <td>${r.compteurs.conge}</td>
-          <td>${r.compteurs.maladie}</td>
-          <td>${r.compteurs.formation}</td>
-          <td>${r.compteurs.ferie}</td>
-          <td><strong>${r.heuresTotales.toFixed(1)} h</strong></td>
-        </tr>
-      `).join('');
+  let totalGeneralH = 0;
+  let totalGeneralMontant = 0;
+
+  // Pour chaque salarié, génère sa ligne
+  const lignes = state.craUtilisateurs.map(u => {
+    const modifs = state.craModifications[u.id] || {};
+    const aDesModifs = Object.keys(modifs).length > 0;
+
+    let totalH = 0;
+    const cellules = [];
+    for (let d = 1; d <= dernier; d++) {
+      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const date = new Date(Date.UTC(y, m-1, d));
+      const isWeekend = (date.getUTCDay() === 0 || date.getUTCDay() === 6);
+      const saisie = idx[u.id]?.[dateStr];
+      // Présence : modif locale > saisie BDD > absence
+      const valeur = (modifs[dateStr] !== undefined)
+        ? modifs[dateStr]
+        : (saisie ? heuresEnPresence(saisie.heures) : 0);
+      const aPhoto = !!(saisie?.photoDebut || saisie?.photoFin);
+      // Total mois (à partir de la valeur effective affichée)
+      totalH += valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
+
+      const valClass = valeur === 1 ? 'val-1' : valeur === 0.5 ? 'val-half' : 'val-0';
+      const photoBadge = `<span class="photo-badge" data-photo="${u.id}|${dateStr}" title="Photos preuve">📷</span>`;
+      cellules.push(`<td class="cra-cell-pointage ${valClass} ${isWeekend?'weekend':''} ${aPhoto?'has-photo':''}" data-uid="${u.id}" data-date="${dateStr}">
+        <select data-pres-uid="${u.id}" data-pres-date="${dateStr}">
+          <option value="0"${valeur===0?' selected':''}>0</option>
+          <option value="0.5"${valeur===0.5?' selected':''}>0.5</option>
+          <option value="1"${valeur===1?' selected':''}>1</option>
+        </select>
+        ${photoBadge}
+      </td>`);
     }
-  }
+
+    const nbJours = totalH / 8;
+    const montant = Math.round(nbJours * state.craTjm);
+    totalGeneralH += totalH;
+    totalGeneralMontant += montant;
+
+    const telephoneLigne = u.telephone
+      ? `<div style="font-family:'DM Mono',monospace;font-size:10px;color:#5c3d1e">📞 ${escapeHtml(u.telephone)}</div>`
+      : '';
+
+    return `<tr class="${aDesModifs?'row-modifiee':''}">
+      <td class="col-sal">
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          <span class="cra-actions-sal">
+            <button class="act-add" data-fill-uid="${u.id}" title="Remplir tout le mois">＋</button>
+            <button class="act-edit" data-edit-uid="${u.id}" title="Modifier">✎</button>
+            <button class="act-del" data-del-uid="${u.id}" title="Supprimer">✕</button>
+          </span>
+          <span class="cra-nom-clic" data-edit-uid="${u.id}">${escapeHtml(u.prenom + ' ' + u.nom)}</span>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#8b5e3c;letter-spacing:0.4px">${u.role}${u.filiere?' · '+u.filiere:''}</div>
+        ${telephoneLigne}
+      </td>
+      ${cellules.join('')}
+      <td class="col-total">${totalH} h<br><span style="font-weight:400;font-size:10px;color:#8b5e3c">${nbJours.toFixed(1)} j</span></td>
+      <td class="col-montant">${formatXAF(montant)}</td>
+      <td class="col-action"><button class="cra-btn-save-row" data-save-uid="${u.id}"${aDesModifs?'':' disabled'}>${aDesModifs?'Enregistrer':'OK'}</button></td>
+    </tr>`;
+  });
+
+  // Ligne de total général en bas
+  const ligneTotal = `<tr class="cra-ligne-total">
+    <td class="col-sal">TOTAL GÉNÉRAL <span style="font-family:'DM Mono',monospace;font-size:10px;color:#8b5e3c;font-weight:400">${state.craUtilisateurs.length} salarié(s) · TJM ${formatXAF(state.craTjm)}</span></td>
+    <td colspan="${dernier}" style="text-align:right;font-family:'DM Mono',monospace;color:#5c3d1e;font-size:11px">Total à verser →</td>
+    <td class="col-total">${totalGeneralH} h<br><span style="font-weight:400;font-size:10px;color:#8b5e3c">${(totalGeneralH/8).toFixed(1)} j</span></td>
+    <td class="col-montant" style="color:#4a8c3f;font-size:14px">${formatXAF(totalGeneralMontant)}</td>
+    <td class="col-action"></td>
+  </tr>`;
+
+  table.innerHTML = enTete + `<tbody>${lignes.join('')}${ligneTotal}</tbody>`;
+
+  // Câblage : changements de présence
+  table.querySelectorAll('select[data-pres-uid]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const uid = sel.dataset.presUid;
+      const date = sel.dataset.presDate;
+      const val = parseFloat(sel.value);
+      if (!state.craModifications[uid]) state.craModifications[uid] = {};
+      state.craModifications[uid][date] = val;
+      renderCRAPointageTable();
+    });
+  });
+
+  // Câblage : bouton enregistrer ligne
+  table.querySelectorAll('button[data-save-uid]').forEach(btn => {
+    btn.addEventListener('click', () => sauverLigneCRA(btn.dataset.saveUid));
+  });
+
+  // Câblage : badge photo
+  table.querySelectorAll('[data-photo]').forEach(badge => {
+    badge.addEventListener('click', e => {
+      e.stopPropagation();
+      const [uid, dateStr] = badge.dataset.photo.split('|');
+      ouvrirModalPhotosPreuve(uid, dateStr);
+    });
+  });
+
+  // Câblage : boutons + (remplir mois) / ✎ (edit) / ✕ (delete) + nom cliquable
+  table.querySelectorAll('[data-fill-uid]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      ouvrirModalRemplirMois(btn.dataset.fillUid);
+    });
+  });
+  table.querySelectorAll('[data-edit-uid]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      ouvrirModalEditSalarie(btn.dataset.editUid);
+    });
+  });
+  table.querySelectorAll('[data-del-uid]').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      await supprimerSalarie(btn.dataset.delUid);
+    });
+  });
 }
 
-async function cycleCRACell(cell) {
-  const dateStr = cell.dataset.date;
-  const current = cell.dataset.type;
-  // Cycle : '' → travail → absence → conge → maladie → formation → ferie → '' (suppression)
-  const idx = current ? TYPES_CRA_ORDRE.indexOf(current) : -1;
-  const next = idx === TYPES_CRA_ORDRE.length - 1 ? '' : TYPES_CRA_ORDRE[idx + 1];
-
+async function sauverLigneCRA(utilisateurId) {
+  const modifs = state.craModifications[utilisateurId];
+  if (!modifs || Object.keys(modifs).length === 0) return;
+  if (bloquerSiConsultatif()) return;
+  const saisies = Object.entries(modifs).map(([date, presence]) => ({ date, presence }));
   try {
-    if (next === '') {
-      // Suppression de la saisie
-      const id = cell.dataset.id;
-      if (id) await apiSupprimerCRAJour(id);
-    } else {
-      await apiSauverCRAJour(dateStr, next, state.craUtilisateurId);
-    }
+    await apiSauverLot(utilisateurId, saisies);
+    toast(`${saisies.length} jour(s) enregistré(s)`, 'success');
+    delete state.craModifications[utilisateurId];
     await renderCRA();
   } catch (e) {
     toast('Erreur : ' + e.message, 'error');
   }
 }
 
+// ─── Inscription salarié ───
+async function gererInscriptionSalarie() {
+  if (bloquerSiConsultatif()) return;
+  const prenom = document.getElementById('insc-prenom').value.trim();
+  const nom = document.getElementById('insc-nom').value.trim();
+  const telephone = document.getElementById('insc-telephone').value.trim() || null;
+  const role = document.getElementById('insc-role').value;
+  const filiere = document.getElementById('insc-filiere').value || null;
+  if (!prenom || !nom) {
+    toast('Prénom et nom requis', 'error');
+    return;
+  }
+  try {
+    await apiInscrireSalarie(prenom, nom, telephone, role, filiere);
+    toast(`${prenom} ${nom} inscrit(e)`, 'success');
+    document.getElementById('insc-prenom').value = '';
+    document.getElementById('insc-nom').value = '';
+    document.getElementById('insc-telephone').value = '';
+    state.craUtilisateurs = []; // forcer rechargement
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+// ─── Édition / suppression d'un salarié ───
+state.craSalEditId = null;
+
+function ouvrirModalEditSalarie(utilisateurId) {
+  if (bloquerSiConsultatif()) return;
+  const u = state.craUtilisateurs.find(x => x.id === utilisateurId);
+  if (!u) return;
+  state.craSalEditId = utilisateurId;
+  document.getElementById('cra-sal-title').textContent = `Modifier ${u.prenom} ${u.nom}`;
+  document.getElementById('cra-sal-prenom').value = u.prenom || '';
+  document.getElementById('cra-sal-nom').value = u.nom || '';
+  document.getElementById('cra-sal-telephone').value = u.telephone || '';
+  document.getElementById('cra-sal-role').value = u.role || 'ouvrier';
+  document.getElementById('cra-sal-filiere').value = u.filiere || '';
+  document.getElementById('modal-cra-salarie').classList.add('show');
+}
+
+async function sauverEditSalarie() {
+  if (!state.craSalEditId) return;
+  const prenom = document.getElementById('cra-sal-prenom').value.trim();
+  const nom = document.getElementById('cra-sal-nom').value.trim();
+  if (!prenom || !nom) { toast('Prénom et nom requis', 'error'); return; }
+  const dto = {
+    prenom, nom,
+    telephone: document.getElementById('cra-sal-telephone').value.trim() || null,
+    role: document.getElementById('cra-sal-role').value,
+    filiere: document.getElementById('cra-sal-filiere').value || null,
+  };
+  try {
+    await apiFetch('PATCH', '/cra/salarie/' + state.craSalEditId, dto);
+    toast('Salarié modifié', 'success');
+    document.getElementById('modal-cra-salarie').classList.remove('show');
+    state.craUtilisateurs = []; // forcer rechargement
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+async function supprimerSalarieDepuisModal() {
+  if (!state.craSalEditId) return;
+  document.getElementById('modal-cra-salarie').classList.remove('show');
+  await supprimerSalarie(state.craSalEditId);
+}
+
+async function supprimerSalarie(utilisateurId) {
+  if (bloquerSiConsultatif()) return;
+  const u = state.craUtilisateurs.find(x => x.id === utilisateurId);
+  if (!u) return;
+  const ok = await confirmAction(
+    `Supprimer ${u.prenom} ${u.nom} de la liste de pointage ?\n\nL'historique des saisies CRA est conservé.`,
+    'Supprimer'
+  );
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/cra/salarie/' + utilisateurId);
+    toast('Salarié archivé', 'success');
+    state.craUtilisateurs = []; // forcer rechargement
+    delete state.craModifications[utilisateurId];
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+// ─── Remplir tout le mois pour un salarié ───
+state.craRemplirUid = null;
+
+function ouvrirModalRemplirMois(utilisateurId) {
+  if (bloquerSiConsultatif()) return;
+  const u = state.craUtilisateurs.find(x => x.id === utilisateurId);
+  if (!u) return;
+  state.craRemplirUid = utilisateurId;
+  const moisLisible = new Date(state.craMois + '-01T12:00:00Z').toLocaleDateString('fr-FR',
+    { month: 'long', year: 'numeric', timeZone:'UTC' });
+  document.getElementById('cra-remplir-title').textContent =
+    `Remplir ${moisLisible} pour ${u.prenom} ${u.nom}`;
+  document.getElementById('modal-cra-remplir').classList.add('show');
+}
+
+async function appliquerRemplirMois(presence) {
+  if (!state.craRemplirUid) return;
+  const utilisateurId = state.craRemplirUid;
+  const skipWeekend = document.getElementById('cra-remplir-skip-we').checked;
+
+  const [y, m] = state.craMois.split('-').map(Number);
+  const dernier = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const saisies = [];
+  for (let d = 1; d <= dernier; d++) {
+    const date = new Date(Date.UTC(y, m-1, d));
+    const dow = date.getUTCDay();
+    if (skipWeekend && (dow === 0 || dow === 6)) continue;
+    const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    saisies.push({ date: dateStr, presence });
+  }
+  try {
+    await apiSauverLot(utilisateurId, saisies);
+    toast(`${saisies.length} jour(s) remplis à ${presence}`, 'success');
+    document.getElementById('modal-cra-remplir').classList.remove('show');
+    delete state.craModifications[utilisateurId];
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+// ─── Mini-modal Photos preuve ───
+function ouvrirModalPhotosPreuve(utilisateurId, dateStr) {
+  if (bloquerSiConsultatif()) return;
+  const u = state.craUtilisateurs.find(x => x.id === utilisateurId);
+  if (!u) return;
+  const saisie = state.craSaisies.find(s => s.utilisateurId === utilisateurId && s.date.split('T')[0] === dateStr);
+  if (!saisie || saisie.heures === 0) {
+    toast('Pointez d\'abord 0.5 ou 1 puis enregistrez la ligne avant de joindre les photos', '');
+    return;
+  }
+  state.craPhotosEdit = {
+    utilisateurId, dateStr, saisieId: saisie.id,
+    photoDebut: saisie.photoDebut || '',
+    photoFin: saisie.photoFin || '',
+  };
+  const dateLisible = new Date(dateStr + 'T12:00:00Z').toLocaleDateString('fr-FR',
+    { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone:'UTC' });
+  document.getElementById('cra-photos-title').textContent = `Photos preuve · ${u.prenom} ${u.nom} — ${dateLisible}`;
+  // Reset inputs
+  const inDeb = document.getElementById('cra-photo-debut');
+  const inFin = document.getElementById('cra-photo-fin');
+  inDeb.value = ''; inFin.value = '';
+  inDeb.dataset.url = saisie.photoDebut || '';
+  inFin.dataset.url = saisie.photoFin || '';
+  rendreApercuPhotoCRA('cra-preview-debut', saisie.photoDebut, 'debut');
+  rendreApercuPhotoCRA('cra-preview-fin', saisie.photoFin, 'fin');
+  document.getElementById('modal-cra-photos').classList.add('show');
+}
+
+function rendreApercuPhotoCRA(idAperçu, url, ref) {
+  const wrap = document.getElementById(idAperçu);
+  if (!wrap) return;
+  if (!url) {
+    wrap.innerHTML = `<span class="cra-photo-vide">Aucune photo</span>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <img src="${escapeHtml(urlPhotoComplete(url))}" alt="Photo ${ref}">
+    <button type="button" class="btn btn-ghost btn-sm" data-clear-photo="${ref}" style="font-size:11px">Retirer</button>
+  `;
+  wrap.querySelector('[data-clear-photo]').addEventListener('click', () => {
+    document.getElementById(`cra-photo-${ref}`).dataset.url = '';
+    rendreApercuPhotoCRA(idAperçu, '', ref);
+  });
+}
+
+async function gererChangementPhotoPreuve(e, ref) {
+  const fichier = e.target.files?.[0];
+  if (!fichier) return;
+  const idAperçu = `cra-preview-${ref}`;
+  document.getElementById(idAperçu).innerHTML = `<span class="cra-photo-vide">Compression et envoi…</span>`;
+  try {
+    const url = await apiUploadPhotoCRA(fichier);
+    e.target.dataset.url = url;
+    rendreApercuPhotoCRA(idAperçu, url, ref);
+  } catch (err) {
+    toast('Erreur photo : ' + err.message, 'error');
+    rendreApercuPhotoCRA(idAperçu, '', ref);
+  }
+}
+
+async function sauverPhotosPreuve() {
+  if (!state.craPhotosEdit) return;
+  const { utilisateurId, dateStr } = state.craPhotosEdit;
+  const photoDebut = document.getElementById('cra-photo-debut').dataset.url || null;
+  const photoFin = document.getElementById('cra-photo-fin').dataset.url || null;
+  // On utilise POST /cra (upsert) pour ne mettre à jour que les photos —
+  // les autres champs (heures, type) restent inchangés via l'upsert qui
+  // recharge tout le contenu actuel. Pour préserver heures/type :
+  const saisie = state.craSaisies.find(s => s.utilisateurId === utilisateurId && s.date.split('T')[0] === dateStr);
+  try {
+    await apiFetch('POST', '/cra', {
+      utilisateurId,
+      date: dateStr,
+      type: saisie?.type || 'travail',
+      heures: saisie?.heures ?? 8,
+      photoDebut,
+      photoFin,
+    });
+    toast('Photos preuve enregistrées', 'success');
+    document.getElementById('modal-cra-photos').classList.remove('show');
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
+}
+
+// ─── Initialisation ───
 function setupCRA() {
   const moisInput = document.getElementById('cra-mois');
   if (moisInput) {
     moisInput.value = state.craMois;
     moisInput.addEventListener('change', () => {
       state.craMois = moisInput.value;
-      renderCRA();
-    });
-  }
-  const userSelect = document.getElementById('cra-utilisateur');
-  if (userSelect) {
-    userSelect.addEventListener('change', () => {
-      state.craUtilisateurId = userSelect.value;
+      // Vider les modifications en cours quand on change de mois (sécurité)
+      state.craModifications = {};
       renderCRA();
     });
   }
   const prev = document.getElementById('cra-prev');
   const next = document.getElementById('cra-next');
-  if (prev) prev.addEventListener('click', () => { decalerCRAMois(-1); });
-  if (next) next.addEventListener('click', () => { decalerCRAMois(+1); });
+  if (prev) prev.addEventListener('click', () => decalerMoisCRA(-1));
+  if (next) next.addEventListener('click', () => decalerMoisCRA(+1));
+
+  // TJM (Taux Journalier Moyen) — persisté dans localStorage
+  const tjmInput = document.getElementById('cra-tjm');
+  if (tjmInput) {
+    tjmInput.value = state.craTjm;
+    tjmInput.addEventListener('change', () => {
+      const v = parseInt(tjmInput.value, 10);
+      if (isNaN(v) || v < 0) {
+        toast('TJM invalide', 'error');
+        tjmInput.value = state.craTjm;
+        return;
+      }
+      state.craTjm = v;
+      try { localStorage.setItem(CLE_TJM, String(v)); } catch {}
+      renderCRAPointageTable();
+    });
+  }
+
+  // Inscription salarié
+  const btnAjouter = document.getElementById('insc-ajouter');
+  if (btnAjouter) btnAjouter.addEventListener('click', gererInscriptionSalarie);
+
+  // Modal photos preuve
+  const btnSavePhotos = document.getElementById('cra-photos-save');
+  if (btnSavePhotos) btnSavePhotos.addEventListener('click', sauverPhotosPreuve);
+  const inDeb = document.getElementById('cra-photo-debut');
+  if (inDeb) inDeb.addEventListener('change', e => gererChangementPhotoPreuve(e, 'debut'));
+  const inFin = document.getElementById('cra-photo-fin');
+  if (inFin) inFin.addEventListener('change', e => gererChangementPhotoPreuve(e, 'fin'));
+
+  // Modal édition salarié
+  const btnSalSave = document.getElementById('cra-sal-save');
+  if (btnSalSave) btnSalSave.addEventListener('click', sauverEditSalarie);
+  const btnSalDel = document.getElementById('cra-sal-supprimer');
+  if (btnSalDel) btnSalDel.addEventListener('click', supprimerSalarieDepuisModal);
+
+  // Modal remplir tout le mois — boutons 0.5 / 1
+  document.querySelectorAll('#modal-cra-remplir .btn-remplir-grand').forEach(btn => {
+    btn.addEventListener('click', () => {
+      appliquerRemplirMois(parseFloat(btn.dataset.val));
+    });
+  });
 }
 
-function decalerCRAMois(delta) {
-  const [y,m] = state.craMois.split('-').map(Number);
-  const d = new Date(Date.UTC(y, m-1+delta, 1));
-  state.craMois = d.toISOString().slice(0,7);
+function decalerMoisCRA(delta) {
+  const [y, m] = state.craMois.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1+delta, 1));
+  state.craMois = dt.toISOString().slice(0,7);
   const inp = document.getElementById('cra-mois'); if (inp) inp.value = state.craMois;
+  state.craModifications = {};
   renderCRA();
 }
 
@@ -7451,6 +8766,7 @@ async function init() {
   setupCheptel();
   setupVentes();
   setupCRA();
+  setupFermeAdmin();
   setupDeploiement();
   if (document.getElementById('btn-reset-data')) {
     document.getElementById('btn-reset-data').addEventListener('click', resetAllData);
