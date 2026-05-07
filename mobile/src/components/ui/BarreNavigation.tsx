@@ -17,8 +17,7 @@ type ItemNav = {
 }
 
 const ITEMS: ItemNav[] = [
-  { cle: 'kanban', libelle: 'Kanban', route: '/kanban', icone: 'grid-outline', prefixesActifs: ['/kanban'] },
-  { cle: 'activite', libelle: 'Activité', route: '/activite', icone: 'list-outline', prefixesActifs: ['/activite'] },
+  { cle: 'activite', libelle: 'Activité', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
   { cle: 'cultures', libelle: 'Cultures', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
   { cle: 'cheptel', libelle: 'Cheptel', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
   { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },

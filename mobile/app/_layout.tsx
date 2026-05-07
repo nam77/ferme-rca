@@ -60,7 +60,6 @@ export default function LayoutRoot() {
               <Stack.Screen name="connexion" />
               <Stack.Screen name="inscription" />
               <Stack.Screen name="mot-de-passe-oublie" />
-              <Stack.Screen name="kanban" />
               <Stack.Screen name="activite" />
               <Stack.Screen name="cultures" />
               <Stack.Screen name="dashboard" />

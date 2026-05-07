@@ -30,12 +30,12 @@ type Module = {
 
 const MODULES: Module[] = [
   {
-    id: 'kanban',
-    titre: 'Kanban',
-    description: 'Suivi des tâches par filière, glisser-déposer entre colonnes.',
+    id: 'activite',
+    titre: 'Activité',
+    description: 'Suivi des tâches par filière, glisser-déposer entre colonnes. Budget, dépense et solde par tâche.',
     icone: '📋',
     couleur: COULEURS_TOKEN.mint,
-    route: '/kanban',
+    route: '/activite',
     tag: 'Opérations',
   },
   {

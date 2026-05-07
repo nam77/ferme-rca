@@ -1,5 +1,5 @@
 // Wrapper iframe / WebView sur le HTML AGROPILOT (mobile/public/agropilot-app.html)
-// pour afficher chaque vue (kanban, activites, dashboard, budget, ferme)
+// pour afficher chaque vue (kanban, cultures, cheptel, dashboard, budget, ferme)
 // pixel-perfect.
 // - Web : <iframe src="/agropilot-app.html?view=...&embed=1"/>
 // - iOS/Android : WebView pointant vers le HTML servi par Expo Web
@@ -13,11 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
 import Constants from 'expo-constants'
 import { useAuthStore } from '../store/authStore'
+import { URL_API } from '../api/client'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../constants/theme'
 
 type Props = {
   vue:
-    | 'kanban' | 'activites' | 'cultures' | 'cheptel'
+    | 'kanban' | 'cultures' | 'cheptel'
     | 'dashboard' | 'budget' | 'ferme' | 'cra' | 'deploiement'
   titreFallback: string
 }
@@ -48,6 +49,10 @@ export const IframePage = ({ vue, titreFallback }: Props) => {
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams({ view: vue, embed: '1' })
+    // Transmet l'URL réelle de l'API (résolue par client.ts depuis
+    // EXPO_PUBLIC_API_URL en prod, fallback localhost:3001 en dev)
+    // pour que le HTML embarqué ne devine plus via window.location.
+    if (URL_API) params.set('api', URL_API)
     if (jeton) params.set('jeton', jeton)
     if (utilisateur) {
       params.set(
