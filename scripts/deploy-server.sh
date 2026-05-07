@@ -141,9 +141,11 @@ NB_TMP=$(find "$TMP_DIST" -type f | wc -l)
 log "Fichiers à uploader : $NB_TMP"
 
 log "wrangler pages deploy → $PROJET..."
+# wrangler@3 reste compatible Node 18+. wrangler@4 exige Node 22+, ce que
+# le serveur Hetzner (Node 20) ne fournit pas encore.
 if ! CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" \
      CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
-     npx --yes wrangler@latest pages deploy "$TMP_DIST" \
+     npx --yes wrangler@3 pages deploy "$TMP_DIST" \
        --project-name="$PROJET" \
        --branch=main \
        --commit-dirty=true 2>&1 | tail -20; then
