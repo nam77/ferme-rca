@@ -72,7 +72,7 @@ ok git-pull
 step backend-deps
 cd "$BACKEND_DIR"
 log "npm ci..."
-npm ci --no-audit --no-fund 2>&1 | tail -3
+npm ci --include=dev --no-audit --no-fund 2>&1 | tail -3
 log "prisma generate (CRITIQUE — sans ça le build TS échoue)..."
 npx prisma generate 2>&1 | grep -E "Generated|Error|error" || true
 log "prisma db push (rétrocompatible)..."
@@ -106,7 +106,7 @@ cd "$MOBILE_DIR"
 if [ ! -d node_modules ]; then
   log "Première installation npm ci mobile (peut prendre 2-3 min)..."
 fi
-npm ci --no-audit --no-fund 2>&1 | tail -3
+npm ci --include=dev --no-audit --no-fund 2>&1 | tail -3
 ok frontend-deps
 
 # ─────────────────────────── 7. Frontend build ───────────────────────
