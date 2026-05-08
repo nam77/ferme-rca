@@ -137,6 +137,31 @@ const estProcessusVivant = (pid?: number): boolean => {
   }
 }
 
+// Envoie un signal au groupe de processus du bash (PID négatif).
+// Critique pour l'annulation : si on envoie SIGTERM uniquement au PID du
+// bash, son trap ne sera exécuté qu'après la fin de la commande en cours
+// (le `wait` implicite sur `npm run build` peut durer jusqu'au timeout
+// de l'étape, soit 5-10 min). En l'envoyant au groupe entier, on tue
+// `npm`/`tsc`/`expo` immédiatement, le bash sort de son wait, et son
+// trap déclenche le rollback dans la seconde.
+// Avec spawn detached:true, Node appelle setsid → le bash a son propre
+// process group dont l'ID = son PID. Fallback sur kill direct du PID si
+// le PG n'existe plus (proc déjà mort, etc.).
+const tuerGroupe = (pid: number | undefined, signal: NodeJS.Signals): boolean => {
+  if (!pid) return false
+  try {
+    process.kill(-pid, signal)
+    return true
+  } catch {
+    try {
+      process.kill(pid, signal)
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+
 // Middleware spécial pour SSE : EventSource ne supporte pas les headers
 // custom donc on accepte aussi le JWT en query string (?jeton=...).
 const verifierAuthQueryOuHeader = (
@@ -361,12 +386,8 @@ const recupererRunsOrphelins = async (): Promise<void> => {
           const restant = Math.max(60_000, RUN_TIMEOUT_MS - (Date.now() - data.startedAt))
           data.watchdog = setTimeout(() => {
             if (data.status !== 'running') return
-            ajouterLog(data, '[watchdog] timeout après reprise — SIGTERM')
-            try {
-              if (data.proc_pid) process.kill(data.proc_pid, 'SIGTERM')
-            } catch {
-              /* déjà mort */
-            }
+            ajouterLog(data, '[watchdog] timeout après reprise — SIGTERM au groupe')
+            tuerGroupe(data.proc_pid, 'SIGTERM')
           }, restant)
           console.log(`[deploy] run orphelin repris : ${data.runId} (PID ${data.proc_pid})`)
         } else {
@@ -482,25 +503,15 @@ routeurAdminDeploy.post(
       if (state.status !== 'running') return
       ajouterLog(
         state,
-        `[watchdog] Déploiement dépassant ${Math.round(RUN_TIMEOUT_MS / 60000)} min — SIGTERM envoyé pour déclencher le rollback`,
+        `[watchdog] Déploiement dépassant ${Math.round(RUN_TIMEOUT_MS / 60000)} min — SIGTERM envoyé au groupe pour déclencher le rollback`,
       )
-      if (state.proc_pid) {
-        try {
-          process.kill(state.proc_pid, 'SIGTERM')
-        } catch {
-          /* déjà mort */
+      tuerGroupe(state.proc_pid, 'SIGTERM')
+      setTimeout(() => {
+        if (state.status === 'running' && estProcessusVivant(state.proc_pid)) {
+          ajouterLog(state, '[watchdog] SIGTERM ignoré — SIGKILL forcé')
+          tuerGroupe(state.proc_pid, 'SIGKILL')
         }
-        setTimeout(() => {
-          if (state.status === 'running' && estProcessusVivant(state.proc_pid)) {
-            ajouterLog(state, '[watchdog] SIGTERM ignoré — SIGKILL forcé')
-            try {
-              process.kill(state.proc_pid!, 'SIGKILL')
-            } catch {
-              /* déjà mort */
-            }
-          }
-        }, 30_000)
-      }
+      }, 30_000)
     }, RUN_TIMEOUT_MS)
 
     // Démarre le polling du log file
@@ -548,31 +559,26 @@ routeurAdminDeploy.post(
     state.cancelDemande = true
     ajouterLog(
       state,
-      `[cancel] Annulation demandée par ${req.utilisateur?.email ?? 'admin'} — SIGTERM envoyé, rollback en cours`,
+      `[cancel] Annulation demandée par ${req.utilisateur?.email ?? 'admin'} — SIGTERM envoyé au groupe, rollback en cours`,
     )
     persisterRunDebounce(state, 0)
 
-    try {
-      process.kill(state.proc_pid!, 'SIGTERM')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      res.status(500).json({ succes: false, message: `kill SIGTERM échoué: ${msg}` })
+    if (!tuerGroupe(state.proc_pid, 'SIGTERM')) {
+      res.status(500).json({ succes: false, message: 'kill SIGTERM échoué' })
       return
     }
-    // Filet de sécurité : SIGKILL après 30s si le bash résiste.
+    // Filet de sécurité : SIGKILL après 60s si le bash + son rollback
+    // ne se sont pas terminés. 60s laisse le temps au rollback (git reset,
+    // pm2 reload, redeploy Cloudflare) de finir proprement.
     setTimeout(() => {
       if (state.status === 'running' && estProcessusVivant(state.proc_pid)) {
         ajouterLog(
           state,
-          '[cancel] SIGTERM ignoré après 30s — SIGKILL forcé (rollback partiel possible)',
+          '[cancel] Rollback dépassant 60s — SIGKILL forcé (état partiel possible)',
         )
-        try {
-          process.kill(state.proc_pid!, 'SIGKILL')
-        } catch {
-          /* déjà mort */
-        }
+        tuerGroupe(state.proc_pid, 'SIGKILL')
       }
-    }, 30_000)
+    }, 60_000)
 
     res.status(202).json({ succes: true, donnees: { runId } })
   },
