@@ -314,6 +314,22 @@ log "Bundle : $NB fichiers"
 URL_API_OCC=$(grep -c "api.agri-pilot.com" dist/_expo/static/js/web/*.js | head -1 | cut -d: -f2)
 log "Occurrences api.agri-pilot.com : $URL_API_OCC"
 [ "${URL_API_OCC:-0}" -lt 1 ] && fail "URL API absente du bundle"
+
+# Workaround wrangler@3 : il filtre silencieusement tout dossier nommé
+# `node_modules`, ce qui élimine les polices générées par expo dans
+# dist/assets/node_modules/@expo-google-fonts/*. Sans ce rename, le bundle
+# servi sur Cloudflare est incomplet et l'app affiche un écran blanc.
+if [ -d dist/assets/node_modules ]; then
+  log "Rename dist/assets/node_modules → dist/assets/_modules (contournement wrangler)"
+  mv dist/assets/node_modules dist/assets/_modules
+  # Patche les références dans tous les fichiers générés (HTML/JS/CSS).
+  CIBLES=$(grep -rl "assets/node_modules" dist 2>/dev/null || true)
+  if [ -n "$CIBLES" ]; then
+    echo "$CIBLES" | xargs sed -i 's|assets/node_modules|assets/_modules|g'
+    NB_PATCHES=$(echo "$CIBLES" | wc -l)
+    log "Références patchées dans $NB_PATCHES fichier(s)"
+  fi
+fi
 ok frontend-build
 
 # ─────────────────────────── 8. Cloudflare deploy ────────────────────

@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
-import { spawn, type ChildProcess } from 'node:child_process'
-import { createInterface } from 'node:readline'
+import { spawn } from 'node:child_process'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
+import { openSync, closeSync, openSync as fsOpenSync, readSync, statSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
@@ -61,27 +61,32 @@ type RunState = {
   log: LogLine[]
   failureMessage?: string
   cancelDemande?: boolean
+  // Persistés sur disque (pour reprise après reload Express)
+  proc_pid?: number
+  log_file?: string
+  log_offset?: number
   // Non sérialisé
   clients?: Set<Response>
-  proc?: ChildProcess
   watchdog?: NodeJS.Timeout
+  poller?: NodeJS.Timeout
 }
 
-type RunPublic = Omit<RunState, 'clients' | 'proc' | 'watchdog'>
+type RunPublic = Omit<RunState, 'clients' | 'watchdog' | 'poller'>
 
 const runs = new Map<string, RunState>()
 let runEnCours: string | null = null
 const HISTORIQUE_MAX = 50
 const LOG_MAX_LIGNES = 5000
 // Watchdog global : si le script n'a pas rendu la main au bout de ce délai,
-// on lui envoie SIGTERM pour déclencher son rollback. Le `tsc` figé d'hier
-// aurait été tué après 45 min au lieu de rester zombie indéfiniment.
+// on lui envoie SIGTERM pour déclencher son rollback.
 const RUN_TIMEOUT_MS = 45 * 60 * 1000
+// Intervalle de polling du fichier log du bash (ms).
+const POLL_INTERVAL_MS = 300
 
 // ───────────────────────── Helpers ─────────────────────────
 
 const sansClients = (s: RunState): RunPublic => {
-  const { clients: _c, proc: _p, watchdog: _w, ...rest } = s
+  const { clients: _c, watchdog: _w, poller: _p, ...rest } = s
   return rest
 }
 
@@ -103,8 +108,34 @@ const persisterRun = async (s: RunState): Promise<void> => {
   await writeFile(fichier, JSON.stringify(sansClients(s), null, 2), 'utf-8')
 }
 
+// Persistance debouncée pour ne pas écrire à chaque ligne de log.
+const persisterRunDebounce = (() => {
+  const timers = new Map<string, NodeJS.Timeout>()
+  return (s: RunState, ms = 500): void => {
+    const existant = timers.get(s.runId)
+    if (existant) clearTimeout(existant)
+    const t = setTimeout(() => {
+      timers.delete(s.runId)
+      void persisterRun(s).catch((err) =>
+        console.error('[deploy] persistance debounce', err),
+      )
+    }, ms)
+    timers.set(s.runId, t)
+  }
+})()
+
 const etapeEnCours = (s: RunState): Step | undefined =>
   s.steps.find((x) => x.status === 'running')
+
+const estProcessusVivant = (pid?: number): boolean => {
+  if (!pid) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
 
 // Middleware spécial pour SSE : EventSource ne supporte pas les headers
 // custom donc on accepte aussi le JWT en query string (?jeton=...).
@@ -133,6 +164,238 @@ const verifierAuthQueryOuHeader = (
   }
 }
 
+// ─────────────────── Traitement des lignes du bash ─────────────────
+
+const ajouterLog = (state: RunState, ligne: string): void => {
+  const entry: LogLine = { ts: Date.now(), line: ligne }
+  state.log.push(entry)
+  if (state.log.length > LOG_MAX_LIGNES) state.log.shift()
+  broadcast(state, 'log', entry)
+}
+
+const traiterLigne = (state: RunState, ligne: string): void => {
+  if (ligne.startsWith('::STEP::')) {
+    const id = ligne.slice('::STEP::'.length) as StepId
+    const step = state.steps.find((s) => s.id === id)
+    if (step) {
+      const stale = etapeEnCours(state)
+      if (stale && stale.id !== id) {
+        stale.status = 'fail'
+        stale.endedAt = Date.now()
+      }
+      step.status = 'running'
+      step.startedAt = Date.now()
+      state.currentStep = id
+      broadcast(state, 'step', step)
+      persisterRunDebounce(state)
+    }
+  } else if (ligne.startsWith('::OK::')) {
+    const id = ligne.slice('::OK::'.length) as StepId
+    const step = state.steps.find((s) => s.id === id)
+    if (step) {
+      step.status = 'ok'
+      step.endedAt = Date.now()
+      broadcast(state, 'step', step)
+      persisterRunDebounce(state)
+    }
+  } else if (ligne.startsWith('::FAIL::')) {
+    const msg = ligne.slice('::FAIL::'.length)
+    state.failureMessage = msg
+    const step = etapeEnCours(state)
+    if (step) {
+      step.status = 'fail'
+      step.endedAt = Date.now()
+      broadcast(state, 'step', step)
+    }
+    ajouterLog(state, `✗ ${msg}`)
+    persisterRunDebounce(state)
+  } else {
+    ajouterLog(state, ligne)
+  }
+}
+
+// Lit le fichier log à partir de log_offset, traite chaque ligne complète,
+// met à jour log_offset, et retourne true si du nouveau contenu a été lu.
+const lireDeltaLog = (state: RunState): boolean => {
+  if (!state.log_file) return false
+  let stats
+  try {
+    stats = statSync(state.log_file)
+  } catch {
+    return false
+  }
+  const from = state.log_offset ?? 0
+  if (stats.size <= from) return false
+
+  const fd = fsOpenSync(state.log_file, 'r')
+  const taille = stats.size - from
+  const buffer = Buffer.alloc(taille)
+  let lus = 0
+  try {
+    lus = readSync(fd, buffer, 0, taille, from)
+  } finally {
+    closeSync(fd)
+  }
+  const texte = buffer.subarray(0, lus).toString('utf-8')
+  // On split en lignes complètes ; si le dernier morceau n'a pas de \n
+  // final, on ne l'avance pas, on attendra le prochain poll.
+  const dernierNL = texte.lastIndexOf('\n')
+  if (dernierNL < 0) return false
+
+  const completes = texte.slice(0, dernierNL)
+  state.log_offset = from + Buffer.byteLength(completes, 'utf-8') + 1
+  for (const ligne of completes.split('\n')) {
+    if (ligne.length > 0) traiterLigne(state, ligne)
+  }
+  return true
+}
+
+const finir = async (state: RunState, codeSortie: number | null): Promise<void> => {
+  if (state.status !== 'running') return
+  state.endedAt = Date.now()
+  if (state.watchdog) {
+    clearTimeout(state.watchdog)
+    state.watchdog = undefined
+  }
+  if (state.poller) {
+    clearInterval(state.poller)
+    state.poller = undefined
+  }
+  // Lecture finale au cas où des lignes seraient encore en attente
+  try {
+    lireDeltaLog(state)
+  } catch {
+    /* ignore */
+  }
+
+  // Détermination du statut final.
+  // Si on n'a pas le code de sortie (cas reprise après reload), on déduit
+  // depuis les marqueurs ::OK::done / ::OK::done-rollback.
+  if (codeSortie === 0) {
+    state.status = 'success'
+  } else if (state.cancelDemande) {
+    state.status = 'cancelled'
+  } else if (codeSortie === null) {
+    const finOk = state.steps.find((s) => s.id === 'done' && s.status === 'ok')
+    const rbOk = state.steps.find((s) => s.id === 'done-rollback' && s.status === 'ok')
+    if (finOk) state.status = 'success'
+    else if (rbOk) state.status = 'failed'
+    else state.status = 'failed'
+  } else {
+    state.status = 'failed'
+  }
+
+  if (state.status !== 'success') {
+    const step = etapeEnCours(state)
+    if (step) {
+      step.status = 'fail'
+      step.endedAt = Date.now()
+    }
+  }
+  broadcast(state, 'end', sansClients(state))
+  if (runEnCours === state.runId) runEnCours = null
+  try {
+    await persisterRun(state)
+  } catch (err) {
+    console.error('[deploy] échec persistance run', err)
+  }
+  setTimeout(() => {
+    if (state.clients) {
+      for (const c of state.clients) {
+        try {
+          c.end()
+        } catch {
+          /* déjà fermé */
+        }
+      }
+      state.clients.clear()
+    }
+  }, 500)
+}
+
+// Démarre le polling du fichier log du bash et la surveillance du PID.
+// Utilisé à la fois pour un nouveau run et pour reprendre un run orphelin
+// après un reload de l'Express (le bash a survécu grâce au detached spawn).
+const attacherSuiviRun = (state: RunState): void => {
+  if (state.poller) return
+  state.poller = setInterval(() => {
+    try {
+      lireDeltaLog(state)
+    } catch (err) {
+      console.error('[deploy] lecture log', err)
+    }
+    if (!estProcessusVivant(state.proc_pid)) {
+      // Le bash est terminé. On marque la fin sans connaître le code de
+      // sortie : finir() le déduit des marqueurs.
+      void finir(state, null)
+    }
+  }, POLL_INTERVAL_MS)
+}
+
+// ───────── Reprise des runs orphelins au boot du backend ─────────
+// Scanne LOG_DIR. Pour chaque run encore en status 'running' :
+// - si le PID est vivant : on rebranche le suivi (le bash continue à
+//   écrire dans le log file, on reprend la lecture là où on s'était arrêté)
+// - sinon : on marque le run en 'failed' avec un message explicite, pour
+//   que l'historique soit propre et l'IHM ne reste pas bloquée.
+const recupererRunsOrphelins = async (): Promise<void> => {
+  try {
+    await mkdir(LOG_DIR, { recursive: true })
+    const fichiers = await readdir(LOG_DIR)
+    for (const f of fichiers.filter((x) => x.endsWith('.json'))) {
+      try {
+        const brut = await readFile(path.join(LOG_DIR, f), 'utf-8')
+        const data = JSON.parse(brut) as RunState
+        if (data.status !== 'running') continue
+        if (estProcessusVivant(data.proc_pid)) {
+          // Bash a survécu au reload. On reprend.
+          data.clients = new Set()
+          runs.set(data.runId, data)
+          runEnCours = data.runId
+          ajouterLog(
+            data,
+            '[reprise] Backend Express redémarré — suivi du déploiement repris',
+          )
+          attacherSuiviRun(data)
+          // Watchdog résiduel : reste du temps original
+          const restant = Math.max(60_000, RUN_TIMEOUT_MS - (Date.now() - data.startedAt))
+          data.watchdog = setTimeout(() => {
+            if (data.status !== 'running') return
+            ajouterLog(data, '[watchdog] timeout après reprise — SIGTERM')
+            try {
+              if (data.proc_pid) process.kill(data.proc_pid, 'SIGTERM')
+            } catch {
+              /* déjà mort */
+            }
+          }, restant)
+          console.log(`[deploy] run orphelin repris : ${data.runId} (PID ${data.proc_pid})`)
+        } else {
+          // Bash est mort pendant que Express était down. On clôture proprement.
+          data.status = 'failed'
+          data.failureMessage =
+            data.failureMessage ??
+            'Backend redémarré pendant le déploiement — état perdu, vérifier manuellement la prod'
+          data.endedAt = Date.now()
+          for (const step of data.steps) {
+            if (step.status === 'running') {
+              step.status = 'fail'
+              step.endedAt = Date.now()
+            }
+          }
+          await persisterRun(data)
+          console.warn(`[deploy] run orphelin marqué failed : ${data.runId}`)
+        }
+      } catch (err) {
+        console.error(`[deploy] reprise impossible pour ${f}`, err)
+      }
+    }
+  } catch (err) {
+    console.error('[deploy] échec scan runs orphelins', err)
+  }
+}
+// Auto-déclenchement au chargement du module (= au boot de l'Express).
+void recupererRunsOrphelins()
+
 // ───────────────────── POST /api/admin/deploy ──────────────
 routeurAdminDeploy.post(
   '/deploy',
@@ -154,6 +417,15 @@ routeurAdminDeploy.post(
     }
 
     const runId = `run_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
+    const logFile = path.join(LOG_DIR, `${runId}.log`)
+    try {
+      mkdirSync(LOG_DIR, { recursive: true })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      res.status(500).json({ succes: false, message: `mkdir LOG_DIR: ${msg}` })
+      return
+    }
+
     const state: RunState = {
       runId,
       startedAt: Date.now(),
@@ -162,143 +434,77 @@ routeurAdminDeploy.post(
       status: 'running',
       steps: STEP_IDS.map((id) => ({ id, status: 'pending' })),
       log: [],
+      log_file: logFile,
+      log_offset: 0,
       clients: new Set(),
     }
     runs.set(runId, state)
     runEnCours = runId
 
-    const ajouterLog = (ligne: string): void => {
-      const entry: LogLine = { ts: Date.now(), line: ligne }
-      state.log.push(entry)
-      if (state.log.length > LOG_MAX_LIGNES) state.log.shift()
-      broadcast(state, 'log', entry)
+    // Spawn detached avec stdio fichier : le bash survit au reload Express,
+    // et son stdout/stderr est écrit dans logFile. On lit ce fichier par
+    // polling au lieu de pipe, pour pouvoir reprendre la lecture après un
+    // redémarrage du backend.
+    let outFd: number
+    try {
+      outFd = openSync(logFile, 'a')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      res.status(500).json({ succes: false, message: `open logFile: ${msg}` })
+      return
     }
 
     const proc = spawn('bash', [SCRIPT_PATH], {
       cwd: REPO_ROOT,
       env: { ...process.env },
-      detached: false,
+      detached: true,
+      stdio: ['ignore', outFd, outFd],
     })
-    state.proc = proc
+    // On peut fermer notre handle, le child a hérité du sien.
+    closeSync(outFd)
+    proc.unref()
+    state.proc_pid = proc.pid
 
-    // Watchdog : si le déploiement n'est pas terminé au bout de RUN_TIMEOUT_MS,
-    // on envoie SIGTERM. Le script bash a un trap TERM qui déclenche son rollback.
+    // Persiste immédiatement : si Express crashe juste après, on a quand
+    // même la trace du run (avec PID + log_file) pour la reprise.
+    void persisterRun(state)
+
+    proc.on('close', (code) => {
+      void finir(state, code)
+    })
+    proc.on('error', (err) => {
+      ajouterLog(state, `[error] spawn: ${err.message}`)
+      void finir(state, -1)
+    })
+
+    // Watchdog
     state.watchdog = setTimeout(() => {
       if (state.status !== 'running') return
       ajouterLog(
+        state,
         `[watchdog] Déploiement dépassant ${Math.round(RUN_TIMEOUT_MS / 60000)} min — SIGTERM envoyé pour déclencher le rollback`,
       )
-      try {
-        proc.kill('SIGTERM')
-      } catch {
-        /* déjà mort */
-      }
-      // Si le bash ignore SIGTERM, on l'achève au SIGKILL après 30s.
-      setTimeout(() => {
-        if (state.status === 'running') {
-          ajouterLog('[watchdog] SIGTERM ignoré — SIGKILL forcé')
-          try {
-            proc.kill('SIGKILL')
-          } catch {
-            /* déjà mort */
-          }
+      if (state.proc_pid) {
+        try {
+          process.kill(state.proc_pid, 'SIGTERM')
+        } catch {
+          /* déjà mort */
         }
-      }, 30_000)
-    }, RUN_TIMEOUT_MS)
-
-    const rlOut = createInterface({ input: proc.stdout })
-    const rlErr = createInterface({ input: proc.stderr })
-
-    rlOut.on('line', (ligne: string) => {
-      if (ligne.startsWith('::STEP::')) {
-        const id = ligne.slice('::STEP::'.length) as StepId
-        const step = state.steps.find((s) => s.id === id)
-        if (step) {
-          // Si une étape précédente était encore "running" sans OK explicite
-          const stale = etapeEnCours(state)
-          if (stale && stale.id !== id) {
-            stale.status = 'fail'
-            stale.endedAt = Date.now()
-          }
-          step.status = 'running'
-          step.startedAt = Date.now()
-          state.currentStep = id
-          broadcast(state, 'step', step)
-        }
-      } else if (ligne.startsWith('::OK::')) {
-        const id = ligne.slice('::OK::'.length) as StepId
-        const step = state.steps.find((s) => s.id === id)
-        if (step) {
-          step.status = 'ok'
-          step.endedAt = Date.now()
-          broadcast(state, 'step', step)
-        }
-      } else if (ligne.startsWith('::FAIL::')) {
-        const msg = ligne.slice('::FAIL::'.length)
-        state.failureMessage = msg
-        const step = etapeEnCours(state)
-        if (step) {
-          step.status = 'fail'
-          step.endedAt = Date.now()
-          broadcast(state, 'step', step)
-        }
-        ajouterLog(`✗ ${msg}`)
-      } else {
-        ajouterLog(ligne)
-      }
-    })
-
-    rlErr.on('line', (ligne: string) => ajouterLog(`[stderr] ${ligne}`))
-
-    const finir = async (codeSortie: number | null): Promise<void> => {
-      state.endedAt = Date.now()
-      if (state.watchdog) {
-        clearTimeout(state.watchdog)
-        state.watchdog = undefined
-      }
-      if (codeSortie === 0) {
-        state.status = 'success'
-      } else if (state.cancelDemande) {
-        state.status = 'cancelled'
-      } else {
-        state.status = 'failed'
-      }
-      if (state.status !== 'success') {
-        const step = etapeEnCours(state)
-        if (step) {
-          step.status = 'fail'
-          step.endedAt = Date.now()
-        }
-      }
-      broadcast(state, 'end', sansClients(state))
-      runEnCours = null
-      try {
-        await persisterRun(state)
-      } catch (err) {
-        console.error('[deploy] échec persistance run', err)
-      }
-      // Fermer les clients SSE peu après pour qu'ils reçoivent le 'end'
-      setTimeout(() => {
-        if (state.clients) {
-          for (const c of state.clients) {
+        setTimeout(() => {
+          if (state.status === 'running' && estProcessusVivant(state.proc_pid)) {
+            ajouterLog(state, '[watchdog] SIGTERM ignoré — SIGKILL forcé')
             try {
-              c.end()
+              process.kill(state.proc_pid!, 'SIGKILL')
             } catch {
-              /* déjà fermé */
+              /* déjà mort */
             }
           }
-          state.clients.clear()
-        }
-      }, 500)
-    }
+        }, 30_000)
+      }
+    }, RUN_TIMEOUT_MS)
 
-    proc.on('close', (code) => {
-      void finir(code)
-    })
-    proc.on('error', (err) => {
-      ajouterLog(`[error] spawn: ${err.message}`)
-      void finir(-1)
-    })
+    // Démarre le polling du log file
+    attacherSuiviRun(state)
 
     res.status(202).json({
       succes: true,
@@ -308,9 +514,8 @@ routeurAdminDeploy.post(
 )
 
 // ─────────── POST /api/admin/deploy/cancel/:runId ──────────
-// Annule un run en cours en envoyant SIGTERM au script bash. Le script a un
-// trap TERM qui déclenche son rollback automatique avant de quitter.
-// Si après 30s le processus n'a pas terminé, SIGKILL est envoyé.
+// Annule un run en cours en envoyant SIGTERM au bash (via PID stocké).
+// Le script a un trap TERM qui déclenche son rollback automatique.
 routeurAdminDeploy.post(
   '/deploy/cancel/:runId',
   verifierAuth,
@@ -329,41 +534,40 @@ routeurAdminDeploy.post(
       })
       return
     }
-    if (!state.proc || state.proc.killed) {
-      res.status(409).json({
-        succes: false,
-        message: 'Processus déjà inactif côté serveur',
+    if (!estProcessusVivant(state.proc_pid)) {
+      // Process déjà mort : on clôture le run au lieu d'échouer.
+      state.cancelDemande = true
+      void finir(state, null)
+      res.status(202).json({
+        succes: true,
+        donnees: { runId, message: 'Processus déjà inactif — run clôturé' },
       })
       return
     }
 
     state.cancelDemande = true
-    const entry: LogLine = {
-      ts: Date.now(),
-      line: `[cancel] Annulation demandée par ${req.utilisateur?.email ?? 'admin'} — SIGTERM envoyé, rollback en cours`,
-    }
-    state.log.push(entry)
-    broadcast(state, 'log', entry)
+    ajouterLog(
+      state,
+      `[cancel] Annulation demandée par ${req.utilisateur?.email ?? 'admin'} — SIGTERM envoyé, rollback en cours`,
+    )
+    persisterRunDebounce(state, 0)
 
     try {
-      state.proc.kill('SIGTERM')
+      process.kill(state.proc_pid!, 'SIGTERM')
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       res.status(500).json({ succes: false, message: `kill SIGTERM échoué: ${msg}` })
       return
     }
-    // Filet de sécurité : si le bash ignore SIGTERM (rollback figé ?),
-    // on force SIGKILL après 30s pour ne pas rester bloqué.
+    // Filet de sécurité : SIGKILL après 30s si le bash résiste.
     setTimeout(() => {
-      if (state.status === 'running' && state.proc && !state.proc.killed) {
-        const force: LogLine = {
-          ts: Date.now(),
-          line: '[cancel] SIGTERM ignoré après 30s — SIGKILL forcé (rollback partiel possible)',
-        }
-        state.log.push(force)
-        broadcast(state, 'log', force)
+      if (state.status === 'running' && estProcessusVivant(state.proc_pid)) {
+        ajouterLog(
+          state,
+          '[cancel] SIGTERM ignoré après 30s — SIGKILL forcé (rollback partiel possible)',
+        )
         try {
-          state.proc.kill('SIGKILL')
+          process.kill(state.proc_pid!, 'SIGKILL')
         } catch {
           /* déjà mort */
         }
@@ -391,7 +595,6 @@ routeurAdminDeploy.get(
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
-      // Nginx : désactive le buffering pour ce SSE
       'X-Accel-Buffering': 'no',
     })
     // État initial
@@ -405,7 +608,6 @@ routeurAdminDeploy.get(
 
     state.clients?.add(res)
 
-    // Heartbeat pour éviter le timeout des proxys
     const heartbeat = setInterval(() => {
       try {
         res.write(': hb\n\n')
