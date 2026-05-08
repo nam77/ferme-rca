@@ -1,5 +1,5 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
-import { spawn } from 'node:child_process'
+import { spawn, type ChildProcess } from 'node:child_process'
 import { createInterface } from 'node:readline'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -20,6 +20,9 @@ const SCRIPT_PATH = path.join(REPO_ROOT, 'scripts', 'deploy-server.sh')
 const LOG_DIR = path.join(REPO_ROOT, 'backend', 'logs', 'deployments')
 
 // Étapes attendues du script bash. L'ordre fait foi pour l'UI.
+// Les deux dernières (rollback, done-rollback) sont des étapes
+// conditionnelles : elles n'apparaissent en 'running' que si une étape
+// précédente a échoué ou si le run a été annulé.
 const STEP_IDS = [
   'backup-db',
   'git-pull',
@@ -31,6 +34,8 @@ const STEP_IDS = [
   'frontend-deploy',
   'tests-prod',
   'done',
+  'rollback',
+  'done-rollback',
 ] as const
 type StepId = (typeof STEP_IDS)[number]
 
@@ -43,7 +48,7 @@ type Step = {
 }
 type LogLine = { ts: number; line: string }
 
-type RunStatus = 'running' | 'success' | 'failed'
+type RunStatus = 'running' | 'success' | 'failed' | 'cancelled'
 type RunState = {
   runId: string
   startedAt: number
@@ -55,21 +60,28 @@ type RunState = {
   currentStep?: StepId
   log: LogLine[]
   failureMessage?: string
+  cancelDemande?: boolean
   // Non sérialisé
   clients?: Set<Response>
+  proc?: ChildProcess
+  watchdog?: NodeJS.Timeout
 }
 
-type RunPublic = Omit<RunState, 'clients'>
+type RunPublic = Omit<RunState, 'clients' | 'proc' | 'watchdog'>
 
 const runs = new Map<string, RunState>()
 let runEnCours: string | null = null
 const HISTORIQUE_MAX = 50
 const LOG_MAX_LIGNES = 5000
+// Watchdog global : si le script n'a pas rendu la main au bout de ce délai,
+// on lui envoie SIGTERM pour déclencher son rollback. Le `tsc` figé d'hier
+// aurait été tué après 45 min au lieu de rester zombie indéfiniment.
+const RUN_TIMEOUT_MS = 45 * 60 * 1000
 
 // ───────────────────────── Helpers ─────────────────────────
 
 const sansClients = (s: RunState): RunPublic => {
-  const { clients: _omit, ...rest } = s
+  const { clients: _c, proc: _p, watchdog: _w, ...rest } = s
   return rest
 }
 
@@ -167,6 +179,32 @@ routeurAdminDeploy.post(
       env: { ...process.env },
       detached: false,
     })
+    state.proc = proc
+
+    // Watchdog : si le déploiement n'est pas terminé au bout de RUN_TIMEOUT_MS,
+    // on envoie SIGTERM. Le script bash a un trap TERM qui déclenche son rollback.
+    state.watchdog = setTimeout(() => {
+      if (state.status !== 'running') return
+      ajouterLog(
+        `[watchdog] Déploiement dépassant ${Math.round(RUN_TIMEOUT_MS / 60000)} min — SIGTERM envoyé pour déclencher le rollback`,
+      )
+      try {
+        proc.kill('SIGTERM')
+      } catch {
+        /* déjà mort */
+      }
+      // Si le bash ignore SIGTERM, on l'achève au SIGKILL après 30s.
+      setTimeout(() => {
+        if (state.status === 'running') {
+          ajouterLog('[watchdog] SIGTERM ignoré — SIGKILL forcé')
+          try {
+            proc.kill('SIGKILL')
+          } catch {
+            /* déjà mort */
+          }
+        }
+      }, 30_000)
+    }, RUN_TIMEOUT_MS)
 
     const rlOut = createInterface({ input: proc.stdout })
     const rlErr = createInterface({ input: proc.stderr })
@@ -214,8 +252,18 @@ routeurAdminDeploy.post(
 
     const finir = async (codeSortie: number | null): Promise<void> => {
       state.endedAt = Date.now()
-      state.status = codeSortie === 0 ? 'success' : 'failed'
-      if (state.status === 'failed') {
+      if (state.watchdog) {
+        clearTimeout(state.watchdog)
+        state.watchdog = undefined
+      }
+      if (codeSortie === 0) {
+        state.status = 'success'
+      } else if (state.cancelDemande) {
+        state.status = 'cancelled'
+      } else {
+        state.status = 'failed'
+      }
+      if (state.status !== 'success') {
         const step = etapeEnCours(state)
         if (step) {
           step.status = 'fail'
@@ -256,6 +304,73 @@ routeurAdminDeploy.post(
       succes: true,
       donnees: { runId, startedAt: state.startedAt },
     })
+  },
+)
+
+// ─────────── POST /api/admin/deploy/cancel/:runId ──────────
+// Annule un run en cours en envoyant SIGTERM au script bash. Le script a un
+// trap TERM qui déclenche son rollback automatique avant de quitter.
+// Si après 30s le processus n'a pas terminé, SIGKILL est envoyé.
+routeurAdminDeploy.post(
+  '/deploy/cancel/:runId',
+  verifierAuth,
+  verifierRole(Role.admin),
+  (req: Request, res: Response): void => {
+    const { runId } = req.params
+    const state = runs.get(runId)
+    if (!state) {
+      res.status(404).json({ succes: false, message: 'Run inconnu' })
+      return
+    }
+    if (state.status !== 'running') {
+      res.status(409).json({
+        succes: false,
+        message: `Run déjà terminé (statut: ${state.status})`,
+      })
+      return
+    }
+    if (!state.proc || state.proc.killed) {
+      res.status(409).json({
+        succes: false,
+        message: 'Processus déjà inactif côté serveur',
+      })
+      return
+    }
+
+    state.cancelDemande = true
+    const entry: LogLine = {
+      ts: Date.now(),
+      line: `[cancel] Annulation demandée par ${req.utilisateur?.email ?? 'admin'} — SIGTERM envoyé, rollback en cours`,
+    }
+    state.log.push(entry)
+    broadcast(state, 'log', entry)
+
+    try {
+      state.proc.kill('SIGTERM')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      res.status(500).json({ succes: false, message: `kill SIGTERM échoué: ${msg}` })
+      return
+    }
+    // Filet de sécurité : si le bash ignore SIGTERM (rollback figé ?),
+    // on force SIGKILL après 30s pour ne pas rester bloqué.
+    setTimeout(() => {
+      if (state.status === 'running' && state.proc && !state.proc.killed) {
+        const force: LogLine = {
+          ts: Date.now(),
+          line: '[cancel] SIGTERM ignoré après 30s — SIGKILL forcé (rollback partiel possible)',
+        }
+        state.log.push(force)
+        broadcast(state, 'log', force)
+        try {
+          state.proc.kill('SIGKILL')
+        } catch {
+          /* déjà mort */
+        }
+      }
+    }, 30_000)
+
+    res.status(202).json({ succes: true, donnees: { runId } })
   },
 )
 

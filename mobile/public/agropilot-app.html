@@ -2989,8 +2989,11 @@
     </div>
 
     <div class="dash-section" id="depl-progression-section" style="display:none">
-      <h3 id="depl-progression-titre"><span class="icon">⏳</span>Progression du déploiement</h3>
-      <div id="depl-progression-bar"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <h3 id="depl-progression-titre" style="margin:0"><span class="icon">⏳</span>Progression du déploiement</h3>
+        <button class="btn btn-sm" id="depl-annuler" style="display:none;background:#c0392b;color:#fff">⛔ Annuler &amp; rollback</button>
+      </div>
+      <div id="depl-progression-bar" style="margin-top:10px"></div>
       <div id="depl-progression-meta" style="font-family:'DM Mono',monospace;font-size:11.5px;color:#5c3d1e;margin:8px 0 14px"></div>
       <div id="depl-etapes"></div>
       <h4 style="font-family:'Fraunces',serif;font-size:14px;margin-top:16px;margin-bottom:6px;color:#2d1f0e">📋 Journal d'événements</h4>
@@ -7062,9 +7065,14 @@ function setupDeploiement() {
   if (backup) backup.addEventListener('click', deplTelechargerBackup);
   const orch = document.getElementById('depl-orchestrer');
   if (orch) orch.addEventListener('click', deplOrchestrer);
+  const annuler = document.getElementById('depl-annuler');
+  if (annuler) annuler.addEventListener('click', deplAnnuler);
 }
 
 // ───── Nouveau pipeline auto (script bash + SSE) ─────
+// Les étapes "rollback" et "done-rollback" sont conditionnelles : elles
+// n'apparaissent dans la liste qu'en cas d'échec ou d'annulation. Elles ne
+// sont pas comptées dans la barre de progression du run nominal.
 const DEPL_ETAPES = [
   { id: 'backup-db',       label: 'Sauvegarde de la base de données' },
   { id: 'git-pull',        label: 'Mise à jour du code (git pull)' },
@@ -7076,9 +7084,12 @@ const DEPL_ETAPES = [
   { id: 'frontend-deploy', label: 'Upload Cloudflare Pages' },
   { id: 'tests-prod',      label: 'Tests post-déploiement' },
   { id: 'done',            label: 'Finalisation' },
+  { id: 'rollback',        label: 'Rollback automatique (restauration)', conditionnel: true },
+  { id: 'done-rollback',   label: 'Rollback terminé — service restauré', conditionnel: true },
 ];
 
 let _deplSSE = null;
+let _deplRunId = null;
 
 async function deplOrchestrer() {
   const btn = document.getElementById('depl-orchestrer');
@@ -7107,10 +7118,17 @@ async function deplOrchestrer() {
 }
 
 function deplDemarrerVue(runId) {
+  _deplRunId = runId;
   document.getElementById('depl-progression-section').style.display = '';
   document.getElementById('depl-progression-titre').innerHTML =
     `<span class="icon">⏳</span>Déploiement en cours… <code style="font-size:11px;color:#8b5e3c">${escapeHtml(runId)}</code>`;
   document.getElementById('depl-journal').textContent = '';
+  const btnAnnuler = document.getElementById('depl-annuler');
+  if (btnAnnuler) {
+    btnAnnuler.style.display = '';
+    btnAnnuler.disabled = false;
+    btnAnnuler.textContent = '⛔ Annuler & rollback';
+  }
   deplInitEtapes();
   deplOuvrirSSE(runId);
 }
@@ -7119,13 +7137,27 @@ function deplInitEtapes() {
   const dest = document.getElementById('depl-etapes');
   if (!dest) return;
   dest.innerHTML = DEPL_ETAPES.map(s => `
-    <div class="depl-etape" data-step="${s.id}">
+    <div class="depl-etape" data-step="${s.id}"${s.conditionnel ? ' data-conditionnel="1" style="display:none"' : ''}>
       <span class="depl-etape-icone">⏸</span>
       <span class="depl-etape-label">${escapeHtml(s.label)}</span>
       <span class="depl-etape-duree"></span>
     </div>
   `).join('');
   deplMajBarre();
+}
+
+async function deplAnnuler() {
+  if (!_deplRunId) return;
+  if (!confirm("Annuler le déploiement en cours ?\n\nLe serveur va :\n• tuer le processus en cours\n• restaurer la version précédente (git reset + pm2 reload)\n• rebuild + redeploy le frontend si nécessaire\n\nDurée estimée du rollback : 1-3 min.\n\nLe service reste en ligne pendant tout le rollback.")) return;
+  const btn = document.getElementById('depl-annuler');
+  if (btn) { btn.disabled = true; btn.textContent = '⛔ Annulation en cours…'; }
+  try {
+    await apiFetch('POST', '/admin/deploy/cancel/' + encodeURIComponent(_deplRunId));
+    toast('Annulation envoyée — le rollback démarre', 'success');
+  } catch (e) {
+    toast('Annulation impossible : ' + (e.message || 'erreur'), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '⛔ Annuler & rollback'; }
+  }
 }
 
 function deplOuvrirSSE(runId) {
@@ -7168,6 +7200,11 @@ function deplAppliquerEtat(state) {
 function deplMajEtape(step) {
   const dest = document.querySelector('[data-step="' + step.id + '"]');
   if (!dest) return;
+  // Une étape conditionnelle (rollback) reste cachée tant qu'elle est pending.
+  // Dès qu'elle est touchée par un événement non-pending, on la révèle.
+  if (dest.dataset.conditionnel === '1' && step.status && step.status !== 'pending') {
+    dest.style.display = '';
+  }
   const icones  = { pending:'⏸', running:'⏳', ok:'✓', fail:'✗' };
   const couleurs= { pending:'#999', running:'#e8943a', ok:'#4a8c3f', fail:'#c0392b' };
   const ic = dest.querySelector('.depl-etape-icone');
@@ -7182,7 +7219,9 @@ function deplMajEtape(step) {
 }
 
 function deplMajBarre() {
-  const etapes = document.querySelectorAll('.depl-etape');
+  // La barre ne compte que les étapes nominales : on exclut les étapes
+  // conditionnelles (rollback) qui ne sont pas censées arriver dans un run réussi.
+  const etapes = document.querySelectorAll('.depl-etape:not([data-conditionnel="1"])');
   const total = etapes.length;
   let ok = 0, fail = 0, running = 0;
   etapes.forEach(et => {
@@ -7207,21 +7246,31 @@ function deplAjouterLog(entry) {
 }
 
 function deplTerminer(state) {
+  _deplRunId = null;
   const btn = document.getElementById('depl-orchestrer');
   if (btn) {
     btn.disabled = false;
     btn.textContent = '▶ Lancer le déploiement';
   }
+  const btnAnnuler = document.getElementById('depl-annuler');
+  if (btnAnnuler) btnAnnuler.style.display = 'none';
   const titre = document.getElementById('depl-progression-titre');
   if (titre) {
     if (state.status === 'success') {
       titre.innerHTML = '<span class="icon">✅</span>Déploiement réussi';
+    } else if (state.status === 'cancelled') {
+      titre.innerHTML = '<span class="icon">⛔</span>Déploiement annulé — version précédente restaurée';
     } else {
       const msg = state.failureMessage ? ' — ' + escapeHtml(state.failureMessage) : '';
-      titre.innerHTML = '<span class="icon">❌</span>Déploiement échoué' + msg;
+      titre.innerHTML = '<span class="icon">❌</span>Déploiement échoué (rollback exécuté)' + msg;
     }
   }
-  toast(state.status === 'success' ? '✓ Déploiement réussi' : '✗ Déploiement échoué', state.status === 'success' ? 'success' : 'error');
+  const toastMsg = state.status === 'success' ? '✓ Déploiement réussi'
+                 : state.status === 'cancelled' ? '⛔ Annulé — version précédente restaurée'
+                 : '✗ Déploiement échoué — rollback automatique';
+  const toastType = state.status === 'success' ? 'success'
+                  : state.status === 'cancelled' ? 'info' : 'error';
+  toast(toastMsg, toastType);
   renderDeploiement();
   deplChargerHistorique();
 }
@@ -7239,8 +7288,8 @@ async function deplChargerHistorique() {
     dest.innerHTML = runs.slice(0, 10).map(run => {
       const debut = new Date(run.startedAt).toLocaleString('fr-FR');
       const duree = run.endedAt ? Math.round((run.endedAt - run.startedAt) / 1000) + 's' : '⏳';
-      const ic    = { running:'⏳', success:'✅', failed:'❌' }[run.status] || '?';
-      const cls   = { running:'#e8943a', success:'#4a8c3f', failed:'#c0392b' }[run.status] || '#5c3d1e';
+      const ic    = { running:'⏳', success:'✅', failed:'❌', cancelled:'⛔' }[run.status] || '?';
+      const cls   = { running:'#e8943a', success:'#4a8c3f', failed:'#c0392b', cancelled:'#8b5e3c' }[run.status] || '#5c3d1e';
       return `<div class="depl-run-item" style="display:flex;gap:14px;padding:8px 10px;border-bottom:1px solid rgba(92,61,30,0.10);font-family:'DM Mono',monospace;font-size:12px;color:#2d1f0e;align-items:center">
         <span style="color:${cls};font-size:14px;width:20px">${ic}</span>
         <span style="flex:1;min-width:140px">${escapeHtml(debut)}</span>
