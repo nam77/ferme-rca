@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express'
-import { spawn } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises'
-import { openSync, closeSync, openSync as fsOpenSync, readSync, statSync, mkdirSync } from 'node:fs'
+import { openSync as fsOpenSync, closeSync, readSync, statSync, mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename)
 // Trois niveaux au-dessus = racine du repo dans les deux cas.
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..')
 const SCRIPT_PATH = path.join(REPO_ROOT, 'scripts', 'deploy-server.sh')
+const RUNNER_PATH = path.join(REPO_ROOT, 'scripts', 'detached-runner.sh')
 const LOG_DIR = path.join(REPO_ROOT, 'backend', 'logs', 'deployments')
 
 // Étapes attendues du script bash. L'ordre fait foi pour l'UI.
@@ -439,6 +440,7 @@ routeurAdminDeploy.post(
 
     const runId = `run_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
     const logFile = path.join(LOG_DIR, `${runId}.log`)
+    const pidFile = path.join(LOG_DIR, `${runId}.pid`)
     try {
       mkdirSync(LOG_DIR, { recursive: true })
     } catch (err) {
@@ -462,41 +464,55 @@ routeurAdminDeploy.post(
     runs.set(runId, state)
     runEnCours = runId
 
-    // Spawn detached avec stdio fichier : le bash survit au reload Express,
-    // et son stdout/stderr est écrit dans logFile. On lit ce fichier par
-    // polling au lieu de pipe, pour pouvoir reprendre la lecture après un
-    // redémarrage du backend.
-    let outFd: number
-    try {
-      outFd = openSync(logFile, 'a')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      res.status(500).json({ succes: false, message: `open logFile: ${msg}` })
+    // On lance le bash via detached-runner.sh : double-fork + setsid →
+    // le bash réel devient orphelin (PPID=1, init), invisible au
+    // tree-kill que pm2 utilise quand il reload Express. Sans ça, le
+    // pm2 reload de l'étape 5 du déploiement tue notre propre bash.
+    const wrapper = spawnSync('bash', [RUNNER_PATH, SCRIPT_PATH, logFile, pidFile], {
+      cwd: REPO_ROOT,
+      env: { ...process.env },
+    })
+    if (wrapper.status !== 0) {
+      const stderr = wrapper.stderr?.toString() ?? ''
+      res.status(500).json({
+        succes: false,
+        message: `detached-runner a échoué (status ${wrapper.status}) : ${stderr}`,
+      })
       return
     }
 
-    const proc = spawn('bash', [SCRIPT_PATH], {
-      cwd: REPO_ROOT,
-      env: { ...process.env },
-      detached: true,
-      stdio: ['ignore', outFd, outFd],
-    })
-    // On peut fermer notre handle, le child a hérité du sien.
-    closeSync(outFd)
-    proc.unref()
-    state.proc_pid = proc.pid
+    // Lire le PID écrit par le wrapper. Le wrapper attend jusqu'à 0.5s
+    // que le PID soit écrit avant de quitter, donc à ce point le fichier
+    // doit exister. On retry quand même brièvement par sécurité.
+    let pid = 0
+    for (let i = 0; i < 20; i++) {
+      try {
+        const contenu = readFileSync(pidFile, 'utf-8').trim()
+        if (contenu) {
+          pid = parseInt(contenu, 10)
+          if (pid > 0) break
+        }
+      } catch {
+        /* pas encore créé */
+      }
+      // wait 50ms synchrone (acceptable, c'est la perf du démarrage)
+      const debut = Date.now()
+      while (Date.now() - debut < 50) {
+        /* busy-wait court */
+      }
+    }
+    if (pid <= 0) {
+      res.status(500).json({
+        succes: false,
+        message: 'PID du bash non récupéré après le double-fork',
+      })
+      return
+    }
+    state.proc_pid = pid
 
-    // Persiste immédiatement : si Express crashe juste après, on a quand
-    // même la trace du run (avec PID + log_file) pour la reprise.
+    // Persiste immédiatement : si Express crashe juste après, on a la
+    // trace du run (avec PID + log_file) pour la reprise.
     void persisterRun(state)
-
-    proc.on('close', (code) => {
-      void finir(state, code)
-    })
-    proc.on('error', (err) => {
-      ajouterLog(state, `[error] spawn: ${err.message}`)
-      void finir(state, -1)
-    })
 
     // Watchdog
     state.watchdog = setTimeout(() => {

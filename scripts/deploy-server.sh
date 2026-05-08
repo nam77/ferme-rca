@@ -173,15 +173,20 @@ declencher_rollback() {
   ok done-rollback
 }
 
-# Trap signal : si l'orchestrateur (backend) envoie SIGTERM/SIGINT,
-# on déclenche le rollback avant de quitter.
+# Trap signal : SEUL SIGTERM (envoyé par /api/admin/deploy/cancel ou par
+# le watchdog Node) déclenche un rollback intentionnel.
+# SIGINT est explicitement ignoré : c'est ce que pm2 envoie au worker
+# Express quand il fait `pm2 reload agri-pilot-api` à l'étape 5. Sans
+# cette protection, notre propre déploiement nous tuait au reload.
+# (Le double-fork du detached-runner.sh isole déjà notre bash de l'arbre
+# pm2, mais on garde cette ceinture en plus des bretelles.)
 sur_signal() {
   local sig="$1"
   echo "::FAIL::Interruption (${sig}) reçue"
   declencher_rollback "signal ${sig}"
   exit 130
 }
-trap 'sur_signal INT' INT
+trap '' INT
 trap 'sur_signal TERM' TERM
 # Filet de sécurité : si le script sort sans avoir déroulé tous les ::OK::,
 # on lance un rollback. Le flag DEPLOIEMENT_REUSSI le désactive en fin.
