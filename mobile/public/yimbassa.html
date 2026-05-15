@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yimbassa AgriConnect — Projet</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--ink:#0d1a0a;--ink2:#3a4a36;--ink3:#6a7d64;
+--M:#2e6b1a;--M2:#3d8c24;--M3:#5cb030;--Mlt:#ecf5e6;--Mdk:#1a3d0d;
+--line:rgba(0,0,0,0.09);--r:8px;--rl:14px;
+}
+body{font-family:'Georgia',serif;color:var(--ink);background:#fff;font-size:15px;line-height:1.7;-webkit-text-size-adjust:100%}
+
+.nav{background:var(--Mdk);display:flex;align-items:stretch;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:11px;padding:12px 20px;text-decoration:none;flex-shrink:0}
+.logo-mark{width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:15px;height:15px;fill:rgba(255,255,255,0.85)}
+.logo-text strong{display:block;font-family:'Georgia',serif;font-size:13px;color:rgba(255,255,255,0.92);letter-spacing:.04em}
+.logo-text span{display:block;font-family:'Segoe UI',sans-serif;font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
+.nav-links{display:flex;align-items:stretch}
+
+.nl{
+  display:flex;align-items:center;justify-content:center;
+  background:none;
+  border:none;
+  border-bottom:3px solid transparent;
+  color:#ffffff !important;
+  font-family:'Georgia',serif;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-decoration:underline;
+  text-decoration-color:rgba(255,255,255,0.3);
+  text-underline-offset:4px;
+  padding:0 22px;
+  cursor:pointer;
+  transition:all .2s;
+  white-space:nowrap;
+  line-height:1;
+  -webkit-text-fill-color:#ffffff;
+}
+.nl:hover{
+  background:rgba(255,255,255,0.08);
+  text-decoration-color:rgba(255,255,255,0.75);
+  color:#ffffff !important;
+}
+.nl.on{
+  border-bottom-color:#7dd44a;
+  background:rgba(255,255,255,0.09);
+  text-decoration-color:#7dd44a;
+  color:#ffffff !important;
+}
+
+.hbg{display:none;background:none;border:none;color:#ffffff;font-size:22px;padding:0 16px;cursor:pointer;align-items:center;font-weight:700}
+.mob-nav{display:none;background:#152b0b;flex-direction:column;border-top:1px solid rgba(255,255,255,0.07)}
+.mob-nav.open{display:flex}
+.mn{
+  display:flex;align-items:center;gap:10px;
+  background:none;border:none;
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff;
+  font-family:'Georgia',serif;font-size:14px;font-weight:700;
+  text-decoration:underline;text-decoration-color:rgba(255,255,255,0.3);text-underline-offset:4px;
+  padding:13px 20px;text-align:left;cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  transition:all .18s;width:100%;letter-spacing:.04em;
+}
+.mn:hover{background:rgba(255,255,255,0.08);text-decoration-color:rgba(255,255,255,0.75)}
+.mn.on{background:rgba(255,255,255,0.1);text-decoration-color:#7dd44a}
+
+.panel{display:none}
+.panel.on{display:block;animation:rise .32s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.hero{background:var(--Mdk);position:relative;overflow:hidden;padding:4.5rem 2rem 3.5rem}
+.hero::before{content:'';position:absolute;right:-100px;top:-100px;width:400px;height:400px;border-radius:50%;border:1px solid rgba(125,212,74,0.08)}
+.hero::after{content:'';position:absolute;left:-60px;bottom:-80px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(125,212,74,0.06)}
+.hstripe{position:absolute;width:2px;top:0;bottom:0;background:rgba(125,212,74,0.12)}
+.hero-inner{max-width:820px;margin:0 auto;position:relative;z-index:1}
+.eyebrow{font-family:'Segoe UI',sans-serif;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(125,212,74,0.85);margin-bottom:1.3rem;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:'';display:inline-block;width:24px;height:1px;background:rgba(125,212,74,0.6)}
+.hero h1{font-size:clamp(24px,5vw,42px);font-weight:400;color:#fff;line-height:1.18;margin-bottom:1.4rem;letter-spacing:-.01em}
+.hero h1 em{font-style:italic;color:#9de668}
+.hero-lead{font-size:clamp(13px,2vw,15px);color:rgba(255,255,255,0.58);max-width:560px;line-height:1.8;font-family:'Segoe UI',sans-serif;margin-bottom:2.5rem}
+.hm-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.07);border-radius:var(--r);overflow:hidden}
+.hm{padding:1.3rem 1rem;text-align:center;background:rgba(0,0,0,0.15)}
+.hm-v{font-size:clamp(16px,3vw,24px);font-weight:400;color:#9de668;letter-spacing:-.02em;font-family:'Georgia',serif}
+.hm-l{font-size:10px;color:rgba(255,255,255,0.38);margin-top:4px;text-transform:uppercase;letter-spacing:.1em;font-family:'Segoe UI',sans-serif;line-height:1.4}
+
+.wrap{max-width:900px;margin:0 auto;padding:3.5rem 2rem}
+.s-eye{font-family:'Segoe UI',sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--M2);margin-bottom:.8rem;display:flex;align-items:center;gap:8px}
+.s-eye::before{content:'';display:inline-block;width:18px;height:1px;background:var(--M3)}
+.s-title{font-size:clamp(20px,4vw,32px);font-weight:400;color:var(--ink);line-height:1.2;margin-bottom:.9rem;letter-spacing:-.01em}
+.s-lead{font-size:14px;color:var(--ink2);max-width:680px;line-height:1.8;font-family:'Segoe UI',sans-serif;margin-bottom:2.5rem}
+.rule{height:1px;background:var(--line);margin:2.5rem 0}
+
+.stat-band{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:var(--rl);overflow:hidden;margin-bottom:2.5rem}
+.sb{padding:1.4rem 1rem;text-align:center;border-right:1px solid var(--line);background:#fff}
+.sb:last-child{border-right:none}
+.sb-v{font-size:clamp(16px,3vw,24px);font-weight:400;color:var(--M);font-family:'Georgia',serif}
+.sb-l{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3);margin-top:5px;font-family:'Segoe UI',sans-serif;line-height:1.4}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-bottom:2.5rem;align-items:start}
+.split.rev{direction:rtl}.split.rev>*{direction:ltr}
+.split-text h3{font-size:clamp(15px,2.5vw,18px);font-weight:400;color:var(--ink);margin-bottom:.7rem;line-height:1.3}
+.split-text p{font-size:13px;color:var(--ink2);line-height:1.85;font-family:'Segoe UI',sans-serif;margin-bottom:.9rem}
+
+.infog{background:#f2f8ee;border-radius:var(--rl);padding:1.5rem}
+.infog-ttl{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink3);font-family:'Segoe UI',sans-serif;margin-bottom:1rem}
+.infog-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(46,107,26,0.1)}
+.infog-row:last-child{border:none}
+.infog-n{font-size:20px;font-weight:400;color:var(--M);font-family:'Georgia',serif;min-width:50px}
+.infog-d{font-size:12px;color:var(--ink2);font-family:'Segoe UI',sans-serif;line-height:1.5}
+
+.pq{border-left:2px solid var(--M3);padding:1.1rem 1.4rem;margin:2rem 0;background:var(--Mlt);border-radius:0 var(--r) var(--r) 0}
+.pq p{font-size:clamp(13px,2vw,15px);color:var(--M);line-height:1.7;font-style:italic}
+.pq cite{font-size:10px;color:var(--M2);font-family:'Segoe UI',sans-serif;font-style:normal;display:block;margin-top:.5rem;text-transform:uppercase;letter-spacing:.1em}
+
+.pillar-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-radius:var(--rl);overflow:hidden;margin-bottom:2.5rem}
+.pillar{background:#fff;padding:1.75rem 1.4rem}
+.pil-ico{width:38px;height:38px;border-radius:50%;background:var(--Mlt);display:flex;align-items:center;justify-content:center;margin-bottom:.9rem}
+.pil-ico svg{width:17px;height:17px;fill:var(--M)}
+.pillar h3{font-size:14px;color:var(--ink);margin-bottom:.5rem}
+.pillar p{font-size:12px;color:var(--ink2);font-family:'Segoe UI',sans-serif;line-height:1.65}
+
+.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:var(--rl);overflow:hidden;margin-bottom:2.5rem}
+.mod{background:#fff;padding:1.4rem;transition:background .2s}
+.mod:hover{background:var(--Mlt)}
+.mod-n{font-size:10px;font-family:'Segoe UI',sans-serif;text-transform:uppercase;letter-spacing:.12em;color:var(--M3);margin-bottom:.5rem}
+.mod-title{font-size:14px;color:var(--ink);margin-bottom:.4rem}
+.mod-rev{font-size:17px;color:var(--M);font-family:'Georgia',serif;margin-bottom:.5rem}
+.mod-body{font-size:11.5px;color:var(--ink2);font-family:'Segoe UI',sans-serif;line-height:1.6}
+
+.tl{margin-bottom:2.5rem}
+.tl-item{display:flex;gap:1.4rem;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:14px;top:32px;bottom:-4px;width:1px;background:rgba(46,107,26,0.18)}
+.tl-pin{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--M2);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff}
+.tl-pin svg{width:12px;height:12px;fill:var(--M)}
+.tl-body{flex:1;padding-bottom:1.75rem}
+.tl-date{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--M2);font-family:'Segoe UI',sans-serif;margin-bottom:.3rem}
+.tl-title{font-size:14px;color:var(--ink);margin-bottom:.35rem}
+.tl-desc{font-size:12.5px;color:var(--ink2);font-family:'Segoe UI',sans-serif;line-height:1.75}
+
+.fin-block{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem}
+.fin-item{margin-bottom:1rem}
+.fin-head{display:flex;justify-content:space-between;margin-bottom:.3rem}
+.fin-cat{font-size:11px;font-family:'Segoe UI',sans-serif;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em}
+.fin-val{font-size:13px;font-family:'Georgia',serif;color:var(--M)}
+.fin-track{height:3px;background:var(--line);border-radius:2px}
+.fin-fill{height:3px;border-radius:2px;background:var(--M2)}
+.proj-table{width:100%;border-collapse:collapse}
+.proj-table th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3);font-family:'Segoe UI',sans-serif;padding:.55rem 0;border-bottom:1px solid var(--line);text-align:left;font-weight:400}
+.proj-table td{font-size:12.5px;color:var(--ink);padding:.6rem 0;border-bottom:1px solid var(--line);font-family:'Segoe UI',sans-serif}
+.proj-table td:last-child{font-family:'Georgia',serif;color:var(--M);text-align:right}
+.kpi-note{margin-top:1.1rem;padding:.9rem 1rem;background:var(--Mlt);border-radius:var(--r);font-family:'Segoe UI',sans-serif;font-size:12px;color:var(--Mdk);line-height:1.7}
+
+.chart-wrap{padding:1.5rem;background:#f2f8ee;border-radius:var(--rl);margin-bottom:1.5rem;border:1px solid rgba(46,107,26,0.1)}
+.chart-wrap h4{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink3);font-family:'Segoe UI',sans-serif;margin-bottom:1rem}
+
+.footer{background:var(--Mdk);padding:2.5rem 2rem;text-align:center}
+.footer-name{font-family:'Georgia',serif;font-size:17px;color:rgba(255,255,255,0.85);margin-bottom:.3rem}
+.footer-sub{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,0.28);font-family:'Segoe UI',sans-serif;margin-bottom:1.4rem}
+.footer-contacts{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.fc{font-size:12px;color:rgba(255,255,255,0.48);font-family:'Segoe UI',sans-serif;display:flex;align-items:center;gap:6px}
+.fc svg{width:12px;height:12px;fill:rgba(255,255,255,0.32);flex-shrink:0}
+.footer-copy{font-size:10px;color:rgba(255,255,255,0.2);font-family:'Segoe UI',sans-serif}
+
+@media(max-width:680px){
+.nav-links{display:none!important}.hbg{display:flex!important}
+.hm-row{grid-template-columns:1fr 1fr}
+.stat-band{grid-template-columns:1fr 1fr}
+.sb{border-right:none;border-bottom:1px solid var(--line)}
+.sb:nth-last-child(-n+2){border-bottom:none}
+.split,.split.rev{grid-template-columns:1fr;direction:ltr}
+.mod-grid{grid-template-columns:1fr 1fr}
+.pillar-grid{grid-template-columns:1fr}
+.fin-block{grid-template-columns:1fr}
+.wrap{padding:2rem 1.1rem}
+.footer-contacts{flex-direction:column;align-items:center;gap:.8rem}
+}
+@media(max-width:420px){.mod-grid{grid-template-columns:1fr}}
+</style>
+
+<nav class="nav">
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 6 5 10c0 5.5 7 12 7 12s7-6.5 7-12c0-4-3-8-7-8zm0 5a3 3 0 110 6 3 3 0 010-6z"/></svg>
+    </div>
+    <div class="logo-text">
+      <strong>Yimbassa AgriConnect</strong>
+      <span>République Centrafricaine</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <button class="nl on" onclick="go('about',this)">À propos</button>
+    <button class="nl" onclick="go('why',this)">Pourquoi</button>
+    <button class="nl" onclick="go('how',this)">Le Comment</button>
+  </div>
+  <button class="hbg" onclick="toggleM()" aria-label="Menu">&#9776;</button>
+</nav>
+
+<div class="mob-nav" id="mNav">
+  <button class="mn on" onclick="go('about',this,1)">À propos</button>
+  <button class="mn" onclick="go('why',this,1)">Pourquoi</button>
+  <button class="mn" onclick="go('how',this,1)">Le Comment</button>
+</div>
+
+<!-- À PROPOS -->
+<div class="panel on" id="about">
+<div class="hero">
+  <div class="hstripe" style="left:9%"></div>
+  <div class="hstripe" style="left:15%;opacity:.4"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">Yangana PK22 · Axe Damara · Centrafrique</div>
+    <h1>La terre centrafricaine<br>mérite une <em>industrie</em>,<br>pas une subsistance.</h1>
+    <p class="hero-lead">Yimbassa AgriConnect est le premier écosystème agropastoral en circuit fermé et entièrement digitalisé de République Centrafricaine — un projet de transformation structurelle qui conjugue rigueur agronomique, technologie digitale et ambition économique nationale.</p>
+    <div class="hm-row">
+      <div class="hm"><div class="hm-v">8 ha</div><div class="hm-l">Superficie initiale</div></div>
+      <div class="hm"><div class="hm-v">5</div><div class="hm-l">Modules intégrés</div></div>
+      <div class="hm"><div class="hm-v">296 M</div><div class="hm-l">FCFA revenus an 3</div></div>
+      <div class="hm"><div class="hm-v">50+</div><div class="hm-l">Emplois directs</div></div>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+  <div class="s-eye">Vision &amp; identité</div>
+  <h2 class="s-title">Une ferme. Un modèle.<br>Un héritage pour la Centrafrique.</h2>
+  <p class="s-lead">Fondée sur 8 hectares de la plaine fertile de Yangana, à 22 km de l'axe Damara, Yimbassa est conçue comme un écosystème vivant où chaque ressource produite est immédiatement valorisée par le module suivant — circulaire, digitalisé, reproductible à l'échelle nationale.</p>
+  <div class="split">
+    <div class="split-text">
+      <h3>Un sol qui pousse naturellement — il faut l'organiser</h3>
+      <p>La Centrafrique bénéficie d'un patrimoine agronomique exceptionnel. Les terres de Yangana sont profondes, bien drainées et favorables à une grande diversité de cultures. Ce n'est pas la fertilité qui manque — c'est la structure industrielle pour en faire une force économique durable.</p>
+      <p>Yimbassa intervient là où tout reste à bâtir : mécanisation, organisation collective des producteurs, transformation sur place et connexion directe aux marchés via le digital. De l'agriculture de survie à une agroindustrie de croissance.</p>
+    </div>
+    <div class="infog">
+      <div class="infog-ttl">Actifs en place — Yangana PK22</div>
+      <div class="infog-row"><div class="infog-n">3 ha</div><div class="infog-d">Manioc en production active — 1 an de croissance, récolte prochaine</div></div>
+      <div class="infog-row"><div class="infog-n">2 ha</div><div class="infog-d">Maïs en cours de semences — première campagne structurée</div></div>
+      <div class="infog-row"><div class="infog-n">1 ha</div><div class="infog-d">Gombo en production, accompagné d'un verger diversifié</div></div>
+      <div class="infog-row"><div class="infog-n">8</div><div class="infog-d">Espèces fruitières et médicinales : corossoliers, moringa, manguiers, bananiers, papayers</div></div>
+    </div>
+  </div>
+  <div class="pq">
+    <p>"La Centrafrique a la richesse naturelle. Ce qui lui manque, c'est l'organisation, la technologie et le leadership pour en faire une puissance agroindustrielle régionale."</p>
+    <cite>Vision fondatrice — Yimbassa AgriConnect 2026</cite>
+  </div>
+  <div class="rule"></div>
+  <div class="s-eye">Gouvernance &amp; portée</div>
+  <h2 class="s-title" style="font-size:clamp(17px,3vw,24px);margin-bottom:1.5rem">Un projet conçu pour convaincre les décideurs les plus exigeants</h2>
+  <div class="pillar-grid">
+    <div class="pillar">
+      <div class="pil-ico"><svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 14a4 4 0 100 8 4 4 0 000-8z"/></svg></div>
+      <h3>Souveraineté alimentaire nationale</h3>
+      <p>Ce projet répond à la vision stratégique de la République Centrafricaine. Il offre aux institutions un modèle concret, mesurable et duplicable — une réponse structurelle à la dépendance alimentaire extérieure.</p>
+    </div>
+    <div class="pillar">
+      <div class="pil-ico"><svg viewBox="0 0 24 24"><path d="M12 1v22M5 8h14M3 15h18"/></svg></div>
+      <h3>Rentabilité et retour documenté</h3>
+      <p>Conçu avec une discipline financière rigoureuse, Yimbassa atteint son seuil de rentabilité au 18e mois. Le modèle projette un retour sur investissement de +60 % dès la deuxième année, sur base conservatrice.</p>
+    </div>
+    <div class="pillar">
+      <div class="pil-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <h3>Développement humain et formation</h3>
+      <p>L'Académie Yimbassa et le groupement agriculteurs forment les producteurs centrafricains à l'agrodéveloppement professionnel — 200 membres intégrés d'ici l'an 3, rupture nette avec la logique de subsistance.</p>
+    </div>
+  </div>
+</div>
+<div class="footer">
+  <div class="footer-name">Yimbassa AgriConnect</div>
+  <div class="footer-sub">Yangana PK22 · République Centrafricaine · Fondé 2026</div>
+  <div class="footer-contacts">
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm8 9L4 6h16L12 13z"/></svg>invest@yimbassa-agriconnect.net</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.29 21 3 13.71 3 4.99 3 4.44 3.45 4 4h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.24 1.02L6.6 10.8z"/></svg>+236 XX XX XX XX</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>Yangana PK22, Centrafrique</div>
+  </div>
+  <div class="footer-copy">© 2026 Yimbassa AgriConnect · Présentation stratégique · Confidentiel</div>
+</div>
+</div>
+
+<!-- POURQUOI -->
+<div class="panel" id="why">
+<div class="hero" style="padding:4rem 2rem 3rem">
+  <div class="hstripe" style="right:12%;opacity:.1"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">L'urgence stratégique</div>
+    <h1>La Centrafrique a les terres.<br>Il lui manque <em>la structure</em><br>pour en faire une force.</h1>
+    <p class="hero-lead">La richesse agronomique centrafricaine est réelle et documentée. Ce qui fait défaut, c'est l'organisation industrielle, la mécanisation à grande échelle, la formation des producteurs et la digitalisation des circuits de distribution. Yimbassa comble ce vide structurel.</p>
+    <div class="hm-row">
+      <div class="hm"><div class="hm-v">80 %</div><div class="hm-l">agriculture de subsistance RCA</div></div>
+      <div class="hm"><div class="hm-v">60 %</div><div class="hm-l">valeur captée par intermédiaires</div></div>
+      <div class="hm"><div class="hm-v">Zéro</div><div class="hm-l">marketplace agro digitale en RCA</div></div>
+      <div class="hm"><div class="hm-v">+60 %</div><div class="hm-l">revenus en circuit direct</div></div>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+  <div class="s-eye">Diagnostic</div>
+  <h2 class="s-title">Quatre défis structurels.<br>Une réponse intégrée.</h2>
+  <p class="s-lead">L'agriculture centrafricaine ne souffre pas de la pauvreté de ses terres — elle souffre de l'absence de cadre industriel, de collectif organisé, d'accès au marché et d'outils technologiques. Ce sont ces quatre fractures que Yimbassa est construit pour refermer.</p>
+  <div class="stat-band">
+    <div class="sb"><div class="sb-v">Mécanisation</div><div class="sb-l">quasi absente — labour manuel sur 95 % des surfaces</div></div>
+    <div class="sb"><div class="sb-v">Isolement</div><div class="sb-l">producteurs sans mutualisation ni pouvoir de marché</div></div>
+    <div class="sb"><div class="sb-v">Digital</div><div class="sb-l">aucune plateforme de distribution agricole en RCA</div></div>
+    <div class="sb"><div class="sb-v">Formation</div><div class="sb-l">agrodéveloppement professionnel quasi inexistant</div></div>
+  </div>
+  <div class="split rev">
+    <div class="split-text">
+      <h3>Une terre naturellement fertile — qui attend d'être structurée</h3>
+      <p>Contrairement à de nombreuses régions du continent, le sol centrafricain n'est pas appauvri. Les cultures y poussent avec générosité et spontanéité. Le véritable enjeu est ailleurs : étendre les surfaces cultivées, introduire des variétés à haute valeur marchande, mécaniser pour multiplier les rendements et organiser des structures collectives capables de peser face aux acheteurs.</p>
+      <p>Yimbassa démarre sur 8 hectares et conçoit dès le premier jour un modèle scalable — chaque décision agronomique anticipe le passage à 100, puis 500 hectares, dans un réseau de fermes reliées à la plateforme AgriConnect.</p>
+    </div>
+    <div class="infog">
+      <div class="infog-ttl">Ce que Yimbassa change concrètement</div>
+      <div class="infog-row"><div class="infog-n">×3</div><div class="infog-d">Surfaces cultivées grâce à la mécanisation progressive dès 2027</div></div>
+      <div class="infog-row"><div class="infog-n">−60 %</div><div class="infog-d">de coûts d'alimentation animale via le circuit fermé fientes-poissons</div></div>
+      <div class="infog-row"><div class="infog-n">8 %</div><div class="infog-d">commission sur la plateforme contre 40–50 % en circuit classique</div></div>
+      <div class="infog-row"><div class="infog-n">200</div><div class="infog-d">agriculteurs formés à l'agrodéveloppement professionnel d'ici l'an 3</div></div>
+      <div class="infog-row"><div class="infog-n">24 h</div><div class="infog-d">délai de livraison consommateur via ShopDigit et AgriConnect</div></div>
+    </div>
+  </div>
+  <div class="pq">
+    <p>"Les décideurs qui soutiennent Yimbassa ne financent pas une ferme. Ils posent la première pierre d'une agroindustrie centrafricaine souveraine, digitale et durable — un héritage de développement territorial mesurable."</p>
+    <cite>Note stratégique investisseurs — Yimbassa 2026</cite>
+  </div>
+  <div class="rule"></div>
+  <div class="s-eye">Impact systémique</div>
+  <h2 class="s-title" style="font-size:clamp(17px,3vw,24px);margin-bottom:1.5rem">Un projet qui transforme bien au-delà de la ferme</h2>
+  <div class="split">
+    <div class="split-text">
+      <h3>Unir les agriculteurs pour créer un rapport de force</h3>
+      <p>Le groupement Yimbassa réunit les producteurs de la région autour d'équipements mutualisés, de contrats collectifs et d'un accès direct au marché institutionnel. Objectif : 200 membres actifs d'ici l'an 3, négociant en bloc là où chacun serait seul face à l'acheteur.</p>
+      <p>L'Académie Yimbassa complète ce dispositif en formant les producteurs aux outils du management agropastoral, du pilotage de projet et de la technologie appliquée — une rupture nette avec la logique de subsistance.</p>
+    </div>
+    <div class="split-text">
+      <h3>Le circuit fermé comme avantage compétitif économique</h3>
+      <p>Le principe "rien ne se perd, tout se transforme" n'est pas une posture environnementale — c'est un avantage de coût structurel. Les fientes de poulets nourrissent les poissons. L'eau enrichie des bassins irrigue les champs. Les déchets d'élevage deviennent du compost organique.</p>
+      <p>Résultat : une structure de coût significativement inférieure à toute exploitation conventionnelle comparable, avec un avantage croissant à mesure que les volumes augmentent.</p>
+    </div>
+  </div>
+</div>
+<div class="footer">
+  <div class="footer-name">Yimbassa AgriConnect</div>
+  <div class="footer-sub">Yangana PK22 · République Centrafricaine · Fondé 2026</div>
+  <div class="footer-contacts">
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm8 9L4 6h16L12 13z"/></svg>invest@yimbassa-agriconnect.net</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.29 21 3 13.71 3 4.99 3 4.44 3.45 4 4h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.24 1.02L6.6 10.8z"/></svg>+236 XX XX XX XX</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>Yangana PK22, Centrafrique</div>
+  </div>
+  <div class="footer-copy">© 2026 Yimbassa AgriConnect · Présentation stratégique · Confidentiel</div>
+</div>
+</div>
+
+<!-- LE COMMENT -->
+<div class="panel" id="how">
+<div class="hero" style="padding:4rem 2rem 3rem">
+  <div class="hstripe" style="left:22%;opacity:.09"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">Exécution &amp; performance financière</div>
+    <h1>Un plan d'exécution<br>ancré dans <em>la réalité</em><br>du terrain centrafricain.</h1>
+    <p class="hero-lead">Yimbassa est construit avec une discipline d'ingénierie de projet : calendrier de construction réaliste, intégration progressive des élevages, lancement commercial le 24 décembre 2026 et déploiement national à partir de 2027. Chaque étape est mesurable, documentée et auditable.</p>
+    <div class="hm-row">
+      <div class="hm"><div class="hm-v">Déc. 2026</div><div class="hm-l">1ères ventes &amp; ShopDigit</div></div>
+      <div class="hm"><div class="hm-v">Mois 18</div><div class="hm-l">seuil de rentabilité</div></div>
+      <div class="hm"><div class="hm-v">+60 %</div><div class="hm-l">ROI dès l'année 2</div></div>
+      <div class="hm"><div class="hm-v">115 M</div><div class="hm-l">FCFA levée cible</div></div>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+  <div class="s-eye">Calendrier d'exécution</div>
+  <h2 class="s-title">Cinq étapes. Une précision d'horloger.</h2>
+  <p class="s-lead">Chaque phase est dimensionnée aux réalités logistiques, climatiques et humaines de la Centrafrique. Le calendrier est délibérément conservateur — pour garantir la tenue des engagements vis-à-vis des partenaires et des investisseurs.</p>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-pin"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+      <div class="tl-body">
+        <div class="tl-date">Janvier – Mai 2026 · Phase active</div>
+        <div class="tl-title">Fondations agricoles &amp; mobilisation du financement</div>
+        <div class="tl-desc">Les 3 ha de manioc, 2 ha de maïs et 1 ha de gombo sont en production. Plans de construction finalisés, appels d'offres matériaux lancés. Levée de fonds en cours auprès des investisseurs, partenaires bancaires et institutions de développement. Développement de la plateforme AgriConnect initié.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-pin"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>
+      <div class="tl-body">
+        <div class="tl-date">Juin – Juillet 2026</div>
+        <div class="tl-title">Construction — bassins, poulaillers, enclos porcins et caprins</div>
+        <div class="tl-desc">Terrassement et construction des 5 bassins piscicoles. Édification des poulaillers pour 500 poulets de chair et 300 pondeuses. Construction des loges porcines pour 15 truies et des enclos caprins pour 30 chèvres laitières. Installation du réseau d'irrigation goutte-à-goutte sur les 8 ha. Mise en eau et stabilisation biologique des bassins.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-pin"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <div class="tl-body">
+        <div class="tl-date">Août – Novembre 2026</div>
+        <div class="tl-title">Intégration des cheptels — alevins, volailles, porcins, caprins</div>
+        <div class="tl-desc">Intégration des premiers alevins Tilapia et Silure dans les 5 bassins stabilisés. Mise en place du premier lot de 500 poulets de chair et 300 pondeuses. Intégration des 15 truies reproductrices et des 30 chèvres laitières. Démarrage du circuit fermé : fientes vers bassins, eau enrichie vers irrigation, lisier vers compostage. Bêta-test de la plateforme AgriConnect.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-pin"><svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2zm-1 8H5V9h14v6zm-7-5a2 2 0 100 4 2 2 0 000-4z"/></svg></div>
+      <div class="tl-body">
+        <div class="tl-date">24 Décembre 2026 · Lancement commercial</div>
+        <div class="tl-title">Ouverture au marché — premières ventes &amp; ShopDigit opérationnel</div>
+        <div class="tl-desc">Lancement officiel de la distribution directe depuis Yangana. Mise en service de l'application AgriConnect pour les acheteurs de Bangui et de la région. Ouverture du premier ShopDigit — point de vente physique connecté à la plateforme. Premières ventes de poissons frais, poulets, oeufs, lait, légumes et fruits. Événement d'inauguration nationale en présence des partenaires institutionnels.</div>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-pin"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14zM7 7h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg></div>
+      <div class="tl-body">
+        <div class="tl-date">2027 – 2028</div>
+        <div class="tl-title">Déploiement national — agroindustrie centrafricaine à l'échelle</div>
+        <div class="tl-desc">Ouverture du fast-food Yimbassa Fresh à Bangui. Extension à 50 fermes partenaires intégrées au réseau AgriConnect. Lancement de l'Académie Yimbassa — 4 programmes certifiants en agrodéveloppement. Groupement agriculteurs : 200 membres actifs, contrats B2B institutionnels. API B2B ouverte aux distributeurs, hôtels et partenaires sous-régionaux.</div>
+      </div>
+    </div>
+  </div>
+  <div class="rule"></div>
+  <div class="s-eye">Les 5 modules de production</div>
+  <h2 class="s-title" style="font-size:clamp(17px,3vw,24px);margin-bottom:1.5rem">Une production intégrée qui s'auto-alimente</h2>
+  <div class="mod-grid">
+    <div class="mod"><div class="mod-n">Module 01</div><div class="mod-title">Agriculture — 8 ha</div><div class="mod-rev">25 M FCFA / an</div><div class="mod-body">Manioc, maïs, arachide, gombo, maraîchage intensif et arboriculture fruitière. Irrigation automatisée par l'eau des bassins. Mécanisation progressive pour tripler les surfaces productives d'ici 2027.</div></div>
+    <div class="mod"><div class="mod-n">Module 02</div><div class="mod-title">Pisciculture — 5 bassins</div><div class="mod-rev">7,5 M FCFA / an</div><div class="mod-body">Tilapia et Silure nourris à 70 % par les fientes de poulets. Eau enrichie pompée vers l'irrigation. Construction juin 2026 · Alevins août 2026 · Premières ventes décembre 2026.</div></div>
+    <div class="mod"><div class="mod-n">Module 03</div><div class="mod-title">Aviculture — chairs &amp; pondeuses</div><div class="mod-rev">20 M FCFA / an</div><div class="mod-body">500 poulets de chair × 8 cycles annuels. 300 pondeuses en continu → 80 000 oeufs par an. Fientes collectées quotidiennement. Intégration août 2026. Distribution via AgriConnect et ShopDigit.</div></div>
+    <div class="mod"><div class="mod-n">Module 04</div><div class="mod-title">Porcins — 15 truies</div><div class="mod-rev">40,5 M FCFA / an</div><div class="mod-body">300 porcelets engraissés par an. Lisier valorisé en compost organique. Alimentation avec les résidus agricoles de la ferme. Module au plus fort potentiel de chiffre d'affaires annuel.</div></div>
+    <div class="mod"><div class="mod-n">Module 05</div><div class="mod-title">Caprins — 30 chèvres</div><div class="mod-rev">12 M FCFA / an</div><div class="mod-body">18 000 litres de lait frais annuels. Transformation fromagère locale dès l'an 2. Déjections compostées avec les porcins. Distribution via AgriConnect, restaurant et fast-food Yimbassa.</div></div>
+    <div class="mod" style="background:#f2f8ee"><div class="mod-n">Plateforme</div><div class="mod-title">AgriConnect &amp; ShopDigit</div><div class="mod-rev">45 M FCFA / an</div><div class="mod-body">Application mobile, ShopDigit points de vente physiques, paiement Orange Money et Wave. Commission 8 % vs 40 % circuit classique. Premier réseau agro-digital de Centrafrique.</div></div>
+  </div>
+  <div class="rule"></div>
+  <div class="s-eye">Modèle financier</div>
+  <h2 class="s-title" style="font-size:clamp(17px,3vw,24px);margin-bottom:1.5rem">Une structure de capital disciplinée et un retour documenté</h2>
+  <div class="fin-block">
+    <div>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink3);font-family:'Segoe UI',sans-serif;margin-bottom:1.1rem">Levée de fonds — 115 M FCFA</p>
+      <div class="fin-item"><div class="fin-head"><span class="fin-cat">Equity — 25 % des parts</span><span class="fin-val">50 M FCFA</span></div><div class="fin-track"><div class="fin-fill" style="width:43%"></div></div></div>
+      <div class="fin-item"><div class="fin-head"><span class="fin-cat">Prêt bancaire — 5 ans à 8 %</span><span class="fin-val">40 M FCFA</span></div><div class="fin-track"><div class="fin-fill" style="width:35%;background:#2a5090"></div></div></div>
+      <div class="fin-item"><div class="fin-head"><span class="fin-cat">Subventions agri &amp; impact</span><span class="fin-val">15 M FCFA</span></div><div class="fin-track"><div class="fin-fill" style="width:13%;background:#6a5aaa"></div></div></div>
+      <div class="fin-item"><div class="fin-head"><span class="fin-cat">Fonds propres fondateurs</span><span class="fin-val">10 M FCFA</span></div><div class="fin-track"><div class="fin-fill" style="width:9%;background:#9a7010"></div></div></div>
+    </div>
+    <div>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink3);font-family:'Segoe UI',sans-serif;margin-bottom:1.1rem">Projections de revenus consolidés</p>
+      <table class="proj-table">
+        <tr><th>Exercice</th><th>Réseau</th><th>Acheteurs</th><th>Revenus</th></tr>
+        <tr><td>2026</td><td>1 ferme</td><td>800 actifs</td><td>66 M FCFA</td></tr>
+        <tr><td>2027</td><td>50 fermes</td><td>5 000 actifs</td><td>210 M FCFA</td></tr>
+        <tr><td>2028</td><td>200 fermes</td><td>20 000 actifs</td><td>493 M FCFA</td></tr>
+      </table>
+      <div class="kpi-note">Seuil de rentabilité au <strong>mois 18</strong>. Retour sur investissement <strong>+60 %</strong> dès 2027. Commission marketplace <strong>8 %</strong> contre 40–50 % en circuit classique.</div>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <h4>Revenus consolidés (M FCFA) — 2026 · 2027 · 2028</h4>
+    <div style="position:relative;height:175px"><canvas id="rc" role="img" aria-label="Projections 66M 210M 493M FCFA">66M, 210M, 493M FCFA</canvas></div>
+  </div>
+</div>
+<div class="footer">
+  <div class="footer-name">Yimbassa AgriConnect</div>
+  <div class="footer-sub">Yangana PK22 · République Centrafricaine · Fondé 2026</div>
+  <div class="footer-contacts">
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm8 9L4 6h16L12 13z"/></svg>invest@yimbassa-agriconnect.net</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.29 21 3 13.71 3 4.99 3 4.44 3.45 4 4h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.24 1.02L6.6 10.8z"/></svg>+236 XX XX XX XX</div>
+    <div class="fc"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>Yangana PK22, Centrafrique</div>
+  </div>
+  <div class="footer-copy">© 2026 Yimbassa AgriConnect · Présentation stratégique · Confidentiel</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var chartDone=false;
+function go(id,el,mob){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nl,.mn').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  el.classList.add('on');
+  var ids=['about','why','how'],idx=ids.indexOf(id);
+  if(mob){document.getElementById('mNav').classList.remove('open');document.querySelectorAll('.nl')[idx].classList.add('on')}
+  else{document.querySelectorAll('.mn')[idx].classList.add('on')}
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='how') setTimeout(initChart,120);
+}
+function toggleM(){document.getElementById('mNav').classList.toggle('open')}
+function initChart(){
+  if(chartDone)return;var c=document.getElementById('rc');
+  if(!c||!c.offsetParent)return;chartDone=true;
+  new Chart(c,{type:'bar',data:{labels:['2026','2027','2028'],datasets:[
+    {label:'Production',data:[105,160,220],backgroundColor:'#5cb030',borderRadius:3},
+    {label:'Commissions',data:[15,45,90],backgroundColor:'#2e6b1a',borderRadius:3},
+    {label:'Restauration',data:[66,75,103],backgroundColor:'#8a4820',borderRadius:3},
+    {label:'Academy',data:[0,25,80],backgroundColor:'#2a5090',borderRadius:3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+  scales:{x:{stacked:true,ticks:{color:'#6a7d64',font:{size:11}},grid:{color:'rgba(0,0,0,0.04)'}},
+  y:{stacked:true,ticks:{color:'#6a7d64',font:{size:10},callback:v=>v+' M'},grid:{color:'rgba(0,0,0,0.04)'},beginAtZero:true}}}});
+}
+</script>
+</html>

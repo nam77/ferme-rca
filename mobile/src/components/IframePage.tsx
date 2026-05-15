@@ -39,8 +39,12 @@ const ORIGINE_HTML = (() => {
   return `http://${host}:8081`
 })()
 
+// Nom physique du fichier statique pour chaque vue.
+// Important : éviter de nommer un fichier comme une route Expo (ex. 'projet.html'
+// vs route /projet) — Cloudflare Pages réécrit /projet.html → /projet et déclenche
+// alors la route Expo qui ré-iframe /projet.html → boucle infinie.
 const fichierPourVue = (vue: Props['vue']): string =>
-  vue === 'projet' ? 'projet.html' : 'agropilot-app.html'
+  vue === 'projet' ? 'yimbassa.html' : 'agropilot-app.html'
 
 // Encode en base64 URL-safe (ASCII uniquement)
 const b64Url = (s: string): string => {
