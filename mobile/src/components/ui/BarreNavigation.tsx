@@ -146,7 +146,7 @@ export const BarreNavigation = () => {
                     onPress={fermerSousMenu}
                   >
                     <View style={styles.popoverPositionneur} pointerEvents="box-none">
-                      <View style={styles.popover}>
+                      <View style={styles.popoverDuo}>
                         {item.sousItems?.map((sous) => {
                           const sousActif = estActif(sous)
                           return (
@@ -155,14 +155,16 @@ export const BarreNavigation = () => {
                               onPress={() => naviguerSousItem(sous.route)}
                               accessibilityLabel={sous.libelle}
                               accessibilityRole="link"
-                              style={[styles.sousItem, sousActif && styles.sousItemActif]}
+                              style={[styles.chip, sousActif && styles.chipActif]}
                             >
-                              <Ionicons
-                                name={sous.icone}
-                                size={16}
-                                color={sousActif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.85)'}
-                              />
-                              <Text style={[styles.sousItemTexte, sousActif && styles.sousItemTexteActif]}>
+                              <View style={[styles.chipPastille, sousActif && styles.chipPastilleActif]}>
+                                <Ionicons
+                                  name={sous.icone}
+                                  size={16}
+                                  color={sousActif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.95)'}
+                                />
+                              </View>
+                              <Text style={[styles.chipTexte, sousActif && styles.chipTexteActif]}>
                                 {sous.libelle}
                               </Text>
                             </Pressable>
@@ -260,42 +262,61 @@ const styles = StyleSheet.create({
   },
   popoverPositionneur: {
     position: 'absolute',
-    top: 64,
+    top: 60,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
-  popover: {
-    minWidth: 200,
-    backgroundColor: '#1D3F17',
-    borderRadius: 12,
-    paddingVertical: 6,
+  popoverDuo: {
+    flexDirection: 'row',
+    gap: 10,
+    padding: 8,
+    backgroundColor: 'rgba(29,63,23,0.96)',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(250,246,238,0.20)',
+    borderColor: 'rgba(250,246,238,0.18)',
     shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 10,
   },
-  sousItem: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: ESPACEMENTS.l,
-    paddingVertical: 12,
+    paddingLeft: 6,
+    paddingRight: 18,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(250,246,238,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(250,246,238,0.14)',
+    minWidth: 130,
   },
-  sousItemActif: {
-    backgroundColor: 'rgba(250,246,238,0.12)',
+  chipActif: {
+    backgroundColor: 'rgba(125,212,74,0.18)',
+    borderColor: 'rgba(125,212,74,0.55)',
   },
-  sousItemTexte: {
+  chipPastille: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(250,246,238,0.10)',
+  },
+  chipPastilleActif: {
+    backgroundColor: 'rgba(125,212,74,0.35)',
+  },
+  chipTexte: {
     fontFamily: POLICES.mono,
     fontSize: 12,
     color: 'rgba(250,246,238,0.85)',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
-  sousItemTexteActif: {
+  chipTexteActif: {
     color: COULEURS_TOKEN.cream,
     fontFamily: POLICES.monoMedium,
   },
