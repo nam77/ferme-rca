@@ -1,4 +1,5 @@
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
+import { useState } from 'react'
+import { View, Text, Pressable, StyleSheet, ScrollView, Modal } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -7,20 +8,38 @@ import { useAuthStore } from '../../store/authStore'
 type RoleAutorise = 'admin' | 'responsable' | 'ouvrier' | 'investisseur'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../../constants/theme'
 
-type ItemNav = {
+type SousItemNav = {
   cle: string
   libelle: string
   route: string
   icone: keyof typeof Ionicons.glyphMap
   prefixesActifs: string[]
+}
+
+type ItemNav = {
+  cle: string
+  libelle: string
+  route?: string
+  icone: keyof typeof Ionicons.glyphMap
+  prefixesActifs: string[]
   rolesAutorises?: RoleAutorise[]
+  sousItems?: SousItemNav[]
 }
 
 const ITEMS: ItemNav[] = [
   { cle: 'activite', libelle: 'Activité', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
   { cle: 'cultures', libelle: 'Cultures', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
   { cle: 'cheptel', libelle: 'Cheptel', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
-  { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
+  {
+    cle: 'projet-ferme',
+    libelle: 'Projet et Ferme',
+    icone: 'leaf-outline',
+    prefixesActifs: ['/ferme', '/projet'],
+    sousItems: [
+      { cle: 'projet', libelle: 'Projet', route: '/projet', icone: 'document-text-outline', prefixesActifs: ['/projet'] },
+      { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
+    ],
+  },
   { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
   { cle: 'budget', libelle: 'Budget et Ventes', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
   { cle: 'cra', libelle: 'CRA', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
@@ -32,9 +51,21 @@ export const BarreNavigation = () => {
   const pathname = usePathname()
   const utilisateur = useAuthStore((s) => s.utilisateur)
   const deconnexion = useAuthStore((s) => s.deconnexion)
+  const [menuOuvert, setMenuOuvert] = useState<string | null>(null)
 
-  const estActif = (item: ItemNav): boolean =>
+  const estActif = (item: { prefixesActifs: string[] }): boolean =>
     item.prefixesActifs.some((p) => pathname.startsWith(p))
+
+  const ouvrirSousMenu = (cle: string) => {
+    setMenuOuvert((courant) => (courant === cle ? null : cle))
+  }
+
+  const fermerSousMenu = () => setMenuOuvert(null)
+
+  const naviguerSousItem = (route: string) => {
+    fermerSousMenu()
+    router.push(route as never)
+  }
 
   return (
     <LinearGradient
@@ -66,24 +97,83 @@ export const BarreNavigation = () => {
           return item.rolesAutorises.includes(utilisateur.role as RoleAutorise)
         }).map((item) => {
           const actif = estActif(item)
+          const aSousMenu = !!item.sousItems?.length
+          const ouvert = menuOuvert === item.cle
+
           return (
-            <Pressable
-              key={item.cle}
-              onPress={() => router.push(item.route as never)}
-              accessibilityLabel={item.libelle}
-              accessibilityRole="link"
-              style={[styles.itemMenu, actif && styles.itemMenuActif]}
-            >
-              <Ionicons
-                name={item.icone}
-                size={16}
-                color={actif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
-                style={styles.itemIcone}
-              />
-              <Text style={[styles.itemTexte, actif && styles.itemTexteActif]}>
-                {item.libelle}
-              </Text>
-            </Pressable>
+            <View key={item.cle} style={styles.itemAncre}>
+              <Pressable
+                onPress={() => {
+                  if (aSousMenu) {
+                    ouvrirSousMenu(item.cle)
+                  } else if (item.route) {
+                    router.push(item.route as never)
+                  }
+                }}
+                accessibilityLabel={item.libelle}
+                accessibilityRole={aSousMenu ? 'button' : 'link'}
+                style={[styles.itemMenu, (actif || ouvert) && styles.itemMenuActif]}
+              >
+                <Ionicons
+                  name={item.icone}
+                  size={16}
+                  color={actif || ouvert ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
+                  style={styles.itemIcone}
+                />
+                <Text style={[styles.itemTexte, (actif || ouvert) && styles.itemTexteActif]}>
+                  {item.libelle}
+                </Text>
+                {aSousMenu ? (
+                  <Ionicons
+                    name={ouvert ? 'chevron-up' : 'chevron-down'}
+                    size={12}
+                    color={actif || ouvert ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
+                    style={styles.chevron}
+                  />
+                ) : null}
+              </Pressable>
+
+              {aSousMenu && ouvert ? (
+                <Modal
+                  transparent
+                  visible={ouvert}
+                  animationType="fade"
+                  onRequestClose={fermerSousMenu}
+                >
+                  <Pressable
+                    style={styles.overlay}
+                    accessibilityLabel="Fermer le menu"
+                    onPress={fermerSousMenu}
+                  >
+                    <View style={styles.popoverPositionneur} pointerEvents="box-none">
+                      <View style={styles.popover}>
+                        {item.sousItems?.map((sous) => {
+                          const sousActif = estActif(sous)
+                          return (
+                            <Pressable
+                              key={sous.cle}
+                              onPress={() => naviguerSousItem(sous.route)}
+                              accessibilityLabel={sous.libelle}
+                              accessibilityRole="link"
+                              style={[styles.sousItem, sousActif && styles.sousItemActif]}
+                            >
+                              <Ionicons
+                                name={sous.icone}
+                                size={16}
+                                color={sousActif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.85)'}
+                              />
+                              <Text style={[styles.sousItemTexte, sousActif && styles.sousItemTexteActif]}>
+                                {sous.libelle}
+                              </Text>
+                            </Pressable>
+                          )
+                        })}
+                      </View>
+                    </View>
+                  </Pressable>
+                </Modal>
+              ) : null}
+            </View>
           )
         })}
 
@@ -158,6 +248,57 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(250,246,238,0.15)',
   },
   itemIcone: {},
+  itemAncre: {
+    position: 'relative',
+  },
+  chevron: {
+    marginLeft: 2,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(13,26,10,0.35)',
+  },
+  popoverPositionneur: {
+    position: 'absolute',
+    top: 64,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  popover: {
+    minWidth: 200,
+    backgroundColor: '#1D3F17',
+    borderRadius: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(250,246,238,0.20)',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  sousItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: ESPACEMENTS.l,
+    paddingVertical: 12,
+  },
+  sousItemActif: {
+    backgroundColor: 'rgba(250,246,238,0.12)',
+  },
+  sousItemTexte: {
+    fontFamily: POLICES.mono,
+    fontSize: 12,
+    color: 'rgba(250,246,238,0.85)',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  sousItemTexteActif: {
+    color: COULEURS_TOKEN.cream,
+    fontFamily: POLICES.monoMedium,
+  },
   itemTexte: {
     fontFamily: POLICES.mono,
     fontSize: 11,

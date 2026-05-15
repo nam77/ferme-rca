@@ -20,16 +20,27 @@ type Props = {
   vue:
     | 'kanban' | 'cultures' | 'cheptel'
     | 'dashboard' | 'budget' | 'ferme' | 'cra' | 'deploiement'
+    | 'projet'
   titreFallback: string
 }
 
-const URL_HTML_NATIF = (() => {
+// Base host servi par Expo Web en dev (ou EXPO_PUBLIC_HTML_URL en prod).
+// EXPO_PUBLIC_HTML_URL peut pointer vers un fichier précis (agropilot-app.html)
+// ou vers la racine ; on extrait la racine pour pouvoir servir d'autres pages
+// statiques comme /projet.html.
+const ORIGINE_HTML = (() => {
   const fromEnv = process.env.EXPO_PUBLIC_HTML_URL
-  if (fromEnv) return fromEnv
+  if (fromEnv) {
+    // Si l'env pointe vers un fichier .html, on retire le nom du fichier
+    return fromEnv.replace(/\/[^/]+\.html?$/, '')
+  }
   const host =
     (Constants.expoConfig?.hostUri ?? '').split(':')[0] || 'localhost'
-  return `http://${host}:8081/agropilot-app.html`
+  return `http://${host}:8081`
 })()
+
+const fichierPourVue = (vue: Props['vue']): string =>
+  vue === 'projet' ? 'projet.html' : 'agropilot-app.html'
 
 // Encode en base64 URL-safe (ASCII uniquement)
 const b64Url = (s: string): string => {
@@ -71,12 +82,14 @@ export const IframePage = ({ vue, titreFallback }: Props) => {
     return params.toString()
   }, [vue, jeton, utilisateur])
 
+  const fichier = fichierPourVue(vue)
+
   if (Platform.OS === 'web') {
     return (
       <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
         <View style={styles.wrap}>
           {React.createElement('iframe', {
-            src: `/agropilot-app.html?${queryString}`,
+            src: `/${fichier}?${queryString}`,
             style: {
               width: '100%',
               height: '100%',
@@ -90,7 +103,7 @@ export const IframePage = ({ vue, titreFallback }: Props) => {
     )
   }
 
-  const url = `${URL_HTML_NATIF}?${queryString}`
+  const url = `${ORIGINE_HTML}/${fichier}?${queryString}`
   return (
     <SafeAreaView style={styles.conteneur} edges={['left', 'right']}>
       <View style={styles.wrap}>
