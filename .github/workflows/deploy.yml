@@ -1,0 +1,46 @@
+name: Deploy
+
+# Déploiement automatique sur push `main` + déclenchement manuel.
+#
+# Stratégie : on capitalise sur le script `scripts/deploy-server.sh` déjà
+# présent sur le serveur Hetzner (rollback automatique, snapshot dist,
+# backup BDD, healthchecks, redeploy Cloudflare Pages, etc.).
+# Le workflow se contente d'ouvrir une session SSH et de lancer ce script
+# au bon endroit. Cela permet de cohabiter avec le déclenchement existant
+# depuis l'UI admin (route /api/admin/deploy) sans dupliquer la logique.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<EOF
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_DIR }}
+            # Exécute le script de déploiement maison. Il fait :
+            # backup BDD → git pull → backend deps+build → pm2 reload →
+            # mobile build → Cloudflare Pages → tests prod.
+            # Si une étape échoue, rollback automatique vers le HEAD précédent.
+            bash scripts/deploy-server.sh
+          EOF
