@@ -34,6 +34,14 @@ const utilisateurs: GraineUtilisateur[] = [
     filiere: null,
   },
   {
+    email: 'realisation@ferme.rca',
+    motDePasse: 'Yimbassa26',
+    prenom: 'Gestion',
+    nom: 'Réalisation',
+    role: Role.gestionnaire,
+    filiere: null,
+  },
+  {
     email: 'pisciculture@ferme.rca',
     motDePasse: 'responsable123',
     prenom: 'Jean',

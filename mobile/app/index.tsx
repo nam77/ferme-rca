@@ -13,6 +13,7 @@ import { Hero, Pastille, Card, Bouton, Tag } from '@src/components/ui'
 
 const LIBELLES_ROLES = {
   admin: 'Administrateur',
+  gestionnaire: 'Gestionnaire',
   responsable: 'Responsable de filière',
   ouvrier: 'Ouvrier de terrain',
   investisseur: 'Investisseur',

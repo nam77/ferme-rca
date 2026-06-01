@@ -93,8 +93,8 @@ const schemaMajSalarie = z.object({
 
 routeurCRA.patch('/salarie/:id', async (req: Request, res: Response) => {
   const moi = req.utilisateur
-  if (!moi || (moi.role !== 'admin' && moi.role !== 'responsable')) {
-    res.status(403).json({ succes: false, message: 'Réservé aux admins et responsables' })
+  if (!moi || (moi.role !== 'admin' && moi.role !== 'gestionnaire' && moi.role !== 'responsable')) {
+    res.status(403).json({ succes: false, message: 'Réservé aux admins, gestionnaires et responsables' })
     return
   }
   const parsed = schemaMajSalarie.safeParse(req.body)
@@ -127,8 +127,8 @@ routeurCRA.patch('/salarie/:id', async (req: Request, res: Response) => {
 // Empêche la suppression de soi-même par sécurité.
 routeurCRA.delete('/salarie/:id', async (req: Request, res: Response) => {
   const moi = req.utilisateur
-  if (!moi || (moi.role !== 'admin' && moi.role !== 'responsable')) {
-    res.status(403).json({ succes: false, message: 'Réservé aux admins et responsables' })
+  if (!moi || (moi.role !== 'admin' && moi.role !== 'gestionnaire' && moi.role !== 'responsable')) {
+    res.status(403).json({ succes: false, message: 'Réservé aux admins, gestionnaires et responsables' })
     return
   }
   if (moi.utilisateurId === req.params.id) {
@@ -150,8 +150,8 @@ routeurCRA.delete('/salarie/:id', async (req: Request, res: Response) => {
 routeurCRA.post('/inscrire-salarie', async (req: Request, res: Response) => {
   // Seul un admin ou responsable peut ajouter un salarié à la liste de pointage
   const moi = req.utilisateur
-  if (!moi || (moi.role !== 'admin' && moi.role !== 'responsable')) {
-    res.status(403).json({ succes: false, message: 'Réservé aux admins et responsables' })
+  if (!moi || (moi.role !== 'admin' && moi.role !== 'gestionnaire' && moi.role !== 'responsable')) {
+    res.status(403).json({ succes: false, message: 'Réservé aux admins, gestionnaires et responsables' })
     return
   }
   const parsed = schemaInscriptionSalarie.safeParse(req.body)

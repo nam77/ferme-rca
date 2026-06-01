@@ -2210,6 +2210,11 @@
           <span class="role-name">Administrateur</span>
           <span class="role-desc">Accès total · gestion utilisateurs &amp; budget</span>
         </button>
+        <button class="role-card" data-role="gestionnaire">
+          <span class="role-icon">📋</span>
+          <span class="role-name">Gestionnaire</span>
+          <span class="role-desc">Salariés, activités, tâches &amp; jours travaillés</span>
+        </button>
         <button class="role-card" data-role="responsable">
           <span class="role-icon">🛠️</span>
           <span class="role-name">Responsable</span>
@@ -3294,6 +3299,17 @@ const ROLES = {
     canResetData: true,
     visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra','deploiement']
   },
+  gestionnaire: {
+    label: 'Gestionnaire', icon: '📋',
+    desc: 'Gestion des activités : salariés, activités, tâches et jours travaillés (CRA)',
+    canEditBudget: false,
+    canDeleteBudget: false,
+    canCreateTask: true,
+    canEditAnyTask: true,
+    canDeleteTask: false,     // suppression réservée à admin
+    canResetData: false,
+    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','ferme','cra']
+  },
   responsable: {
     label: 'Responsable', icon: '🛠️',
     desc: 'Création et gestion des tâches et budget (sans suppression)',
@@ -3335,9 +3351,10 @@ const ROLES = {
 /* Email seed pré-rempli au choix du rôle (le mot de passe reste à saisir).
    Les comptes correspondants sont créés par backend/prisma/seed.ts. */
 const EMAIL_PAR_DEFAUT = {
-  admin:       'admin@ferme.rca',
-  responsable: 'pisciculture@ferme.rca',
-  ouvrier:     'ouvrier@ferme.rca',
+  admin:        'admin@ferme.rca',
+  gestionnaire: 'realisation@ferme.rca',
+  responsable:  'pisciculture@ferme.rca',
+  ouvrier:      'ouvrier@ferme.rca',
 };
 
 /* Modules affichés sur la page d'accueil. L'ordre est conservé.

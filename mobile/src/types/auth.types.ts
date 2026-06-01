@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'responsable' | 'ouvrier' | 'investisseur'
+export type Role = 'admin' | 'gestionnaire' | 'responsable' | 'ouvrier' | 'investisseur'
 
 export type Filiere =
   | 'pisciculture'

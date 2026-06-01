@@ -13,7 +13,7 @@ const schemaInscription = z.object({
   motDePasse: z.string().min(8).max(100),
   prenom: z.string().min(1).max(50),
   nom: z.string().min(1).max(50),
-  role: z.enum([Role.admin, Role.responsable, Role.ouvrier, Role.investisseur]).optional(),
+  role: z.enum([Role.admin, Role.gestionnaire, Role.responsable, Role.ouvrier, Role.investisseur]).optional(),
   filiere: z.enum([
     Filiere.pisciculture,
     Filiere.aviculture,
