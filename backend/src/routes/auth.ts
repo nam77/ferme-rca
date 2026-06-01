@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
 import { signerJeton } from '../lib/jeton.js'
-import { verifierAuth } from '../middleware/auth.js'
+import { verifierAuth, verifierRole } from '../middleware/auth.js'
 import { Role, Filiere } from '../generated/prisma/enums.js'
 
 export const routeurAuth = Router()
@@ -49,7 +49,10 @@ const profilPublic = (u: {
   filiere: u.filiere,
 })
 
-routeurAuth.post('/inscription', async (req: Request, res: Response) => {
+// Création de compte réservée à un administrateur authentifié.
+// (Auparavant publique : n'importe qui pouvait créer un compte avec n'importe
+// quel rôle, y compris admin → élévation de privilèges.)
+routeurAuth.post('/inscription', verifierAuth, verifierRole(Role.admin), async (req: Request, res: Response) => {
   const parsed = schemaInscription.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ succes: false, message: 'Données invalides', details: parsed.error.issues })

@@ -98,15 +98,8 @@ export default function EcranConnexion() {
           </Pressable>
 
           <View style={styles.liensSecondaires}>
-            <Pressable
-              onPress={() => router.push('/inscription')}
-              accessibilityLabel="Créer un compte"
-              accessibilityRole="link"
-              style={({ pressed }) => [styles.lien, pressed && styles.lienPresse]}
-            >
-              <Text style={styles.lienTexte}>Créer un compte</Text>
-            </Pressable>
-            <Text style={styles.separateur}>·</Text>
+            {/* Lien « Créer un compte » retiré : la création de compte est
+                désormais réservée aux administrateurs (route protégée côté API). */}
             <Pressable
               onPress={() => router.push('/mot-de-passe-oublie')}
               accessibilityLabel="Mot de passe oublié"
