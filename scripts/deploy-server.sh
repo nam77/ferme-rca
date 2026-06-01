@@ -262,7 +262,7 @@ avec_timeout "$T_BACKEND_DEPS" backend-deps -- \
 log "prisma generate (CRITIQUE — sans ça le build TS échoue)..."
 avec_timeout 60 backend-deps -- npx prisma generate 2>&1 | grep -E "Generated|Error|error" || true
 log "prisma db push (rétrocompatible)..."
-avec_timeout 120 backend-deps -- npx prisma db push --skip-generate 2>&1 | grep -E "in sync|error|warn" || true
+avec_timeout 120 backend-deps -- npx prisma db push --skip-generate 2>&1 | tail -30 || true
 log "Compte gestionnaire (idempotent, ne réécrit pas le mot de passe existant)..."
 avec_timeout 60 backend-deps -- npx tsx scripts/creer-gestionnaire.ts 2>&1 | tail -15 || true
 ok backend-deps
