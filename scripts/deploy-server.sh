@@ -261,8 +261,11 @@ avec_timeout "$T_BACKEND_DEPS" backend-deps -- \
   || fail "npm ci backend a échoué"
 log "prisma generate (CRITIQUE — sans ça le build TS échoue)..."
 avec_timeout 60 backend-deps -- npx prisma generate 2>&1 | grep -E "Generated|Error|error" || true
+# NB : `--skip-generate` n'existe plus dans Prisma 7 (db push affichait son aide
+# sans rien appliquer). On laisse db push régénérer le client (redondant avec le
+# generate ci-dessus mais sûr).
 log "prisma db push (rétrocompatible)..."
-avec_timeout 120 backend-deps -- npx prisma db push --skip-generate 2>&1 | tail -30 || true
+avec_timeout 120 backend-deps -- npx prisma db push 2>&1 | tail -12 || true
 log "Compte gestionnaire (idempotent, ne réécrit pas le mot de passe existant)..."
 avec_timeout 60 backend-deps -- npx tsx scripts/creer-gestionnaire.ts 2>&1 | tail -15 || true
 ok backend-deps
