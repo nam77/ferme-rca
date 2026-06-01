@@ -12,10 +12,13 @@ datasource db {
 
 enum Role {
   admin
-  gestionnaire
   responsable
   ouvrier
   investisseur
+  // Ajouté en fin d'enum volontairement : `prisma db push` applique alors un
+  // simple ALTER TYPE ADD VALUE (sûr, sans recréation du type ni perte de
+  // données). Insérer au milieu forcerait une recréation refusée en prod.
+  gestionnaire
 }
 
 enum Filiere {
