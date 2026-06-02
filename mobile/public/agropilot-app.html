@@ -2092,6 +2092,27 @@
   .depl-etape-icone { font-size: 14px; width: 18px; text-align: center; }
   .depl-etape-label { flex: 1; }
   .depl-etape-duree { font-family: 'DM Mono', monospace; font-size: 11px; color: #8b5e3c; }
+
+  /* ===== Visibilité des menus (panneau admin déploiement) ===== */
+  .vm-ligne {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 11px 14px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--paper); margin-bottom: 8px;
+  }
+  .vm-label {
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    color: var(--soil); display: flex; align-items: center; gap: 8px;
+  }
+  .vm-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+  .vm-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    min-height: 38px; padding: 0 16px; border: none; background: transparent;
+    color: var(--clay); cursor: pointer; transition: background .15s, color .15s;
+  }
+  .vm-btn + .vm-btn { border-left: 1px solid var(--border); }
+  .vm-btn:hover { background: rgba(201,169,110,0.12); }
+  .vm-btn.active[data-action="affiche"] { background: #4a8c3f; color: #fff; }
+  .vm-btn.active[data-action="cache"]   { background: #c0392b; color: #fff; }
 </style>
 <!-- Chart.js pour graphiques dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -2978,6 +2999,14 @@
     </div>
 
     <div class="cultures-stats" id="depl-statut"></div>
+
+    <div class="dash-section" id="depl-visibilite-menus">
+      <h3><span class="icon">👁️</span>Visibilité des menus</h3>
+      <p style="font-family:'DM Sans',sans-serif;font-size:13px;color:#5c3d1e;margin-bottom:14px">
+        Choisissez les onglets visibles par les utilisateurs <strong>non-administrateurs</strong> (gestionnaire, responsable, ouvrier, visiteur). Un menu « caché » disparaît de la barre de navigation et de la page d'accueil pour ces rôles. Les administrateurs voient toujours l'ensemble des menus.
+      </p>
+      <div id="visibilite-menus-liste"></div>
+    </div>
 
     <div class="dash-section">
       <h3><span class="icon">🚀</span>Lancer un déploiement complet</h3>
@@ -4980,12 +5009,16 @@ function renderAccueil() {
     pastWrap.innerHTML = past.join('');
   }
 
-  // Grille de modules : on ne montre que ceux autorisés par le rôle.
+  // Grille de modules : on ne montre que ceux autorisés par le rôle,
+  // et on retire ceux que l'admin a masqués (sauf pour l'admin lui-même).
   const grille = document.getElementById('accueil-grille');
   if (!grille) return;
   const autorises = new Set(role.visibleTabs || []);
+  const menusCaches = lireMenusCaches();
+  const estAdmin = (utilisateur && utilisateur.role) === 'admin';
   grille.innerHTML = MODULES_ACCUEIL
     .filter(m => autorises.has(m.id))
+    .filter(m => estAdmin || !menusCaches.has(m.id))
     .map(m => `
       <div class="accueil-card" data-go="${m.id}" style="--mod-color:${m.couleur}"
            role="button" tabindex="0" aria-label="Ouvrir ${escapeHtml(m.titre)}">
@@ -6490,6 +6523,57 @@ function loadSession() {
   } catch {}
 }
 
+/* ============ VISIBILITÉ DES MENUS (réglage admin) ============
+   L'admin peut masquer des onglets pour tous les utilisateurs non-admin.
+   Persistance locale (localStorage) : liste des vues cachées. */
+const CLE_MENUS_CACHES = 'agropilot_menus_caches';
+// Onglets non gérables : l'accueil (point d'entrée) et le déploiement
+// (déjà réservé admin). Tout le reste est pilotable.
+const MENUS_NON_GERABLES = new Set(['accueil', 'deploiement']);
+
+function lireMenusCaches() {
+  try { return new Set(JSON.parse(localStorage.getItem(CLE_MENUS_CACHES) || '[]')); }
+  catch { return new Set(); }
+}
+function ecrireMenusCaches(ensemble) {
+  try { localStorage.setItem(CLE_MENUS_CACHES, JSON.stringify([...ensemble])); } catch {}
+}
+
+// Affiche le panneau de réglage : une ligne par onglet gérable, avec
+// deux boutons « Affiché » / « Caché ».
+function renderVisibiliteMenus() {
+  const conteneur = document.getElementById('visibilite-menus-liste');
+  if (!conteneur) return;
+  const caches = lireMenusCaches();
+  const boutons = [...document.querySelectorAll('nav.tabs button[data-view]')]
+    .filter(b => !MENUS_NON_GERABLES.has(b.dataset.view));
+  conteneur.innerHTML = boutons.map(b => {
+    const vue = b.dataset.view;
+    const icone = (b.querySelector('.tab-icon')?.textContent || '').trim();
+    const label = b.textContent.replace(icone, '').trim();
+    const estCache = caches.has(vue);
+    return `
+      <div class="vm-ligne">
+        <span class="vm-label">${icone} ${escapeHtml(label)}</span>
+        <div class="vm-toggle" role="group" aria-label="Visibilité de ${escapeHtml(label)}">
+          <button class="vm-btn ${estCache ? '' : 'active'}" data-vue="${vue}" data-action="affiche" aria-pressed="${!estCache}">Affiché</button>
+          <button class="vm-btn ${estCache ? 'active' : ''}" data-vue="${vue}" data-action="cache" aria-pressed="${estCache}">Caché</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  conteneur.querySelectorAll('.vm-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ensemble = lireMenusCaches();
+      if (btn.dataset.action === 'cache') ensemble.add(btn.dataset.vue);
+      else ensemble.delete(btn.dataset.vue);
+      ecrireMenusCaches(ensemble);
+      renderVisibiliteMenus();   // rafraîchit l'état des boutons
+      applyAuthState();          // applique immédiatement la nouvelle visibilité
+    });
+  });
+}
+
 /* Applique l'état d'authentification :
    - Connecté → app complète selon les permissions du rôle.
    - Non connecté → MODE CONSULTATIF (visiteur public en lecture seule).
@@ -6532,9 +6616,16 @@ function applyAuthState() {
     }
   }
 
-  // Onglets : masquer ceux qui ne sont pas autorisés pour ce rôle
-  document.querySelectorAll('nav.tabs button[data-restrict]').forEach(btn => {
-    const allowed = btn.dataset.restrict.split(',').includes(utilisateur.role);
+  // Onglets : masquer ceux non autorisés pour ce rôle (data-restrict)
+  // ET ceux que l'admin a marqués « cachés » (sauf pour l'admin lui-même).
+  const menusCaches = lireMenusCaches();
+  const estAdmin = utilisateur.role === 'admin';
+  document.querySelectorAll('nav.tabs button[data-view]').forEach(btn => {
+    const vue = btn.dataset.view;
+    const restrictOk = !btn.dataset.restrict
+      || btn.dataset.restrict.split(',').includes(utilisateur.role);
+    const cacheParAdmin = !estAdmin && menusCaches.has(vue);
+    const allowed = restrictOk && !cacheParAdmin;
     btn.dataset.hidden = allowed ? 'false' : 'true';
     if (!allowed && btn.classList.contains('active')) {
       // si l'utilisateur était sur cet onglet interdit, on rebascule sur Accueil
@@ -6958,6 +7049,8 @@ function setupVentes() {
 
 /* ============ DÉPLOIEMENT (admin uniquement) ============ */
 async function renderDeploiement() {
+  // Panneau de visibilité des menus : purement local, indépendant de l'API.
+  renderVisibiliteMenus();
   if (!API_DISPONIBLE) {
     const el = document.getElementById('depl-statut');
     if (el) el.innerHTML = '<div class="empty-state">API indisponible.</div>';

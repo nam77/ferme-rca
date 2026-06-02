@@ -1,4 +1,4 @@
-// Crée (ou met à jour) le compte gestionnaire « realisation » sur la base
+// Crée (ou met à jour) le compte gestionnaire « gestion » sur la base
 // actuelle, sans réinitialiser les autres données.
 //
 //   cd backend && npx tsx scripts/creer-gestionnaire.ts
