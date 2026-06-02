@@ -39,3 +39,5 @@ deploiements/
 # ni les autres PNG de sous-dossiers.
 /*.png
 /prototype*.html
+/yimbassa_nav_white.html
+/PROMPT_DEPLOIEMENT_CRA.md
