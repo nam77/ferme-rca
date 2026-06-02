@@ -28,13 +28,13 @@ const utilisateurs: GraineUtilisateur[] = [
   {
     email: 'admin@ferme.rca',
     motDePasse: 'admin123',
-    prenom: 'Awa',
-    nom: 'Ngakola',
+    prenom: 'Oscar',
+    nom: 'NAM',
     role: Role.admin,
     filiere: null,
   },
   {
-    email: 'realisation@ferme.rca',
+    email: 'gestion@ferme.rca',
     motDePasse: 'Yimbassa26',
     prenom: 'Gestion',
     nom: 'Réalisation',
@@ -44,8 +44,8 @@ const utilisateurs: GraineUtilisateur[] = [
   {
     email: 'pisciculture@ferme.rca',
     motDePasse: 'responsable123',
-    prenom: 'Jean',
-    nom: 'Bangui',
+    prenom: 'Romée',
+    nom: 'Herbert',
     role: Role.responsable,
     filiere: Filiere.pisciculture,
   },
@@ -60,8 +60,8 @@ const utilisateurs: GraineUtilisateur[] = [
   {
     email: 'investisseur@ferme.rca',
     motDePasse: 'investisseur123',
-    prenom: 'Marie',
-    nom: 'Bozizé',
+    prenom: 'Priscille',
+    nom: 'Yona',
     role: Role.investisseur,
     filiere: null,
   },

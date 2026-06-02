@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '../src/lib/prisma.js'
 import { Role } from '../src/generated/prisma/enums.js'
 
-const EMAIL = 'realisation@ferme.rca'
+const EMAIL = 'gestion@ferme.rca'
 const MOT_DE_PASSE = 'Yimbassa26'
 
 async function main() {
