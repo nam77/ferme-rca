@@ -35,24 +35,32 @@ de 8 hectares en République Centrafricaine (RCA).
 ## Structure des dossiers
   /ferme-rca
     /backend
-      /src/routes/      -- routes Express (auth, taches, budget, zones, dashboard)
-      /src/middleware/  -- auth JWT, validation Zod
-      /src/lib/         -- prisma.ts singleton, helpers
+      /src/routes/      -- routes Express : auth, taches, budget, zones, dashboard,
+                           cra, deploiement, lots, parcelles, ventes, admin-deploy
+      /src/middleware/  -- auth.ts (auth JWT, validation Zod)
+      /src/lib/         -- prisma.ts singleton, jeton.ts (JWT), helpers
+      /src/generated/prisma/ -- client Prisma généré (ne pas versionner, gitignoré)
       /prisma/
-        schema.prisma
+        schema.prisma   -- 13 modèles, 16 enums (PAS de migrations : workflow `prisma db push`)
         seed.ts
+      /scripts/         -- scripts d'admin (ex. creer-gestionnaire.ts)
+      /uploads/         -- photos CRA uploadées (contenu gitignoré, .gitkeep versionné)
       .env.example
     /mobile
-      /app/             -- routes Expo Router (file-based) : index.tsx, kanban.tsx, dashboard.tsx, budget.tsx, ferme.tsx, _layout.tsx
-      /src/screens/     -- composants d'écran (EcranKanban, EcranTableauDeBord, EcranBudget, EcranFerme)
-      /src/components/  -- CarteTache, ColonneKanban, CarteKPI, ModalZone...
-      /src/hooks/       -- useTaches, useBudget, useZones, useDashboard, useReseau
-      /src/store/       -- Zustand stores (tachesStore, authStore)
-      /src/api/         -- appels axios (client.ts, taches.api.ts, budget.api.ts...)
-      /src/types/       -- types TypeScript (Tache, Zone, BudgetLigne...)
-      /src/lib/         -- queueOffline, helpers
+      /app/             -- routes Expo Router (file-based) : index, connexion, inscription,
+                           mot-de-passe-oublie, dashboard, budget, activite, ferme, projet,
+                           cheptel, cultures, cra, deploiement, _layout
+      /src/screens/     -- EcranTableauDeBord, EcranBudget, EcranFerme, EcranActivite, EcranProjet
+      /src/components/  -- BandeauReseau, IframePage, Toaster + /ui (BarreNavigation,
+                           Bouton, Card, Hero, Pastille, Tag, EnteteSection)
+      /src/hooks/       -- usePolices, useReseau
+      /src/store/       -- Zustand stores (authStore, toastStore)
+      /src/api/         -- appels axios (client.ts, auth.api.ts)
+      /src/types/       -- types TypeScript
       /src/constants/
         couleurs.ts     -- couleurs par filière (NE PAS MODIFIER)
+  Note : certaines pages métier (app complète, projet Yimbassa) sont servies via
+  IframePage à partir de /mobile/public/*.html (agropilot-app.html, yimbassa.html).
 
 ## Couleurs par filière (CONSTANTES IMMUABLES)
   Pisciculture  : #1a6b8a  (bleu eau)
@@ -67,11 +75,13 @@ de 8 hectares en République Centrafricaine (RCA).
   "en_cours" -> colonne centrale Kanban (orange)
   "termine"  -> colonne droite Kanban (vert)
 
-## Rôles utilisateurs
+## Rôles utilisateurs (enum Role)
   "admin"        -- accès total
+  "gestionnaire" -- gestion/réalisation (ajouté en FIN d'enum : voir note schema.prisma)
   "responsable"  -- gestion tâches de sa filière uniquement
   "ouvrier"      -- consultation + mise à jour de ses tâches
   "investisseur" -- lecture seule (dashboard + budget)
+  Sécurité : POST /auth/inscription est réservé aux admins authentifiés (commit 5cce90e).
 
 ## Conventions obligatoires
   - Tout le code en FRANÇAIS (variables, fonctions, commentaires, labels)
@@ -100,15 +110,26 @@ de 8 hectares en République Centrafricaine (RCA).
   cd mobile && npm run android     -- App sur Android
   cd backend && npx prisma studio  -- Interface base de données
   cd backend && npm run seed       -- Données initiales (reset + peuple)
-  cd backend && npx prisma migrate dev -- Appliquer nouvelles migrations
+  cd backend && npm run prisma:push -- Synchroniser le schéma (db push, PAS de migrate)
+  cd backend && npm run prisma:generate -- Régénérer le client Prisma
 
 ## Skills disponibles (lire avant de coder)
   .claude/skills/react-native.md -- Patterns composants et écrans
   .claude/skills/api-express.md  -- Routes API et validation
   .claude/skills/kanban.md       -- Kanban drag and drop
 
+## Périmètre fonctionnel (modules)
+  Tâches/Kanban   -- modèle Tache + SousTache, statuts a_faire/en_cours/termine
+  Budget          -- BudgetLigne (suivi des dépenses/recettes par filière)
+  Cheptel         -- LotAnimaux + MouvementAnimal (espèces, sexe, catégories d'âge)
+  Cultures        -- Parcelle + EvenementCulture (types de culture, statuts parcelle)
+  Ventes          -- Vente (catégories produit, unités)
+  CRA             -- SaisieJourCRA : compte-rendu d'activité journalier + Photo (uploads)
+  Zones / Dashboard / Déploiement (admin-deploy : déploiement piloté depuis l'app)
+
 ## JAMAIS toucher sans validation explicite
-  /backend/prisma/migrations/     -- Migrations existantes
   /mobile/src/constants/couleurs.ts -- Système couleurs défini
   .env et .env.example            -- Variables d'environnement
+  enum Role (schema.prisma)       -- toute nouvelle valeur s'ajoute EN FIN (db push sûr)
+  Note : pas de dossier /backend/prisma/migrations/ (workflow `prisma db push`).
       
