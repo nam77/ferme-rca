@@ -27,9 +27,6 @@ type ItemNav = {
 }
 
 const ITEMS: ItemNav[] = [
-  { cle: 'activite', libelle: 'Tâches & opérations', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
-  { cle: 'cultures', libelle: 'Agriculture', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
-  { cle: 'cheptel', libelle: 'Élevage', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
   {
     cle: 'projet-ferme',
     libelle: 'Projet et Ferme',
@@ -40,6 +37,9 @@ const ITEMS: ItemNav[] = [
       { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
     ],
   },
+  { cle: 'activite', libelle: 'Tâches & opérations', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
+  { cle: 'cultures', libelle: 'Agriculture', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
+  { cle: 'cheptel', libelle: 'Élevage', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
   { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
   { cle: 'budget', libelle: 'Budget et Ventes', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
   { cle: 'cra', libelle: 'Pointage', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
