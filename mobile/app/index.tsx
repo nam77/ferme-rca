@@ -31,6 +31,15 @@ type Module = {
 
 const MODULES: Module[] = [
   {
+    id: 'ferme',
+    titre: 'Plan de la ferme',
+    description: '8 zones interactives sur les 8 hectares.',
+    icone: '🗺️',
+    couleur: COULEURS_TOKEN.caprins,
+    route: '/ferme',
+    tag: 'Spatial',
+  },
+  {
     id: 'activite',
     titre: 'Tâches & opérations',
     description: 'Suivi des tâches par filière, glisser-déposer entre colonnes. Budget, dépense et solde par tâche.',
@@ -38,6 +47,24 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.mint,
     route: '/activite',
     tag: 'Opérations',
+  },
+  {
+    id: 'cultures',
+    titre: 'Agriculture',
+    description: 'Parcelles agricoles : semis, fertilisation, récoltes.',
+    icone: '🌾',
+    couleur: COULEURS_TOKEN.cultures,
+    route: '/cultures',
+    tag: 'Végétal',
+  },
+  {
+    id: 'cheptel',
+    titre: 'Élevage',
+    description: 'Effectifs et mouvements par espèce. Naissances, ventes, mortalités.',
+    icone: '🐾',
+    couleur: COULEURS_TOKEN.porcins,
+    route: '/cheptel',
+    tag: 'Animaux',
   },
   {
     id: 'tableau',
@@ -56,33 +83,6 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.aviculture,
     route: '/budget',
     tag: 'Finance',
-  },
-  {
-    id: 'ferme',
-    titre: 'Plan de la ferme',
-    description: '8 zones interactives sur les 8 hectares.',
-    icone: '🗺️',
-    couleur: COULEURS_TOKEN.caprins,
-    route: '/ferme',
-    tag: 'Spatial',
-  },
-  {
-    id: 'cheptel',
-    titre: 'Élevage',
-    description: 'Effectifs et mouvements par espèce. Naissances, ventes, mortalités.',
-    icone: '🐾',
-    couleur: COULEURS_TOKEN.porcins,
-    route: '/cheptel',
-    tag: 'Animaux',
-  },
-  {
-    id: 'cultures',
-    titre: 'Agriculture',
-    description: 'Parcelles agricoles : semis, fertilisation, récoltes.',
-    icone: '🌾',
-    couleur: COULEURS_TOKEN.cultures,
-    route: '/cultures',
-    tag: 'Végétal',
   },
 ]
 
