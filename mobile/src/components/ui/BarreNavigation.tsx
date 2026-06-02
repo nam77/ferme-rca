@@ -27,9 +27,9 @@ type ItemNav = {
 }
 
 const ITEMS: ItemNav[] = [
-  { cle: 'activite', libelle: 'Activité', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
-  { cle: 'cultures', libelle: 'Cultures', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
-  { cle: 'cheptel', libelle: 'Cheptel', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
+  { cle: 'activite', libelle: 'Tâches & opérations', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
+  { cle: 'cultures', libelle: 'Agriculture', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
+  { cle: 'cheptel', libelle: 'Élevage', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
   {
     cle: 'projet-ferme',
     libelle: 'Projet et Ferme',
@@ -42,7 +42,7 @@ const ITEMS: ItemNav[] = [
   },
   { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
   { cle: 'budget', libelle: 'Budget et Ventes', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
-  { cle: 'cra', libelle: 'CRA', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
+  { cle: 'cra', libelle: 'Pointage', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
   { cle: 'deploiement', libelle: 'Déploiement', route: '/deploiement', icone: 'rocket-outline', prefixesActifs: ['/deploiement'], rolesAutorises: ['admin'] },
 ]
 

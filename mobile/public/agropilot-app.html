@@ -2362,13 +2362,13 @@
   <nav class="tabs" id="nav-tabs" role="tablist">
     <button data-view="accueil" class="active"><span class="tab-icon">🏠</span>Accueil</button>
     <button data-view="kanban"><span class="tab-icon">📋</span>Kanban</button>
-    <button data-view="activites"><span class="tab-icon">📅</span>Activités</button>
-    <button data-view="cultures"><span class="tab-icon">🌾</span>Cultures</button>
-    <button data-view="cheptel"><span class="tab-icon">🐾</span>Cheptel</button>
+    <button data-view="activites"><span class="tab-icon">📅</span>Tâches &amp; opérations</button>
+    <button data-view="cultures"><span class="tab-icon">🌾</span>Agriculture</button>
+    <button data-view="cheptel"><span class="tab-icon">🐾</span>Élevage</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">💰</span>Budget et Ventes</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
-    <button data-view="cra" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">🕒</span>CRA</button>
+    <button data-view="cra" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">🕒</span>Pointage</button>
     <button data-view="deploiement" data-restrict="admin"><span class="tab-icon">🚀</span>Déploiement</button>
   </nav>
   <div class="user-pill" id="user-pill">
@@ -2430,7 +2430,7 @@
   <section class="view" id="view-activites">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Activités — <em>Qui fait quoi, quand, comment</em></h2>
+        <h2 class="view-title">Tâches &amp; opérations — <em>Qui fait quoi, quand, comment</em></h2>
         <p class="view-sub">Saisie directe et édition rapide. Cliquez sur un champ pour le modifier.</p>
       </div>
       <div class="row">
@@ -2528,7 +2528,7 @@
   <section class="view" id="view-cra">
     <div class="view-head">
       <div>
-        <h2 class="view-title">CRA — <em>Pointage mensuel</em></h2>
+        <h2 class="view-title">Pointage — <em>Présences &amp; heures du mois</em></h2>
         <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve.</p>
       </div>
     </div>
@@ -2826,7 +2826,7 @@
   <section class="view" id="view-cultures">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Cultures — <em>Parcelles & événements</em></h2>
+        <h2 class="view-title">Agriculture — <em>Parcelles & événements</em></h2>
         <p class="view-sub">Suivi des parcelles agricoles : semis, fertilisation, irrigation, désherbage, récoltes.</p>
       </div>
       <div class="row">
@@ -2976,7 +2976,7 @@
   <section class="view" id="view-cheptel">
     <div class="view-head">
       <div>
-        <h2 class="view-title">Cheptel — <em>Effectifs & mouvements</em></h2>
+        <h2 class="view-title">Élevage — <em>Effectifs & mouvements</em></h2>
         <p class="view-sub">Suivi des lots d'animaux : achats, naissances, ventes, mortalités, transferts.</p>
       </div>
       <div class="row">
@@ -3392,11 +3392,11 @@ const EMAIL_PAR_DEFAUT = {
 const MODULES_ACCUEIL = [
   { id:'kanban',      titre:'Kanban',          icone:'📋', tag:'Opérations', couleur:'#4a8c3f',
     desc:"Suivi des tâches par filière, glisser-déposer entre colonnes." },
-  { id:'activites',   titre:'Activités',       icone:'📅', tag:'Suivi',      couleur:'#7b6e3e',
+  { id:'activites',   titre:'Tâches & opérations', icone:'📅', tag:'Suivi',  couleur:'#7b6e3e',
     desc:"Liste des opérations passées et à venir, par statut." },
-  { id:'cultures',    titre:'Cultures',        icone:'🌾', tag:'Végétal',    couleur:'#4a8c3f',
+  { id:'cultures',    titre:'Agriculture',     icone:'🌾', tag:'Végétal',    couleur:'#4a8c3f',
     desc:"Parcelles agricoles : semis, fertilisation, récoltes." },
-  { id:'cheptel',     titre:'Cheptel',         icone:'🐾', tag:'Animaux',    couleur:'#d4548a',
+  { id:'cheptel',     titre:'Élevage',         icone:'🐾', tag:'Animaux',    couleur:'#d4548a',
     desc:"Effectifs et mouvements par espèce. Naissances, ventes, mortalités." },
   { id:'dashboard',   titre:'Tableau de bord', icone:'📊', tag:'Pilotage',   couleur:'#1a6b8a',
     desc:"Indicateurs de progression, échéances, activité récente." },
@@ -3404,7 +3404,7 @@ const MODULES_ACCUEIL = [
     desc:"8 zones interactives sur les 8 hectares." },
   { id:'budget',      titre:'Budget & Ventes', icone:'💰', tag:'Finance',    couleur:'#e8943a',
     desc:"Prévu vs réel par phase, chiffre d'affaires des ventes." },
-  { id:'cra',         titre:'CRA',             icone:'🕒', tag:'RH',         couleur:'#6b6b6b',
+  { id:'cra',         titre:'Pointage',        icone:'🕒', tag:'RH',         couleur:'#6b6b6b',
     desc:"Compte rendu d'activité mensuel par personne." },
   { id:'deploiement', titre:'Déploiement',     icone:'🚀', tag:'Admin',      couleur:'#c0392b',
     desc:"Statut serveur, base de données et mise en production." },

@@ -32,7 +32,7 @@ type Module = {
 const MODULES: Module[] = [
   {
     id: 'activite',
-    titre: 'Activité',
+    titre: 'Tâches & opérations',
     description: 'Suivi des tâches par filière, glisser-déposer entre colonnes. Budget, dépense et solde par tâche.',
     icone: '📋',
     couleur: COULEURS_TOKEN.mint,
@@ -68,7 +68,7 @@ const MODULES: Module[] = [
   },
   {
     id: 'cheptel',
-    titre: 'Cheptel',
+    titre: 'Élevage',
     description: 'Effectifs et mouvements par espèce. Naissances, ventes, mortalités.',
     icone: '🐾',
     couleur: COULEURS_TOKEN.porcins,
@@ -77,7 +77,7 @@ const MODULES: Module[] = [
   },
   {
     id: 'cultures',
-    titre: 'Cultures',
+    titre: 'Agriculture',
     description: 'Parcelles agricoles : semis, fertilisation, récoltes.',
     icone: '🌾',
     couleur: COULEURS_TOKEN.cultures,
