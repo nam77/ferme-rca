@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, View, StyleSheet } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -9,6 +9,7 @@ import { useAuthStore } from '@src/store/authStore'
 import { COULEURS } from '@src/constants/couleurs'
 import { Toaster } from '@src/components/Toaster'
 import { BandeauReseau } from '@src/components/BandeauReseau'
+import { IntroAnimee } from '@src/components/IntroAnimee'
 import { BarreNavigation } from '@src/components/ui'
 import { usePolices } from '@src/hooks/usePolices'
 
@@ -19,6 +20,8 @@ export default function LayoutRoot() {
   const router = useRouter()
   const segments = useSegments()
   const policesPretes = usePolices()
+  // Intro animée (savane -> eau -> forêt -> champs) jouée une fois au lancement.
+  const [introVisible, setIntroVisible] = useState(true)
 
   useEffect(() => {
     initialiser()
@@ -73,6 +76,7 @@ export default function LayoutRoot() {
           </View>
         </View>
         <Toaster />
+        {introVisible ? <IntroAnimee onTermine={() => setIntroVisible(false)} /> : null}
         <StatusBar style="dark" />
       </SafeAreaProvider>
     </GestureHandlerRootView>
