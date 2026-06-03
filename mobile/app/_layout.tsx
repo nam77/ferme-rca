@@ -56,7 +56,6 @@ export default function LayoutRoot() {
       <SafeAreaProvider>
         <View style={styles.colonne}>
           <BandeauReseau />
-          {afficherNav ? <BarreNavigation /> : null}
           <View style={styles.flex}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
@@ -74,6 +73,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="deploiement" />
             </Stack>
           </View>
+          {afficherNav ? <BarreNavigation /> : null}
         </View>
         <Toaster />
         {introVisible ? <IntroAnimee onTermine={() => setIntroVisible(false)} /> : null}

@@ -1,349 +1,412 @@
 import { useState } from 'react'
-import { View, Text, Pressable, StyleSheet, ScrollView, Modal } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Modal, ScrollView } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import Animated, { FadeIn } from 'react-native-reanimated'
 import { useAuthStore } from '../../store/authStore'
+import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../../constants/theme'
 
 type RoleAutorise = 'admin' | 'responsable' | 'ouvrier' | 'investisseur'
-import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '../../constants/theme'
 
-type SousItemNav = {
+type Destination = {
   cle: string
   libelle: string
   route: string
   icone: keyof typeof Ionicons.glyphMap
-  prefixesActifs: string[]
-}
-
-type ItemNav = {
-  cle: string
-  libelle: string
-  route?: string
-  icone: keyof typeof Ionicons.glyphMap
-  prefixesActifs: string[]
+  iconeActif: keyof typeof Ionicons.glyphMap
+  prefixes: string[]
+  couleur: string
   rolesAutorises?: RoleAutorise[]
-  sousItems?: SousItemNav[]
 }
 
-const ITEMS: ItemNav[] = [
+// Quatre raccourcis « pouce » toujours visibles dans la pilule.
+const PRINCIPAUX: Destination[] = [
   {
-    cle: 'projet-ferme',
-    libelle: 'Projet et Ferme',
-    icone: 'leaf-outline',
-    prefixesActifs: ['/ferme', '/projet'],
-    sousItems: [
-      { cle: 'projet', libelle: 'Projet', route: '/projet', icone: 'document-text-outline', prefixesActifs: ['/projet'] },
-      { cle: 'ferme', libelle: 'Ferme', route: '/ferme', icone: 'leaf-outline', prefixesActifs: ['/ferme'] },
-    ],
+    cle: 'accueil',
+    libelle: 'Accueil',
+    route: '/',
+    icone: 'home-outline',
+    iconeActif: 'home',
+    prefixes: ['/'],
+    couleur: COULEURS_TOKEN.mint,
   },
-  { cle: 'activite', libelle: 'Tâches & opérations', route: '/activite', icone: 'grid-outline', prefixesActifs: ['/activite'] },
-  { cle: 'cultures', libelle: 'Agriculture', route: '/cultures', icone: 'flower-outline', prefixesActifs: ['/cultures'] },
-  { cle: 'cheptel', libelle: 'Élevage', route: '/cheptel', icone: 'paw-outline', prefixesActifs: ['/cheptel'] },
-  { cle: 'dashboard', libelle: 'Dashboard', route: '/dashboard', icone: 'stats-chart-outline', prefixesActifs: ['/dashboard'] },
-  { cle: 'budget', libelle: 'Budget et Ventes', route: '/budget', icone: 'wallet-outline', prefixesActifs: ['/budget'] },
-  { cle: 'cra', libelle: 'Pointage', route: '/cra', icone: 'time-outline', prefixesActifs: ['/cra'] },
-  { cle: 'deploiement', libelle: 'Déploiement', route: '/deploiement', icone: 'rocket-outline', prefixesActifs: ['/deploiement'], rolesAutorises: ['admin'] },
+  {
+    cle: 'activite',
+    libelle: 'Tâches',
+    route: '/activite',
+    icone: 'grid-outline',
+    iconeActif: 'grid',
+    prefixes: ['/activite'],
+    couleur: COULEURS_TOKEN.mint,
+  },
+  {
+    cle: 'cultures',
+    libelle: 'Agriculture',
+    route: '/cultures',
+    icone: 'flower-outline',
+    iconeActif: 'flower',
+    prefixes: ['/cultures'],
+    couleur: COULEURS_TOKEN.cultures,
+  },
+  {
+    cle: 'cheptel',
+    libelle: 'Élevage',
+    route: '/cheptel',
+    icone: 'paw-outline',
+    iconeActif: 'paw',
+    prefixes: ['/cheptel'],
+    couleur: COULEURS_TOKEN.porcins,
+  },
+]
+
+// Le reste, accessible via « ⋯ » dans une feuille.
+const SECONDAIRES: Destination[] = [
+  {
+    cle: 'dashboard',
+    libelle: 'Tableau de bord',
+    route: '/dashboard',
+    icone: 'stats-chart-outline',
+    iconeActif: 'stats-chart',
+    prefixes: ['/dashboard'],
+    couleur: COULEURS_TOKEN.water,
+  },
+  {
+    cle: 'budget',
+    libelle: 'Budget & Ventes',
+    route: '/budget',
+    icone: 'wallet-outline',
+    iconeActif: 'wallet',
+    prefixes: ['/budget'],
+    couleur: COULEURS_TOKEN.aviculture,
+  },
+  {
+    cle: 'cra',
+    libelle: 'Pointage',
+    route: '/cra',
+    icone: 'time-outline',
+    iconeActif: 'time',
+    prefixes: ['/cra'],
+    couleur: COULEURS_TOKEN.clay,
+  },
+  {
+    cle: 'projet',
+    libelle: 'Projet',
+    route: '/projet',
+    icone: 'document-text-outline',
+    iconeActif: 'document-text',
+    prefixes: ['/projet'],
+    couleur: COULEURS_TOKEN.straw,
+  },
+  {
+    cle: 'ferme',
+    libelle: 'Ferme',
+    route: '/ferme',
+    icone: 'leaf-outline',
+    iconeActif: 'leaf',
+    prefixes: ['/ferme'],
+    couleur: COULEURS_TOKEN.caprins,
+  },
+  {
+    cle: 'deploiement',
+    libelle: 'Déploiement',
+    route: '/deploiement',
+    icone: 'rocket-outline',
+    iconeActif: 'rocket',
+    prefixes: ['/deploiement'],
+    couleur: COULEURS_TOKEN.infrastructure,
+    rolesAutorises: ['admin'],
+  },
 ]
 
 export const BarreNavigation = () => {
   const router = useRouter()
   const pathname = usePathname()
+  const insets = useSafeAreaInsets()
   const utilisateur = useAuthStore((s) => s.utilisateur)
   const deconnexion = useAuthStore((s) => s.deconnexion)
-  const [menuOuvert, setMenuOuvert] = useState<string | null>(null)
+  const [feuilleOuverte, setFeuilleOuverte] = useState(false)
 
-  const estActif = (item: { prefixesActifs: string[] }): boolean =>
-    item.prefixesActifs.some((p) => pathname.startsWith(p))
-
-  const ouvrirSousMenu = (cle: string) => {
-    setMenuOuvert((courant) => (courant === cle ? null : cle))
+  const estActif = (dest: Destination): boolean => {
+    if (dest.cle === 'accueil') return pathname === '/'
+    return dest.prefixes.some((p) => pathname.startsWith(p))
   }
 
-  const fermerSousMenu = () => setMenuOuvert(null)
+  const secondairesVisibles = SECONDAIRES.filter((dest) => {
+    if (!dest.rolesAutorises) return true
+    if (!utilisateur) return false
+    return dest.rolesAutorises.includes(utilisateur.role as RoleAutorise)
+  })
 
-  const naviguerSousItem = (route: string) => {
-    fermerSousMenu()
+  const plusActif = secondairesVisibles.some((dest) => estActif(dest))
+
+  const aller = (route: string) => {
+    setFeuilleOuverte(false)
     router.push(route as never)
   }
 
   return (
-    <LinearGradient
-      colors={['#1D3F17', '#264E20', '#446D33']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.barre}
-    >
-      <Pressable
-        onPress={() => router.push('/' as never)}
-        accessibilityLabel="Accueil AGROPILOT"
-        accessibilityRole="link"
-        style={styles.logoBloc}
+    <View style={[styles.socle, { paddingBottom: Math.max(insets.bottom, ESPACEMENTS.s) }]}>
+      <LinearGradient
+        colors={['#1D3F17', '#264E20', '#446D33']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.pilule}
       >
-        <Text style={styles.logoTexte}>
-          AGRO<Text style={styles.logoTexteAccent}>PILOT</Text>
-        </Text>
-        <Text style={styles.logoSousTitre}>Outil de pilotage agropastoral</Text>
-      </Pressable>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.menu}
-      >
-        {ITEMS.filter((item) => {
-          if (!item.rolesAutorises) return true
-          if (!utilisateur) return false
-          return item.rolesAutorises.includes(utilisateur.role as RoleAutorise)
-        }).map((item) => {
-          const actif = estActif(item)
-          const aSousMenu = !!item.sousItems?.length
-          const ouvert = menuOuvert === item.cle
-
+        {PRINCIPAUX.map((dest) => {
+          const actif = estActif(dest)
           return (
-            <View key={item.cle} style={styles.itemAncre}>
-              <Pressable
-                onPress={() => {
-                  if (aSousMenu) {
-                    ouvrirSousMenu(item.cle)
-                  } else if (item.route) {
-                    router.push(item.route as never)
-                  }
-                }}
-                accessibilityLabel={item.libelle}
-                accessibilityRole={aSousMenu ? 'button' : 'link'}
-                style={[styles.itemMenu, (actif || ouvert) && styles.itemMenuActif]}
-              >
-                <Ionicons
-                  name={item.icone}
-                  size={16}
-                  color={actif || ouvert ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
-                  style={styles.itemIcone}
-                />
-                <Text style={[styles.itemTexte, (actif || ouvert) && styles.itemTexteActif]}>
-                  {item.libelle}
-                </Text>
-                {aSousMenu ? (
-                  <Ionicons
-                    name={ouvert ? 'chevron-up' : 'chevron-down'}
-                    size={12}
-                    color={actif || ouvert ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.70)'}
-                    style={styles.chevron}
-                  />
-                ) : null}
-              </Pressable>
-
-              {aSousMenu && ouvert ? (
-                <Modal
-                  transparent
-                  visible={ouvert}
-                  animationType="fade"
-                  onRequestClose={fermerSousMenu}
-                >
-                  <Pressable
-                    style={styles.overlay}
-                    accessibilityLabel="Fermer le menu"
-                    onPress={fermerSousMenu}
-                  >
-                    <View style={styles.popoverPositionneur} pointerEvents="box-none">
-                      <View style={styles.popoverDuo}>
-                        {item.sousItems?.map((sous) => {
-                          const sousActif = estActif(sous)
-                          return (
-                            <Pressable
-                              key={sous.cle}
-                              onPress={() => naviguerSousItem(sous.route)}
-                              accessibilityLabel={sous.libelle}
-                              accessibilityRole="link"
-                              style={[styles.chip, sousActif && styles.chipActif]}
-                            >
-                              <View style={[styles.chipPastille, sousActif && styles.chipPastilleActif]}>
-                                <Ionicons
-                                  name={sous.icone}
-                                  size={16}
-                                  color={sousActif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.95)'}
-                                />
-                              </View>
-                              <Text style={[styles.chipTexte, sousActif && styles.chipTexteActif]}>
-                                {sous.libelle}
-                              </Text>
-                            </Pressable>
-                          )
-                        })}
-                      </View>
-                    </View>
-                  </Pressable>
-                </Modal>
+            <Pressable
+              key={dest.cle}
+              onPress={() => aller(dest.route)}
+              accessibilityLabel={dest.libelle}
+              accessibilityRole="link"
+              accessibilityState={{ selected: actif }}
+              style={[styles.onglet, actif && { backgroundColor: dest.couleur }]}
+            >
+              <Ionicons
+                name={actif ? dest.iconeActif : dest.icone}
+                size={22}
+                color={actif ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.62)'}
+              />
+              {actif ? (
+                <Animated.Text entering={FadeIn.duration(180)} style={styles.ongletLibelle}>
+                  {dest.libelle}
+                </Animated.Text>
               ) : null}
-            </View>
+            </Pressable>
           )
         })}
 
-        {utilisateur ? (
+        {/* Bouton « ⋯ » : ouvre la feuille des autres rubriques */}
+        <Pressable
+          onPress={() => setFeuilleOuverte(true)}
+          accessibilityLabel="Plus de rubriques"
+          accessibilityRole="button"
+          accessibilityState={{ expanded: feuilleOuverte }}
+          style={[styles.onglet, (plusActif || feuilleOuverte) && styles.ongletPlusActif]}
+        >
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={22}
+            color={plusActif || feuilleOuverte ? COULEURS_TOKEN.cream : 'rgba(250,246,238,0.62)'}
+          />
+        </Pressable>
+      </LinearGradient>
+
+      <Modal
+        transparent
+        visible={feuilleOuverte}
+        animationType="slide"
+        onRequestClose={() => setFeuilleOuverte(false)}
+      >
+        <Pressable
+          style={styles.voile}
+          accessibilityLabel="Fermer le menu"
+          onPress={() => setFeuilleOuverte(false)}
+        >
           <Pressable
-            onPress={deconnexion}
-            accessibilityLabel="Se déconnecter"
-            accessibilityRole="button"
-            style={[styles.itemMenu, styles.itemUtilisateur]}
+            style={[styles.feuille, { paddingBottom: Math.max(insets.bottom, ESPACEMENTS.l) }]}
+            onPress={() => {}}
           >
-            <Ionicons name="person-circle-outline" size={18} color={COULEURS_TOKEN.cream} />
-            <Text style={styles.itemUtilisateurTexte}>
-              {utilisateur.prenom}
-            </Text>
+            <View style={styles.poignee} />
+            <Text style={styles.feuilleTitre}>Toutes les rubriques</Text>
+
+            <ScrollView
+              contentContainerStyle={styles.grille}
+              showsVerticalScrollIndicator={false}
+            >
+              {secondairesVisibles.map((dest) => {
+                const actif = estActif(dest)
+                return (
+                  <Pressable
+                    key={dest.cle}
+                    onPress={() => aller(dest.route)}
+                    accessibilityLabel={dest.libelle}
+                    accessibilityRole="link"
+                    accessibilityState={{ selected: actif }}
+                    style={({ pressed }) => [
+                      styles.carte,
+                      actif && { borderColor: dest.couleur, backgroundColor: dest.couleur + '14' },
+                      pressed && styles.cartePressee,
+                    ]}
+                  >
+                    <View style={[styles.cartePastille, { backgroundColor: dest.couleur + '22' }]}>
+                      <Ionicons
+                        name={actif ? dest.iconeActif : dest.icone}
+                        size={22}
+                        color={dest.couleur}
+                      />
+                    </View>
+                    <Text style={styles.carteLibelle}>{dest.libelle}</Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+
+            {utilisateur ? (
+              <Pressable
+                onPress={() => {
+                  setFeuilleOuverte(false)
+                  deconnexion()
+                }}
+                accessibilityLabel="Se déconnecter"
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.deconnexion, pressed && styles.cartePressee]}
+              >
+                <Ionicons name="log-out-outline" size={20} color={COULEURS_TOKEN.rouge} />
+                <Text style={styles.deconnexionTexte}>
+                  Se déconnecter · {utilisateur.prenom}
+                </Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => aller('/connexion')}
+                accessibilityLabel="Se connecter"
+                accessibilityRole="link"
+                style={({ pressed }) => [styles.connexion, pressed && styles.cartePressee]}
+              >
+                <Ionicons name="log-in-outline" size={20} color={COULEURS_TOKEN.cream} />
+                <Text style={styles.connexionTexte}>Se connecter</Text>
+              </Pressable>
+            )}
           </Pressable>
-        ) : null}
-      </ScrollView>
-    </LinearGradient>
+        </Pressable>
+      </Modal>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  barre: {
+  socle: {
+    backgroundColor: COULEURS_TOKEN.cream,
+    paddingHorizontal: ESPACEMENTS.l,
+    paddingTop: ESPACEMENTS.s,
+  },
+  pilule: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: ESPACEMENTS.xl,
-    paddingVertical: ESPACEMENTS.s,
-    gap: ESPACEMENTS.xl,
-    minHeight: 64,
-  },
-  logoBloc: {
-    paddingVertical: ESPACEMENTS.xs,
-    paddingRight: ESPACEMENTS.l,
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(250,246,238,0.20)',
-  },
-  logoTexte: {
-    fontFamily: POLICES.serif,
-    fontSize: 22,
-    color: COULEURS_TOKEN.cream,
-    letterSpacing: 0.5,
-    lineHeight: 24,
-  },
-  logoTexteAccent: {
-    fontFamily: POLICES.serifItalique,
-    color: COULEURS_TOKEN.straw,
-  },
-  logoSousTitre: {
-    fontFamily: POLICES.mono,
-    fontSize: 9,
-    color: 'rgba(250,246,238,0.65)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  menu: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: ESPACEMENTS.xs,
-    paddingRight: ESPACEMENTS.s,
-  },
-  itemMenu: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: ESPACEMENTS.m,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: 'transparent',
-  },
-  itemMenuActif: {
-    backgroundColor: 'rgba(250,246,238,0.15)',
-  },
-  itemIcone: {},
-  itemAncre: {
-    position: 'relative',
-  },
-  chevron: {
-    marginLeft: 2,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(13,26,10,0.35)',
-  },
-  popoverPositionneur: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  popoverDuo: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 8,
-    backgroundColor: 'rgba(29,63,23,0.96)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(250,246,238,0.18)',
-    shadowColor: '#000',
+    paddingHorizontal: ESPACEMENTS.s,
+    paddingVertical: ESPACEMENTS.s,
+    borderRadius: RAYONS.rond,
+    shadowColor: '#1D3F17',
     shadowOpacity: 0.35,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-  chip: {
+  onglet: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingLeft: 6,
-    paddingRight: 18,
-    paddingVertical: 6,
+    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: 14,
+    borderRadius: RAYONS.rond,
+  },
+  ongletPlusActif: {
+    backgroundColor: 'rgba(250,246,238,0.16)',
+  },
+  ongletLibelle: {
+    fontFamily: POLICES.sansBold,
+    fontSize: 14,
+    color: COULEURS_TOKEN.cream,
+    letterSpacing: 0.3,
+  },
+  voile: {
+    flex: 1,
+    backgroundColor: 'rgba(13,26,10,0.45)',
+    justifyContent: 'flex-end',
+  },
+  feuille: {
+    backgroundColor: COULEURS_TOKEN.cream,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    paddingHorizontal: ESPACEMENTS.l,
+    paddingTop: ESPACEMENTS.m,
+  },
+  poignee: {
+    alignSelf: 'center',
+    width: 44,
+    height: 5,
     borderRadius: 999,
-    backgroundColor: 'rgba(250,246,238,0.06)',
+    backgroundColor: COULEURS_TOKEN.bordure,
+    marginBottom: ESPACEMENTS.l,
+  },
+  feuilleTitre: {
+    fontFamily: POLICES.serifSemi,
+    fontSize: 20,
+    color: COULEURS_TOKEN.soil,
+    marginBottom: ESPACEMENTS.l,
+  },
+  grille: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: ESPACEMENTS.m,
+  },
+  carte: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: ESPACEMENTS.m,
+    minHeight: 64,
+    paddingHorizontal: ESPACEMENTS.m,
+    paddingVertical: ESPACEMENTS.m,
+    borderRadius: RAYONS.grand,
     borderWidth: 1,
-    borderColor: 'rgba(250,246,238,0.14)',
-    minWidth: 130,
+    borderColor: COULEURS_TOKEN.bordure,
+    backgroundColor: COULEURS_TOKEN.carte,
   },
-  chipActif: {
-    backgroundColor: 'rgba(125,212,74,0.18)',
-    borderColor: 'rgba(125,212,74,0.55)',
+  cartePressee: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
-  chipPastille: {
-    width: 28,
-    height: 28,
-    borderRadius: 999,
+  cartePastille: {
+    width: 40,
+    height: 40,
+    borderRadius: RAYONS.rond,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(250,246,238,0.10)',
   },
-  chipPastilleActif: {
-    backgroundColor: 'rgba(125,212,74,0.35)',
+  carteLibelle: {
+    flex: 1,
+    fontFamily: POLICES.sansMedium,
+    fontSize: 15,
+    color: COULEURS_TOKEN.soil,
   },
-  chipTexte: {
-    fontFamily: POLICES.mono,
-    fontSize: 12,
-    color: 'rgba(250,246,238,0.85)',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  chipTexteActif: {
-    color: COULEURS_TOKEN.cream,
-    fontFamily: POLICES.monoMedium,
-  },
-  itemTexte: {
-    fontFamily: POLICES.mono,
-    fontSize: 11,
-    color: 'rgba(250,246,238,0.70)',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  itemTexteActif: {
-    color: COULEURS_TOKEN.cream,
-    fontFamily: POLICES.monoMedium,
-  },
-  itemUtilisateur: {
-    backgroundColor: 'rgba(250,246,238,0.18)',
-    borderRadius: 999,
-    paddingHorizontal: ESPACEMENTS.m,
-    marginLeft: ESPACEMENTS.s,
+  deconnexion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ESPACEMENTS.s,
+    minHeight: 52,
+    marginTop: ESPACEMENTS.l,
+    borderRadius: RAYONS.grand,
     borderWidth: 1,
-    borderColor: 'rgba(250,246,238,0.25)',
+    borderColor: 'rgba(231,76,60,0.4)',
+    backgroundColor: 'rgba(231,76,60,0.08)',
   },
-  itemUtilisateurTexte: {
-    fontFamily: POLICES.monoMedium,
-    fontSize: 11,
+  deconnexionTexte: {
+    fontFamily: POLICES.sansBold,
+    fontSize: 15,
+    color: COULEURS_TOKEN.rouge,
+  },
+  connexion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: ESPACEMENTS.s,
+    minHeight: 52,
+    marginTop: ESPACEMENTS.l,
+    borderRadius: RAYONS.grand,
+    backgroundColor: COULEURS_TOKEN.leaf,
+  },
+  connexionTexte: {
+    fontFamily: POLICES.sansBold,
+    fontSize: 15,
     color: COULEURS_TOKEN.cream,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
 })
