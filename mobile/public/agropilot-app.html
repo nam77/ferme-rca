@@ -2552,32 +2552,8 @@
         <h2 class="view-title">Pointage — <em>Présences &amp; heures du mois</em></h2>
         <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve.</p>
       </div>
-    </div>
-
-    <!-- Formulaire d'inscription d'un salarié (admin/responsable) -->
-    <div class="cra-inscription">
-      <h3 class="cra-recap-titre" style="padding:0;margin:0 0 8px">Ajouter un salarié au pointage</h3>
-      <div class="cra-insc-form">
-        <input type="text" id="insc-prenom" placeholder="Prénom" maxlength="60">
-        <input type="text" id="insc-nom" placeholder="Nom" maxlength="60">
-        <input type="tel" id="insc-telephone" placeholder="Téléphone (ex : +236 75 12 34 56)" maxlength="40">
-        <select id="insc-role">
-          <option value="ouvrier">Ouvrier</option>
-          <option value="responsable">Responsable</option>
-          <option value="admin">Administrateur</option>
-          <option value="investisseur">Investisseur</option>
-        </select>
-        <select id="insc-filiere">
-          <option value="">— Filière (optionnel) —</option>
-          <option value="pisciculture">Pisciculture</option>
-          <option value="aviculture">Aviculture</option>
-          <option value="porcins">Porcins</option>
-          <option value="caprins">Caprins/Ovins</option>
-          <option value="cultures">Cultures</option>
-          <option value="infrastructure">Infrastructure</option>
-          <option value="habitat">Habitat</option>
-        </select>
-        <button class="btn btn-primary btn-sm" id="insc-ajouter">+ Ajouter</button>
+      <div class="row">
+        <button class="btn btn-primary" id="btn-new-salarie">＋ Ajouter un salarié</button>
       </div>
     </div>
 
@@ -3140,6 +3116,60 @@
     <div class="modal-foot">
       <button class="btn btn-ghost" data-close-modal>Annuler</button>
       <button class="btn btn-primary" id="f-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL INSCRIPTION SALARIÉ (Pointage) — calquée sur le formulaire de tâche ===== -->
+<div class="modal-backdrop" id="modal-cra-inscription">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Ajouter un salarié au pointage</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom — <span class="hint">Qui ?</span></label>
+          <input type="text" id="insc-prenom" placeholder="Ex: Jean" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="insc-nom" placeholder="Ex: Kota" maxlength="60">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Téléphone — <span class="hint">optionnel</span></label>
+        <input type="tel" id="insc-telephone" placeholder="Ex: +236 75 12 34 56" maxlength="40">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rôle</label>
+          <select id="insc-role">
+            <option value="ouvrier">Ouvrier</option>
+            <option value="responsable">Responsable</option>
+            <option value="admin">Administrateur</option>
+            <option value="investisseur">Investisseur</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filière — <span class="hint">optionnel</span></label>
+          <select id="insc-filiere">
+            <option value="">— Aucune —</option>
+            <option value="pisciculture">Pisciculture</option>
+            <option value="aviculture">Aviculture</option>
+            <option value="porcins">Porcins</option>
+            <option value="caprins">Caprins/Ovins</option>
+            <option value="cultures">Cultures</option>
+            <option value="infrastructure">Infrastructure</option>
+            <option value="habitat">Habitat</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="insc-ajouter">Ajouter</button>
     </div>
   </div>
 </div>
@@ -8314,11 +8344,24 @@ async function gererInscriptionSalarie() {
     document.getElementById('insc-prenom').value = '';
     document.getElementById('insc-nom').value = '';
     document.getElementById('insc-telephone').value = '';
+    document.getElementById('modal-cra-inscription').classList.remove('show');
     state.craUtilisateurs = []; // forcer rechargement
     await renderCRA();
   } catch (e) {
     toast('Erreur : ' + e.message, 'error');
   }
+}
+
+// Ouvre la modale d'inscription d'un salarié (réinitialise les champs).
+function ouvrirModalInscriptionSalarie() {
+  if (bloquerSiConsultatif()) return;
+  document.getElementById('insc-prenom').value = '';
+  document.getElementById('insc-nom').value = '';
+  document.getElementById('insc-telephone').value = '';
+  document.getElementById('insc-role').value = 'ouvrier';
+  document.getElementById('insc-filiere').value = '';
+  document.getElementById('modal-cra-inscription').classList.add('show');
+  setTimeout(() => document.getElementById('insc-prenom').focus(), 100);
 }
 
 // ─── Édition / suppression d'un salarié ───
@@ -8562,7 +8605,9 @@ function setupCRA() {
     });
   }
 
-  // Inscription salarié
+  // Inscription salarié (ouverture modale + enregistrement)
+  const btnNouveauSalarie = document.getElementById('btn-new-salarie');
+  if (btnNouveauSalarie) btnNouveauSalarie.addEventListener('click', ouvrirModalInscriptionSalarie);
   const btnAjouter = document.getElementById('insc-ajouter');
   if (btnAjouter) btnAjouter.addEventListener('click', gererInscriptionSalarie);
 
