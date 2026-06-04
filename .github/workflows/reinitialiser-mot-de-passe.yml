@@ -1,0 +1,55 @@
+name: Réinitialiser un mot de passe
+
+# Outil « break-glass » : réinitialise le mot de passe d'un compte sur la
+# base de PRODUCTION via SSH (même canal que le déploiement).
+#
+# Déclenchement MANUEL uniquement (workflow_dispatch) — réservé aux
+# utilisateurs ayant un accès en écriture au dépôt.
+#
+# Ce dépôt étant PUBLIC, le nouveau mot de passe NE DOIT JAMAIS apparaître
+# dans les logs : il transite par le secret `RESET_PASSWORD` (masqué par
+# GitHub) et est transmis au serveur via stdin (jamais en argument).
+#
+# Procédure :
+#   1) gh secret set RESET_PASSWORD          # saisie cachée du nouveau mdp
+#   2) gh workflow run reinitialiser-mot-de-passe.yml -f email=admin@ferme.rca
+#   3) (après connexion) gh secret delete RESET_PASSWORD
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email du compte à réinitialiser"
+        required: true
+        default: "admin@ferme.rca"
+
+concurrency:
+  group: reset-password-production
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    name: Réinitialiser le mot de passe
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la présence du secret
+        run: |
+          if [ -z "${{ secrets.RESET_PASSWORD }}" ]; then
+            echo "::error::Secret RESET_PASSWORD absent. Définissez-le d'abord : gh secret set RESET_PASSWORD"
+            exit 1
+          fi
+
+      - name: Configuration SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Réinitialiser sur le serveur de production
+        run: |
+          # Le mot de passe est piped via stdin et lu par $(cat) côté serveur :
+          # il n'apparaît ni dans les arguments (ps) ni dans les logs.
+          printf '%s' "${{ secrets.RESET_PASSWORD }}" | \
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd ${{ secrets.DEPLOY_DIR }}/backend && RESET_EMAIL='${{ github.event.inputs.email }}' RESET_PASSWORD=\"\$(cat)\" npx tsx scripts/reinitialiser-mot-de-passe.ts"

@@ -2629,6 +2629,13 @@
             </select>
           </div>
         </div>
+        <div class="form-group">
+          <label>Réinitialiser le mot de passe — <span class="hint">admin uniquement</span></label>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input type="text" id="cra-sal-nouveau-mdp" autocomplete="new-password" placeholder="Nouveau mot de passe (8 caractères min)" style="flex:1">
+            <button class="btn btn-ghost" id="cra-sal-reset-mdp" style="white-space:nowrap">🔑 Réinitialiser</button>
+          </div>
+        </div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" id="cra-sal-supprimer" style="color:#e74c3c">Supprimer ce salarié</button>
@@ -8378,7 +8385,24 @@ function ouvrirModalEditSalarie(utilisateurId) {
   document.getElementById('cra-sal-telephone').value = u.telephone || '';
   document.getElementById('cra-sal-role').value = u.role || 'ouvrier';
   document.getElementById('cra-sal-filiere').value = u.filiere || '';
+  document.getElementById('cra-sal-nouveau-mdp').value = '';
   document.getElementById('modal-cra-salarie').classList.add('show');
+}
+
+// Réinitialise le mot de passe du salarié en cours d'édition (admin only,
+// l'API renvoie 403 sinon). Le nouveau mot de passe n'est pas conservé.
+async function reinitialiserMotDePasseSalarie() {
+  if (!state.craSalEditId) return;
+  const inp = document.getElementById('cra-sal-nouveau-mdp');
+  const mdp = inp.value;
+  if (!mdp || mdp.length < 8) { toast('Mot de passe : 8 caractères minimum', 'error'); return; }
+  try {
+    await apiFetch('PATCH', '/auth/utilisateurs/' + state.craSalEditId + '/mot-de-passe', { motDePasse: mdp });
+    toast('Mot de passe réinitialisé', 'success');
+    inp.value = '';
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
 }
 
 async function sauverEditSalarie() {
@@ -8624,6 +8648,8 @@ function setupCRA() {
   if (btnSalSave) btnSalSave.addEventListener('click', sauverEditSalarie);
   const btnSalDel = document.getElementById('cra-sal-supprimer');
   if (btnSalDel) btnSalDel.addEventListener('click', supprimerSalarieDepuisModal);
+  const btnSalReset = document.getElementById('cra-sal-reset-mdp');
+  if (btnSalReset) btnSalReset.addEventListener('click', reinitialiserMotDePasseSalarie);
 
   // Modal remplir tout le mois — boutons 0.5 / 1
   document.querySelectorAll('#modal-cra-remplir .btn-remplir-grand').forEach(btn => {

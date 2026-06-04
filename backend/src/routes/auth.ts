@@ -141,6 +141,43 @@ routeurAuth.post('/mot-de-passe-oublie', async (req: Request, res: Response) => 
   }
 })
 
+// ─────────── Réinitialisation du mot de passe par un admin ───────────
+// Un administrateur authentifié définit un nouveau mot de passe pour
+// n'importe quel compte (lui-même ou un autre). Le mot de passe n'est
+// jamais renvoyé ni journalisé.
+const schemaResetMotDePasse = z.object({
+  motDePasse: z.string().min(8).max(100),
+})
+
+routeurAuth.patch(
+  '/utilisateurs/:id/mot-de-passe',
+  verifierAuth,
+  verifierRole(Role.admin),
+  async (req: Request, res: Response) => {
+    const parsed = schemaResetMotDePasse.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ succes: false, message: 'Mot de passe invalide (8 caractères minimum)' })
+      return
+    }
+    try {
+      const cible = await prisma.utilisateur.findUnique({ where: { id: req.params.id } })
+      if (!cible) {
+        res.status(404).json({ succes: false, message: 'Compte introuvable' })
+        return
+      }
+      const motDePasseHash = await bcrypt.hash(parsed.data.motDePasse, 10)
+      await prisma.utilisateur.update({
+        where: { id: req.params.id },
+        data: { motDePasseHash },
+      })
+      res.json({ succes: true, message: `Mot de passe réinitialisé pour ${cible.email}` })
+    } catch (erreur) {
+      console.error('Erreur reset mot de passe admin:', erreur)
+      res.status(500).json({ succes: false, message: 'Erreur serveur' })
+    }
+  },
+)
+
 routeurAuth.get('/moi', verifierAuth, async (req: Request, res: Response) => {
   try {
     const u = await prisma.utilisateur.findUnique({
