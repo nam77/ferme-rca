@@ -2393,7 +2393,6 @@
   <!-- ============ ACCUEIL ============ -->
   <section class="view active" id="view-accueil">
     <div class="accueil-hero">
-      <div class="accueil-hero-tag" id="accueil-tag">AGROPASTORALE RCA · 8 HECTARES</div>
       <h1 class="accueil-hero-titre">
         <span id="accueil-salutation">Bienvenue sur</span>
         <em id="accueil-prenom">AGROPILOT</em>
@@ -5135,7 +5134,6 @@ function renderAccueil() {
   // Hero : salutation + prénom (ou "Bienvenue sur AGROPILOT" pour visiteur)
   const sal = document.getElementById('accueil-salutation');
   const prenomEl = document.getElementById('accueil-prenom');
-  const tagEl = document.getElementById('accueil-tag');
   if (sal && prenomEl) {
     if (utilisateur && !role.consultatif) {
       const prenom = (utilisateur.name || '').split(' ')[0] || utilisateur.username;
@@ -5146,7 +5144,6 @@ function renderAccueil() {
       prenomEl.textContent = 'AGROPILOT';
     }
   }
-  if (tagEl) tagEl.textContent = 'AGROPASTORALE RCA · 8 HECTARES';
 
   // Pastilles : rôle + (optionnel) "mode consultation"
   const pastWrap = document.getElementById('accueil-pastilles');
