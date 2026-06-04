@@ -20,7 +20,7 @@ export default function LayoutRoot() {
   const router = useRouter()
   const segments = useSegments()
   const policesPretes = usePolices()
-  // Intro animée (savane -> eau -> forêt -> champs) jouée une fois au lancement.
+  // Intro animée (champ préparé -> pluie -> semis -> cultures) jouée une fois au lancement.
   const [introVisible, setIntroVisible] = useState(true)
 
   useEffect(() => {
