@@ -2383,6 +2383,7 @@
 
   <nav class="tabs" id="nav-tabs" role="tablist">
     <button data-view="accueil" class="active"><span class="tab-icon">🏠</span>Accueil</button>
+    <button data-view="cra" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">🕒</span>Pointage</button>
     <button data-view="kanban"><span class="tab-icon">📋</span>Kanban</button>
     <button data-view="ferme"><span class="tab-icon">🗺️</span>Ferme</button>
     <button data-view="activites"><span class="tab-icon">📅</span>Tâches &amp; opérations</button>
@@ -2390,7 +2391,6 @@
     <button data-view="cheptel"><span class="tab-icon">🐾</span>Élevage</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">💰</span>Budget et Ventes</button>
-    <button data-view="cra" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">🕒</span>Pointage</button>
     <button data-view="deploiement" data-restrict="admin"><span class="tab-icon">🚀</span>Déploiement</button>
   </nav>
   <div class="user-pill" id="user-pill">
@@ -3590,6 +3590,8 @@ const EMAIL_PAR_DEFAUT = {
    Chaque module est lié à un onglet : si l'onglet n'est pas dans
    visibleTabs du rôle courant, le module est masqué. */
 const MODULES_ACCUEIL = [
+  { id:'cra',         titre:'Pointage',        icone:'🕒', tag:'RH',         couleur:'#6b6b6b',
+    desc:"Compte rendu d'activité mensuel par personne." },
   { id:'kanban',      titre:'Kanban',          icone:'📋', tag:'Opérations', couleur:'#4a8c3f',
     desc:"Suivi des tâches par filière, glisser-déposer entre colonnes." },
   { id:'ferme',       titre:'Plan de la ferme', icone:'🗺️', tag:'Spatial',   couleur:'#7b6e3e',
@@ -3604,8 +3606,6 @@ const MODULES_ACCUEIL = [
     desc:"Indicateurs de progression, échéances, activité récente." },
   { id:'budget',      titre:'Budget & Ventes', icone:'💰', tag:'Finance',    couleur:'#e8943a',
     desc:"Prévu vs réel par phase, chiffre d'affaires des ventes." },
-  { id:'cra',         titre:'Pointage',        icone:'🕒', tag:'RH',         couleur:'#6b6b6b',
-    desc:"Compte rendu d'activité mensuel par personne." },
   { id:'deploiement', titre:'Déploiement',     icone:'🚀', tag:'Admin',      couleur:'#c0392b',
     desc:"Statut serveur, base de données et mise en production." },
 ];
