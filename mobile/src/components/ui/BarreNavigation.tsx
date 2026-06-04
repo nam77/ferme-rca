@@ -21,7 +21,7 @@ type Destination = {
   rolesAutorises?: RoleAutorise[]
 }
 
-// Quatre raccourcis « pouce » toujours visibles dans la pilule.
+// Raccourcis « pouce » toujours visibles dans la pilule (Pointage en 2e).
 const PRINCIPAUX: Destination[] = [
   {
     cle: 'accueil',
@@ -31,6 +31,15 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'home',
     prefixes: ['/'],
     couleur: COULEURS_TOKEN.mint,
+  },
+  {
+    cle: 'cra',
+    libelle: 'Pointage',
+    route: '/cra',
+    icone: 'time-outline',
+    iconeActif: 'time',
+    prefixes: ['/cra'],
+    couleur: COULEURS_TOKEN.clay,
   },
   {
     cle: 'activite',
@@ -80,15 +89,6 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'wallet',
     prefixes: ['/budget'],
     couleur: COULEURS_TOKEN.aviculture,
-  },
-  {
-    cle: 'cra',
-    libelle: 'Pointage',
-    route: '/cra',
-    icone: 'time-outline',
-    iconeActif: 'time',
-    prefixes: ['/cra'],
-    couleur: COULEURS_TOKEN.clay,
   },
   {
     cle: 'projet',
