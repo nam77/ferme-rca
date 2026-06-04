@@ -1909,6 +1909,7 @@
     display: grid; place-items: center;
     cursor: pointer;
     line-height: 1;
+    z-index: 2;
   }
   .cra-cell-pointage.has-photo .photo-badge { background: #4a8c3f; color: #fff; border-color: #4a8c3f; }
   .cra-pointage-table .row-modifiee .col-sal::after {
@@ -8197,14 +8198,23 @@ function ouvrirModalPhotosPreuve(utilisateurId, dateStr) {
   const u = state.craUtilisateurs.find(x => x.id === utilisateurId);
   if (!u) return;
   const saisie = state.craSaisies.find(s => s.utilisateurId === utilisateurId && s.date.split('T')[0] === dateStr);
-  if (!saisie || saisie.heures === 0) {
-    toast('Pointez d\'abord 0.5 ou 1 puis enregistrez la ligne avant de joindre les photos', '');
+  // Présence effective : une modification locale (menu déroulant non encore
+  // enregistré) prime sur la saisie en base. On peut ainsi joindre les photos
+  // sans étape « Enregistrer la ligne » séparée.
+  const modifLocale = state.craModifications[utilisateurId]?.[dateStr];
+  const presence = (modifLocale !== undefined)
+    ? modifLocale
+    : (saisie ? heuresEnPresence(saisie.heures) : 0);
+  if (presence === 0) {
+    toast('Indiquez d\'abord une présence (0.5 ou 1) pour ce jour avant de joindre les photos', '');
     return;
   }
   state.craPhotosEdit = {
-    utilisateurId, dateStr, saisieId: saisie.id,
-    photoDebut: saisie.photoDebut || '',
-    photoFin: saisie.photoFin || '',
+    utilisateurId, dateStr, saisieId: saisie?.id,
+    heures: presence === 1 ? 8 : 4,
+    type: saisie?.type || 'travail',
+    photoDebut: saisie?.photoDebut || '',
+    photoFin: saisie?.photoFin || '',
   };
   const dateLisible = new Date(dateStr + 'T12:00:00Z').toLocaleDateString('fr-FR',
     { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone:'UTC' });
@@ -8213,10 +8223,10 @@ function ouvrirModalPhotosPreuve(utilisateurId, dateStr) {
   const inDeb = document.getElementById('cra-photo-debut');
   const inFin = document.getElementById('cra-photo-fin');
   inDeb.value = ''; inFin.value = '';
-  inDeb.dataset.url = saisie.photoDebut || '';
-  inFin.dataset.url = saisie.photoFin || '';
-  rendreApercuPhotoCRA('cra-preview-debut', saisie.photoDebut, 'debut');
-  rendreApercuPhotoCRA('cra-preview-fin', saisie.photoFin, 'fin');
+  inDeb.dataset.url = saisie?.photoDebut || '';
+  inFin.dataset.url = saisie?.photoFin || '';
+  rendreApercuPhotoCRA('cra-preview-debut', saisie?.photoDebut, 'debut');
+  rendreApercuPhotoCRA('cra-preview-fin', saisie?.photoFin, 'fin');
   document.getElementById('modal-cra-photos').classList.add('show');
 }
 
@@ -8254,22 +8264,27 @@ async function gererChangementPhotoPreuve(e, ref) {
 
 async function sauverPhotosPreuve() {
   if (!state.craPhotosEdit) return;
-  const { utilisateurId, dateStr } = state.craPhotosEdit;
+  const { utilisateurId, dateStr, heures, type } = state.craPhotosEdit;
   const photoDebut = document.getElementById('cra-photo-debut').dataset.url || null;
   const photoFin = document.getElementById('cra-photo-fin').dataset.url || null;
-  // On utilise POST /cra (upsert) pour ne mettre à jour que les photos —
-  // les autres champs (heures, type) restent inchangés via l'upsert qui
-  // recharge tout le contenu actuel. Pour préserver heures/type :
-  const saisie = state.craSaisies.find(s => s.utilisateurId === utilisateurId && s.date.split('T')[0] === dateStr);
+  // POST /cra (upsert) : persiste la présence (heures/type, calculés à
+  // l'ouverture depuis la valeur effective) ET les photos en un seul appel.
+  // La ligne est ainsi enregistrée même si l'utilisateur n'a pas cliqué
+  // « Enregistrer la ligne » au préalable.
   try {
     await apiFetch('POST', '/cra', {
       utilisateurId,
       date: dateStr,
-      type: saisie?.type || 'travail',
-      heures: saisie?.heures ?? 8,
+      type: type || 'travail',
+      heures: heures ?? 8,
       photoDebut,
       photoFin,
     });
+    // La présence vient d'être persistée : on retire la modification locale
+    // correspondante pour éviter un faux indicateur « non enregistré ».
+    if (state.craModifications[utilisateurId]) {
+      delete state.craModifications[utilisateurId][dateStr];
+    }
     toast('Photos preuve enregistrées', 'success');
     document.getElementById('modal-cra-photos').classList.remove('show');
     await renderCRA();
