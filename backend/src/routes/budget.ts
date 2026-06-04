@@ -44,12 +44,38 @@ routeurBudget.get('/', async (_req: Request, res: Response) => {
   try {
     const lignes = await prisma.budgetLigne.findMany({
       orderBy: [{ phase: 'asc' }, { categorie: 'asc' }],
+      include: {
+        taches: {
+          select: {
+            id: true,
+            titre: true,
+            statut: true,
+            filiere: true,
+            montantBudget: true,
+            montantDepense: true,
+          },
+          orderBy: { creeLe: 'desc' },
+        },
+      },
     })
-    const lignesNumber = lignes.map((l) => ({
-      ...l,
-      montantPrevu: decimalEnNumber(l.montantPrevu),
-      montantReel: decimalEnNumber(l.montantReel),
-    }))
+    const lignesNumber = lignes.map((l) => {
+      const taches = l.taches.map((t) => ({
+        id: t.id,
+        titre: t.titre,
+        statut: t.statut,
+        filiere: t.filiere,
+        montantBudget: t.montantBudget != null ? decimalEnNumber(t.montantBudget) : null,
+        montantDepense: t.montantDepense != null ? decimalEnNumber(t.montantDepense) : null,
+      }))
+      // Budget réel = somme des dépenses des tâches enfants (auto-calculé).
+      const montantReel = taches.reduce((s, t) => s + (t.montantDepense ?? 0), 0)
+      return {
+        ...l,
+        montantPrevu: decimalEnNumber(l.montantPrevu),
+        montantReel,
+        taches,
+      }
+    })
 
     const groupes: Record<string, typeof lignesNumber> = {
       phase_1_infrastructure: [],

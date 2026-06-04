@@ -535,6 +535,27 @@
   }
   .budget-table input:hover{border-color:var(--border)}
   .budget-table input:focus{outline:none;border-color:var(--mint);background:white}
+  /* Réel auto-calculé (lecture seule) */
+  .budget-table td.budget-reel-auto{font-weight:600;color:var(--soil)}
+  /* Compteur de tâches enfants sur la ligne parente */
+  .budget-enfants-compte{
+    font-family:var(--mono);font-size:10px;letter-spacing:0.04em;
+    color:#1a6b8a;background:rgba(26,107,138,0.10);
+    border-radius:8px;padding:1px 7px;margin-left:6px;white-space:nowrap;
+  }
+  .budget-enfants-compte.budget-enfants-vide{color:var(--clay);background:rgba(140,120,90,0.10)}
+  /* Sous-lignes : tâches enfants d'une ligne de budget */
+  .budget-table tr.budget-tache-ligne td{
+    background:rgba(201,169,110,0.05);
+    padding-top:7px;padding-bottom:7px;font-size:12.5px;color:var(--earth);
+  }
+  .budget-tache-nom{padding-left:24px !important}
+  .budget-tache-statut{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:0.04em;
+    color:var(--clay);border:1px solid var(--border);border-radius:6px;
+    padding:1px 6px;margin-left:8px;
+  }
+  .budget-table td.budget-tache-vide{color:var(--clay)}
   /* ===== ACTIVITÉS — vue par zone ===== */
   .seg-filter{
     display:inline-flex;background:var(--paper);
@@ -3099,13 +3120,19 @@
           <option value="termine">Terminé</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Budget parent — <span class="hint">Rattacher à une ligne de budget</span></label>
+        <select id="f-budget-ligne">
+          <option value="">— Aucun budget parent —</option>
+        </select>
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label>Budget alloué (XAF) — <span class="hint">Combien prévu ?</span></label>
           <input type="number" id="f-budget" min="0" step="500" placeholder="Ex: 50000">
         </div>
         <div class="form-group">
-          <label>Dépense (XAF) — <span class="hint">Combien dépensé ?</span></label>
+          <label>Dépense (XAF) — <span class="hint">Compte dans le réel du budget parent</span></label>
           <input type="number" id="f-depense" min="0" step="500" placeholder="Ex: 12500">
         </div>
       </div>
@@ -3393,16 +3420,11 @@
           <option value="3">Phase 3 — Exploitation</option>
         </select>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Montant prévu (FCFA)</label>
-          <input type="number" id="bf-prevu" placeholder="0" step="10000" min="0">
-        </div>
-        <div class="form-group">
-          <label>Montant réel (FCFA)</label>
-          <input type="number" id="bf-reel" placeholder="0" step="10000" min="0">
-        </div>
+      <div class="form-group">
+        <label>Montant prévu (FCFA)</label>
+        <input type="number" id="bf-prevu" placeholder="0" step="10000" min="0">
       </div>
+      <p class="hint" style="margin-top:-4px">Le montant réel est calculé automatiquement : c'est la somme des dépenses des tâches rattachées à ce budget.</p>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" data-close-modal>Annuler</button>
@@ -4221,6 +4243,7 @@ function tacheApiVersHtml(t) {
     // null/undefined → null (champ vide).
     budget: t.montantBudget != null ? Number(t.montantBudget) : null,
     depense: t.montantDepense != null ? Number(t.montantDepense) : null,
+    budgetLigne: t.budgetLigneId || null,
     _apiId: t.id,
   };
 }
@@ -4234,6 +4257,7 @@ function tacheHtmlVersApi(t) {
     dateLimite: t.dateFin ? new Date(t.dateFin + 'T00:00:00Z').toISOString() : null,
     montantBudget: t.budget != null && t.budget !== '' ? Number(t.budget) : null,
     montantDepense: t.depense != null && t.depense !== '' ? Number(t.depense) : null,
+    budgetLigneId: t.budgetLigne || null,
   };
 }
 function budgetApiVersHtml(b) {
@@ -4252,7 +4276,9 @@ function budgetHtmlVersApi(b) {
     categorie: b.categorie || '',
     description: b.categorie || '',
     montantPrevu: Number(b.prevu) || 0,
-    montantReel: Number(b.reel) || 0,
+    // Réel auto-calculé côté serveur (somme des dépenses des tâches enfants) :
+    // on n'envoie plus de valeur manuelle.
+    montantReel: 0,
   };
 }
 
@@ -4395,6 +4421,9 @@ async function apiSauvegarderTaches() {
       if (numOuNull(t.depense) !== numOuNull(ancien.depense)) {
         champsChanges.montantDepense = numOuNull(t.depense);
       }
+      if ((t.budgetLigne||null) !== (ancien.budgetLigne||null)) {
+        champsChanges.budgetLigneId = t.budgetLigne || null;
+      }
       if (t.statut !== ancien.statut) {
         // Route dédiée pour le statut (passe par le mouvement)
         promesses.push(apiFetch('PATCH', '/taches/'+ancien._apiId+'/statut', { nouveauStatut: t.statut })
@@ -4436,7 +4465,8 @@ async function apiSauvegarderBudget() {
       const champsChanges = {};
       if (b.categorie !== ancien.categorie) { champsChanges.categorie = b.categorie; champsChanges.description = b.categorie; }
       if (Number(b.prevu) !== Number(ancien.prevu)) champsChanges.montantPrevu = Number(b.prevu) || 0;
-      if (Number(b.reel) !== Number(ancien.reel)) champsChanges.montantReel = Number(b.reel) || 0;
+      // montantReel n'est plus synchronisé : il est calculé côté serveur
+      // (somme des dépenses des tâches enfants).
       if (b.phase !== ancien.phase) champsChanges.phase = PHASE_HTML_VERS_API[b.phase] || 'phase_1_infrastructure';
       if (Object.keys(champsChanges).length > 0) {
         promesses.push(apiFetch('PATCH', '/budget/'+ancien._apiId, champsChanges)
@@ -5424,6 +5454,28 @@ function populateCategorieSelect(filiere, currentValue) {
   if (currentValue) sel.value = currentValue;
 }
 
+// Clé stable d'une ligne de budget : l'id API si présent, sinon l'id local.
+// C'est cette valeur qui est stockée dans tache.budgetLigne (= budgetLigneId côté API).
+function cleLigneBudget(l) { return l._apiId || l.id; }
+
+const PHASE_LABELS_BUDGET = { '1': 'Phase 1 — Infrastructure', '2': 'Phase 2 — Lancement', '3': 'Phase 3 — Exploitation' };
+
+// Remplit le select « Budget parent » du formulaire de tâche, groupé par phase.
+function populateBudgetLigneSelect(currentValue) {
+  const sel = document.getElementById('f-budget-ligne');
+  if (!sel) return;
+  let html = '<option value="">— Aucun budget parent —</option>';
+  ['1','2','3'].forEach(ph => {
+    const lignes = state.budget.filter(b => b.phase === ph);
+    if (lignes.length === 0) return;
+    html += `<optgroup label="${PHASE_LABELS_BUDGET[ph]}">`;
+    html += lignes.map(l => `<option value="${cleLigneBudget(l)}">${escapeHtml(l.categorie)}</option>`).join('');
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+  sel.value = currentValue || '';
+}
+
 function openTaskModal(id, defaultStatut) {
   if (bloquerSiConsultatif()) return;
   state.editingTaskId = id;
@@ -5440,6 +5492,7 @@ function openTaskModal(id, defaultStatut) {
   document.getElementById('f-statut').value = t ? t.statut : (defaultStatut || 'a_faire');
   document.getElementById('f-budget').value = t && t.budget != null ? t.budget : '';
   document.getElementById('f-depense').value = t && t.depense != null ? t.depense : '';
+  populateBudgetLigneSelect(t ? (t.budgetLigne || '') : '');
   // Remplir le select catégorie filtré par la filière, et sélectionner la valeur courante
   populateCategorieSelect(filiere, t ? (t.categorie || '') : '');
   document.getElementById('modal-task').classList.add('show');
@@ -5469,6 +5522,7 @@ async function saveTaskFromModal() {
     statut:    document.getElementById('f-statut').value,
     budget:    lireMontant('f-budget'),
     depense:   lireMontant('f-depense'),
+    budgetLigne: document.getElementById('f-budget-ligne').value || null,
   };
   if (state.editingTaskId) {
     Object.assign(state.taches.find(t => t.id === state.editingTaskId), data);
@@ -5487,6 +5541,8 @@ function refreshAfterTaskChange() {
   renderKanban();
   if (typeof renderActivites === 'function') renderActivites();
   if (typeof renderDashboard === 'function') renderDashboard();
+  // Le réel des budgets dépend des dépenses des tâches enfants.
+  if (typeof renderBudget === 'function') renderBudget();
 }
 
 async function duplicateTache(id) {
@@ -5519,6 +5575,7 @@ async function deleteTache(id) {
 
 /* ============ DASHBOARD ============ */
 function renderDashboard() {
+  recalculerReelsBudget();
   const total = state.taches.length;
   const done = state.taches.filter(t => t.statut === 'termine').length;
   const today = new Date(new Date().toDateString());
@@ -5613,9 +5670,28 @@ function setupBudgetTabs() {
   });
 }
 
+// Tâches enfants d'une ligne de budget (rattachées via tache.budgetLigne).
+function tachesDeLigne(l) {
+  const cle = cleLigneBudget(l);
+  return state.taches.filter(t => (t.budgetLigne || null) === cle);
+}
+// Budget réel d'une ligne = somme des dépenses de ses tâches enfants.
+function reelDeLigne(l) {
+  return tachesDeLigne(l).reduce((s, t) => s + (Number(t.depense) || 0), 0);
+}
+// Met à jour le champ `reel` de chaque ligne de budget (= somme des dépenses
+// des tâches enfants), pour que tous les consommateurs (récap, dashboard,
+// graphiques) restent cohérents avec ce calcul automatique.
+function recalculerReelsBudget() {
+  if (!Array.isArray(state.budget)) return;
+  state.budget.forEach(b => { b.reel = reelDeLigne(b); });
+}
+const STATUT_LABELS_BUDGET = { a_faire: 'À faire', en_cours: 'En cours', termine: 'Terminé' };
+
 function renderBudget() {
   // Render aussi les ventes (même page Budget & Ventes)
   renderVentes();
+  recalculerReelsBudget();
   const lignes = state.budget.filter(b => b.phase === state.phaseActive);
   const tbody = document.getElementById('budget-tbody');
   let totPrev = 0, totReel = 0;
@@ -5623,15 +5699,29 @@ function renderBudget() {
   tbody.innerHTML = lignes.length === 0
     ? `<tr><td colspan="5" style="text-align:center;color:var(--clay);font-style:italic;padding:24px">Aucune ligne pour cette phase. Cliquez sur « ＋ Nouvelle ligne » pour en créer une.</td></tr>`
     : lignes.map(l => {
+        const reel = reelDeLigne(l);
+        const enfants = tachesDeLigne(l);
         totPrev += +l.prevu || 0;
-        totReel += +l.reel || 0;
-        const ecart = (+l.prevu||0) - (+l.reel||0);
+        totReel += reel;
+        const ecart = (+l.prevu||0) - reel;
         const ecartCls = ecart > 0 ? 'ecart-pos' : (ecart < 0 ? 'ecart-neg' : 'ecart-zero');
         const ecartLbl = ecart > 0 ? `+${fmtFCFA(ecart)}` : (ecart < 0 ? fmtFCFA(ecart) : '—');
-        return `<tr>
-          <td>${escapeHtml(l.categorie)}</td>
+        // Sous-lignes : une par tâche enfant, avec sa dépense (qui alimente le réel).
+        const enfantsHtml = enfants.map(t => `
+          <tr class="budget-tache-ligne">
+            <td class="budget-tache-nom">↳ ${escapeHtml(t.titre || '(sans titre)')}<span class="budget-tache-statut">${STATUT_LABELS_BUDGET[t.statut] || t.statut || ''}</span></td>
+            <td class="num budget-tache-vide">—</td>
+            <td class="num">${fmtFCFA(Number(t.depense) || 0)}</td>
+            <td class="num budget-tache-vide">—</td>
+            <td></td>
+          </tr>`).join('');
+        const compteEnfants = enfants.length
+          ? `<span class="budget-enfants-compte">${enfants.length} tâche${enfants.length > 1 ? 's' : ''}</span>`
+          : `<span class="budget-enfants-compte budget-enfants-vide">aucune tâche</span>`;
+        return `<tr class="budget-ligne-parent">
+          <td>${escapeHtml(l.categorie)} ${compteEnfants}</td>
           <td class="num"><input type="number" data-field="prevu" data-id="${l.id}" value="${l.prevu||0}" step="10000"></td>
-          <td class="num"><input type="number" data-field="reel" data-id="${l.id}" value="${l.reel||0}" step="10000"></td>
+          <td class="num budget-reel-auto" title="Somme des dépenses des tâches rattachées">${fmtFCFA(reel)}</td>
           <td class="num ${ecartCls}">${ecartLbl}</td>
           <td class="actions-col">
             <div class="row-actions">
@@ -5640,7 +5730,7 @@ function renderBudget() {
               <button class="row-act act-del"  data-bdel="${l.id}"  title="Supprimer">✕</button>
             </div>
           </td>
-        </tr>`;
+        </tr>${enfantsHtml}`;
       }).join('');
 
   // Ligne de total
@@ -5725,7 +5815,6 @@ function openBudgetModal(id) {
   document.getElementById('bf-categorie').value = l ? l.categorie : '';
   document.getElementById('bf-phase').value = l ? l.phase : state.phaseActive;
   document.getElementById('bf-prevu').value = l ? (l.prevu || 0) : '';
-  document.getElementById('bf-reel').value  = l ? (l.reel || 0)  : '';
   document.getElementById('modal-budget').classList.add('show');
   setTimeout(() => document.getElementById('bf-categorie').focus(), 100);
 }
@@ -5738,7 +5827,7 @@ async function saveBudgetFromModal() {
     categorie,
     phase: document.getElementById('bf-phase').value,
     prevu: parseFloat(document.getElementById('bf-prevu').value) || 0,
-    reel:  parseFloat(document.getElementById('bf-reel').value) || 0
+    // reel n'est plus saisi : il est calculé depuis les dépenses des tâches enfants.
   };
   if (editingBudgetId) {
     Object.assign(state.budget.find(b => b.id === editingBudgetId), data);
@@ -7714,6 +7803,7 @@ function formatFCFA(n) {
 
 function renderDashboardCharts() {
   if (typeof Chart === 'undefined') return;
+  recalculerReelsBudget();
   // Charge les mouvements détaillés du cheptel pour les graphiques par espèce
   chargerTousMouvementsCheptel().then(mvts => renderCheptelParEspece(mvts));
 

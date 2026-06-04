@@ -209,12 +209,18 @@ model Tache {
   zoneId        String?
   zone          Zone?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
 
+  // Ligne de budget parente : la tâche est un « enfant » d'une ligne de budget.
+  // Le montant réel d'une ligne = somme des montantDepense de ses tâches.
+  budgetLigneId String?
+  budgetLigne   BudgetLigne? @relation(fields: [budgetLigneId], references: [id], onDelete: SetNull)
+
   mouvements    Mouvement[]
   sousTaches    SousTache[]
 
   @@index([statut])
   @@index([filiere])
   @@index([responsableId])
+  @@index([budgetLigneId])
 }
 
 model SousTache {
@@ -413,6 +419,9 @@ model BudgetLigne {
   devise        String   @default("XAF") // Franc CFA d'Afrique centrale
   creeLe        DateTime @default(now())
   modifieLe     DateTime @updatedAt
+
+  // Tâches enfants : leur somme de montantDepense constitue le budget réel.
+  taches        Tache[]
 
   @@index([phase])
 }
