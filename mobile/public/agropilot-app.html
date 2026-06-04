@@ -3118,6 +3118,154 @@
   </div>
 </div>
 
+<!-- ===== MODAL PARCELLE (Agriculture) — calquée sur le formulaire de tâche ===== -->
+<div class="modal-backdrop" id="modal-parcelle">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="parcelle-modal-title">Nouvelle parcelle</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom — <span class="hint">Quoi ?</span></label>
+        <input type="text" id="parc-nom" placeholder="Ex: Maïs Champ Nord" maxlength="120">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type de culture</label>
+          <select id="parc-type"></select>
+        </div>
+        <div class="form-group">
+          <label>Surface (ha)</label>
+          <input type="number" id="parc-surface" min="0" step="0.1" placeholder="Ex: 2">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Statut</label>
+          <select id="parc-statut"></select>
+        </div>
+        <div class="form-group">
+          <label>Date de semis — <span class="hint">optionnel</span></label>
+          <input type="date" id="parc-date-semis">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rendement prévu (kg) — <span class="hint">optionnel</span></label>
+          <input type="number" id="parc-rendement" min="0" step="10" placeholder="Ex: 4000">
+        </div>
+        <div class="form-group">
+          <label>Récolte prévue — <span class="hint">optionnel</span></label>
+          <input type="date" id="parc-date-recolte">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="parc-notes" placeholder="Observations, intrants, contexte..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="parc-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ÉVÉNEMENT CULTURE (Agriculture) — calquée sur le formulaire de tâche ===== -->
+<div class="modal-backdrop" id="modal-evt-culture">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h2 id="evt-modal-title">Nouvel événement</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type d'événement</label>
+          <select id="evt-type"></select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="evt-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="evt-desc" placeholder="Détails de l'intervention..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group" id="evt-grp-qte">
+          <label>Quantité récoltée (kg) — <span class="hint">récolte</span></label>
+          <input type="number" id="evt-qte" min="0" step="1" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Coût (FCFA) — <span class="hint">optionnel</span></label>
+          <input type="number" id="evt-cout" min="0" step="500" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="evt-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL LOT (Élevage) — calquée sur le formulaire de tâche ===== -->
+<div class="modal-backdrop" id="modal-lot">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="lot-modal-title">Nouveau lot</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nom du lot — <span class="hint">Quoi ?</span></label>
+        <input type="text" id="lot-nom" placeholder="Ex: Cycle 2 — poulets de chair" maxlength="120">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Espèce</label>
+          <select id="lot-espece"></select>
+        </div>
+        <div class="form-group">
+          <label>Sexe — <span class="hint">optionnel</span></label>
+          <select id="lot-sexe">
+            <option value="">— Non précisé —</option>
+            <option value="male">Mâle</option>
+            <option value="femelle">Femelle</option>
+            <option value="mixte">Mixte</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Catégorie d'âge</label>
+          <select id="lot-age">
+            <option value="jeune">Jeune</option>
+            <option value="croissance">Croissance</option>
+            <option value="adulte" selected>Adulte</option>
+            <option value="reforme">Réforme</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date de naissance — <span class="hint">optionnel</span></label>
+          <input type="date" id="lot-naissance">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="lot-notes" placeholder="Race, provenance, observations..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="lot-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL ZONE ===== -->
 <div class="modal-backdrop" id="modal-zone">
   <div class="modal modal-zone">
@@ -8515,20 +8663,8 @@ function renderCultures() {
   });
 }
 
-async function editParcelle(id) {
-  const p = state.parcelles.find(x => x.id === id);
-  if (!p) return;
-  const nom = prompt('Nom de la parcelle', p.nom);
-  if (nom === null) return;
-  const surfaceStr = prompt('Surface (ha)', String(p.surfaceHa || 1));
-  if (surfaceStr === null) return;
-  const surface = parseFloat(surfaceStr);
-  if (isNaN(surface) || surface <= 0) { toast('Surface invalide', 'error'); return; }
-  try {
-    await apiFetch('PATCH', '/parcelles/' + id, { nom: nom.trim(), surfaceHa: surface });
-    toast('Parcelle modifiée', 'success');
-    await rechargerParcelles();
-  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+function editParcelle(id) {
+  ouvrirModalParcelle(id);
 }
 
 async function duplicateParcelle(id) {
@@ -8562,35 +8698,136 @@ function escapeHtml(s) {
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-/* ===== Modals Cultures ===== */
+/* ===== Modals Cultures (parcelles + événements) — calquées sur le formulaire de tâche ===== */
+state.parcEditId = null;       // id de la parcelle en cours d'édition (null = création)
+state.evtParcelleId = null;    // parcelle ciblée par l'événement en cours
+
+// Convertit une date ISO en valeur d'<input type="date"> (YYYY-MM-DD) et inversement.
+function isoVersInputDate(iso) { return iso ? String(iso).slice(0, 10) : ''; }
+function inputDateVersIso(v) { return v ? new Date(v + 'T00:00:00Z').toISOString() : null; }
+
 function setupCultures() {
   const btn = document.getElementById('btn-new-parcelle');
-  if (btn) btn.addEventListener('click', openNouvelleParcelleModal);
+  if (btn) btn.addEventListener('click', () => ouvrirModalParcelle(null));
+  const save = document.getElementById('parc-save');
+  if (save) save.addEventListener('click', sauverParcelle);
+  const evtSave = document.getElementById('evt-save');
+  if (evtSave) evtSave.addEventListener('click', sauverEvenementCulture);
+  // Afficher la quantité récoltée uniquement pour le type « récolte ».
+  const evtType = document.getElementById('evt-type');
+  if (evtType) evtType.addEventListener('change', () => adapterChampEvenement(evtType.value));
 }
 
-function openNouvelleParcelleModal() {
+function ouvrirModalParcelle(id) {
   if (bloquerSiConsultatif()) return;
-  const nom = prompt('Nom de la parcelle (ex: "Maïs Champ Nord")');
-  if (!nom || nom.trim().length < 2) return;
-  const type = prompt('Type de culture : mais, manioc, arachide, legumes, brachiaria, bananier, jachere', 'mais');
-  if (!type || !TYPES_CULTURE.find(t => t.cle === type)) {
-    toast('Type de culture invalide', 'error');
-    return;
-  }
-  const surfaceStr = prompt('Surface en hectares (ex: 2)', '1');
-  const surface = parseFloat(surfaceStr);
-  if (isNaN(surface) || surface <= 0) {
-    toast('Surface invalide', 'error');
-    return;
-  }
-  apiCreerParcelle({ nom: nom.trim(), typeCulture: type, surfaceHa: surface })
-    .then(() => { rechargerParcelles(); toast('Parcelle créée', 'success'); })
-    .catch(e => toast('Erreur : ' + e.message, 'error'));
+  state.parcEditId = id;
+  const p = id ? state.parcelles.find(x => x.id === id) : null;
+  document.getElementById('parcelle-modal-title').textContent = p ? 'Modifier la parcelle' : 'Nouvelle parcelle';
+  // Selects
+  document.getElementById('parc-type').innerHTML = TYPES_CULTURE.map(t =>
+    `<option value="${t.cle}">${t.icone} ${t.label}</option>`).join('');
+  document.getElementById('parc-statut').innerHTML = STATUTS_PARCELLE.map(s =>
+    `<option value="${s.cle}">${s.label}</option>`).join('');
+  // Valeurs
+  document.getElementById('parc-nom').value = p?.nom || '';
+  document.getElementById('parc-type').value = p?.typeCulture || 'mais';
+  document.getElementById('parc-surface').value = p?.surfaceHa ?? '';
+  document.getElementById('parc-statut').value = p?.statut || 'preparation';
+  document.getElementById('parc-date-semis').value = isoVersInputDate(p?.dateSemis);
+  document.getElementById('parc-date-recolte').value = isoVersInputDate(p?.dateRecoltePrev);
+  document.getElementById('parc-rendement').value = p?.rendementPrevuKg ?? '';
+  document.getElementById('parc-notes').value = p?.notes || '';
+  document.getElementById('modal-parcelle').classList.add('show');
 }
 
-async function apiCreerParcelle(dto) {
-  if (!API_DISPONIBLE) throw new Error('API indisponible');
-  return apiFetch('POST', '/parcelles', dto);
+async function sauverParcelle() {
+  if (bloquerSiConsultatif()) return;
+  const nom = document.getElementById('parc-nom').value.trim();
+  if (nom.length < 2) { toast('Nom de parcelle requis (2 caractères min)', 'error'); return; }
+  const surface = parseFloat(document.getElementById('parc-surface').value);
+  if (isNaN(surface) || surface <= 0) { toast('Surface invalide', 'error'); return; }
+  const rendementStr = document.getElementById('parc-rendement').value;
+  const rendement = rendementStr === '' ? null : parseFloat(rendementStr);
+  const dto = {
+    nom,
+    typeCulture: document.getElementById('parc-type').value,
+    surfaceHa: surface,
+    statut: document.getElementById('parc-statut').value,
+    dateSemis: inputDateVersIso(document.getElementById('parc-date-semis').value),
+    dateRecoltePrev: inputDateVersIso(document.getElementById('parc-date-recolte').value),
+    rendementPrevuKg: (rendement != null && !isNaN(rendement)) ? rendement : null,
+    notes: document.getElementById('parc-notes').value.trim() || null,
+  };
+  try {
+    if (state.parcEditId) {
+      await apiFetch('PATCH', '/parcelles/' + state.parcEditId, dto);
+      toast('Parcelle modifiée', 'success');
+    } else {
+      await apiFetch('POST', '/parcelles', dto);
+      toast('Parcelle créée', 'success');
+    }
+    document.getElementById('modal-parcelle').classList.remove('show');
+    state.parcEditId = null;
+    await rechargerParcelles();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+// Types d'événement culture (clé enum backend → libellé lisible).
+const TYPES_EVENEMENT_CULTURE = [
+  { cle:'preparation_sol', label:'Préparation du sol', icone:'🚜' },
+  { cle:'semis',           label:'Semis',              icone:'🌱' },
+  { cle:'fertilisation',   label:'Fertilisation',      icone:'💩' },
+  { cle:'irrigation',      label:'Irrigation',         icone:'💧' },
+  { cle:'traitement',      label:'Traitement',         icone:'🧪' },
+  { cle:'desherbage',      label:'Désherbage',         icone:'🌾' },
+  { cle:'recolte',         label:'Récolte',            icone:'🧺' },
+  { cle:'observation',     label:'Observation',        icone:'👁️' },
+];
+
+function adapterChampEvenement(type) {
+  const grp = document.getElementById('evt-grp-qte');
+  if (grp) grp.style.display = (type === 'recolte') ? '' : 'none';
+}
+
+function openEvenementModal(parcelleId) {
+  if (bloquerSiConsultatif()) return;
+  const p = state.parcelles.find(x => x.id === parcelleId);
+  if (!p) return;
+  state.evtParcelleId = parcelleId;
+  document.getElementById('evt-modal-title').textContent = `Événement — ${p.nom}`;
+  document.getElementById('evt-type').innerHTML = TYPES_EVENEMENT_CULTURE.map(t =>
+    `<option value="${t.cle}">${t.icone} ${t.label}</option>`).join('');
+  document.getElementById('evt-type').value = 'observation';
+  document.getElementById('evt-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('evt-desc').value = '';
+  document.getElementById('evt-qte').value = '';
+  document.getElementById('evt-cout').value = '';
+  adapterChampEvenement('observation');
+  document.getElementById('modal-evt-culture').classList.add('show');
+}
+
+async function sauverEvenementCulture() {
+  if (bloquerSiConsultatif()) return;
+  if (!state.evtParcelleId) return;
+  const type = document.getElementById('evt-type').value;
+  const qStr = document.getElementById('evt-qte').value;
+  const cStr = document.getElementById('evt-cout').value;
+  const quantiteKg = (type === 'recolte' && qStr !== '') ? parseFloat(qStr) : null;
+  const coutTotal = cStr !== '' ? parseFloat(cStr) : null;
+  const dto = {
+    type,
+    dateEvenement: inputDateVersIso(document.getElementById('evt-date').value) || undefined,
+    description: document.getElementById('evt-desc').value.trim() || null,
+    quantiteKg: (quantiteKg != null && !isNaN(quantiteKg)) ? quantiteKg : null,
+    coutTotal: (coutTotal != null && !isNaN(coutTotal)) ? coutTotal : null,
+  };
+  try {
+    await apiFetch('POST', '/parcelles/' + state.evtParcelleId + '/evenements', dto);
+    toast('Événement enregistré', 'success');
+    document.getElementById('modal-evt-culture').classList.remove('show');
+    state.evtParcelleId = null;
+    await rechargerParcelles();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
 }
 
 /* ============ CHEPTEL — Lots animaux ============ */
@@ -8729,17 +8966,8 @@ function renderCheptel() {
   });
 }
 
-async function editLot(id) {
-  const l = state.lots.find(x => x.id === id);
-  if (!l) return;
-  const nom = prompt('Nom du lot', l.nom);
-  if (nom === null) return;
-  const notes = prompt('Notes (optionnel)', l.notes || '');
-  try {
-    await apiFetch('PATCH', '/lots/' + id, { nom: nom.trim(), notes: notes ? notes.trim() : null });
-    toast('Lot modifié', 'success');
-    await rechargerLots();
-  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+function editLot(id) {
+  ouvrirModalLot(id);
 }
 
 async function duplicateLot(id) {
@@ -8771,7 +8999,10 @@ async function deleteLot(id) {
 
 function setupCheptel() {
   const btn = document.getElementById('btn-new-lot');
-  if (btn) btn.addEventListener('click', openNouveauLotModal);
+  if (btn) btn.addEventListener('click', () => ouvrirModalLot(null));
+  // Modal lot (création / édition)
+  const lotSave = document.getElementById('lot-save');
+  if (lotSave) lotSave.addEventListener('click', sauverLot);
   // Modal mouvement
   const saveBtn = document.getElementById('mvt-save');
   if (saveBtn) saveBtn.addEventListener('click', sauverMouvement);
@@ -8787,20 +9018,50 @@ function setupCheptel() {
   });
 }
 
-function openNouveauLotModal() {
+state.lotEditId = null; // id du lot en cours d'édition (null = création)
+
+function ouvrirModalLot(id) {
   if (bloquerSiConsultatif()) return;
-  const nom = prompt('Nom du lot (ex: "Cycle 2 — poulets de chair")');
-  if (!nom || nom.trim().length < 2) return;
-  const espece = prompt('Espèce : poulet, porc, caprin, ovin, tilapia, clarias', 'caprin');
-  if (!espece || !ESPECES.find(e => e.cle === espece)) {
-    toast('Espèce invalide', 'error');
-    return;
-  }
-  const sexeRaw = prompt('Sexe (optionnel) : male, femelle, mixte ou vide', 'femelle');
-  const sexe = ['male','femelle','mixte'].includes(sexeRaw) ? sexeRaw : null;
-  apiFetch('POST', '/lots', { nom: nom.trim(), espece, sexe })
-    .then(() => { rechargerLots(); toast('Lot créé', 'success'); })
-    .catch(e => toast('Erreur : ' + e.message, 'error'));
+  state.lotEditId = id;
+  const l = id ? state.lots.find(x => x.id === id) : null;
+  document.getElementById('lot-modal-title').textContent = l ? 'Modifier le lot' : 'Nouveau lot';
+  document.getElementById('lot-espece').innerHTML = ESPECES.map(e =>
+    `<option value="${e.cle}">${e.icone} ${e.label}</option>`).join('');
+  document.getElementById('lot-nom').value = l?.nom || '';
+  document.getElementById('lot-espece').value = l?.espece || 'caprin';
+  document.getElementById('lot-sexe').value = l?.sexe || '';
+  document.getElementById('lot-age').value = l?.categorieAge || 'adulte';
+  document.getElementById('lot-naissance').value = isoVersInputDate(l?.dateNaissance);
+  document.getElementById('lot-notes').value = l?.notes || '';
+  document.getElementById('modal-lot').classList.add('show');
+}
+
+async function sauverLot() {
+  if (bloquerSiConsultatif()) return;
+  const nom = document.getElementById('lot-nom').value.trim();
+  if (nom.length < 2) { toast('Nom de lot requis (2 caractères min)', 'error'); return; }
+  const espece = document.getElementById('lot-espece').value;
+  if (!ESPECES.find(e => e.cle === espece)) { toast('Espèce invalide', 'error'); return; }
+  const dto = {
+    nom,
+    espece,
+    sexe: document.getElementById('lot-sexe').value || null,
+    categorieAge: document.getElementById('lot-age').value,
+    dateNaissance: inputDateVersIso(document.getElementById('lot-naissance').value),
+    notes: document.getElementById('lot-notes').value.trim() || null,
+  };
+  try {
+    if (state.lotEditId) {
+      await apiFetch('PATCH', '/lots/' + state.lotEditId, dto);
+      toast('Lot modifié', 'success');
+    } else {
+      await apiFetch('POST', '/lots', dto);
+      toast('Lot créé', 'success');
+    }
+    document.getElementById('modal-lot').classList.remove('show');
+    state.lotEditId = null;
+    await rechargerLots();
+  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
 }
 
 /* ===== Modal mouvement cheptel — ouverture, configuration dynamique, save ===== */
@@ -8933,29 +9194,6 @@ async function sauverMouvement() {
     document.getElementById('modal-mvt-cheptel').classList.remove('show');
     _mvtLotCourant = null;
     await rechargerLots();
-  } catch (e) {
-    toast('Erreur : ' + e.message, 'error');
-  }
-}
-
-async function openEvenementModal(parcelleId) {
-  if (bloquerSiConsultatif()) return;
-  const type = prompt('Type d\'événement : preparation_sol, semis, fertilisation, irrigation, traitement, desherbage, recolte, observation', 'observation');
-  if (!type) return;
-  const description = prompt('Description (optionnel)') || null;
-  let quantiteKg = null, coutTotal = null;
-  if (type === 'recolte') {
-    const qStr = prompt('Quantité récoltée (kg)', '0');
-    quantiteKg = parseFloat(qStr); if (isNaN(quantiteKg)) quantiteKg = null;
-  }
-  const cStr = prompt('Coût (FCFA, optionnel)', '');
-  if (cStr) { coutTotal = parseFloat(cStr); if (isNaN(coutTotal)) coutTotal = null; }
-  try {
-    await apiFetch('POST', '/parcelles/' + parcelleId + '/evenements', {
-      type, description, quantiteKg, coutTotal,
-    });
-    toast('Événement enregistré', 'success');
-    await rechargerParcelles();
   } catch (e) {
     toast('Erreur : ' + e.message, 'error');
   }
