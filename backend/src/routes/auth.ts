@@ -178,6 +178,39 @@ routeurAuth.patch(
   },
 )
 
+// ─────────── Changer son propre mot de passe (self-service) ───────────
+// L'utilisateur connecté fournit son ancien mot de passe + le nouveau.
+const schemaChangerMonMotDePasse = z.object({
+  ancienMotDePasse: z.string().min(1),
+  nouveauMotDePasse: z.string().min(8).max(100),
+})
+
+routeurAuth.patch('/mon-mot-de-passe', verifierAuth, async (req: Request, res: Response) => {
+  const parsed = schemaChangerMonMotDePasse.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Nouveau mot de passe invalide (8 caractères minimum)' })
+    return
+  }
+  try {
+    const moi = await prisma.utilisateur.findUnique({ where: { id: req.utilisateur!.utilisateurId } })
+    if (!moi) {
+      res.status(404).json({ succes: false, message: 'Compte introuvable' })
+      return
+    }
+    const ancienOk = await bcrypt.compare(parsed.data.ancienMotDePasse, moi.motDePasseHash)
+    if (!ancienOk) {
+      res.status(401).json({ succes: false, message: 'Ancien mot de passe incorrect' })
+      return
+    }
+    const motDePasseHash = await bcrypt.hash(parsed.data.nouveauMotDePasse, 10)
+    await prisma.utilisateur.update({ where: { id: moi.id }, data: { motDePasseHash } })
+    res.json({ succes: true, message: 'Mot de passe changé' })
+  } catch (erreur) {
+    console.error('Erreur changement mon mot de passe:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
 routeurAuth.get('/moi', verifierAuth, async (req: Request, res: Response) => {
   try {
     const u = await prisma.utilisateur.findUnique({

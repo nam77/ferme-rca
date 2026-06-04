@@ -1367,6 +1367,7 @@
   body.mode-consultatif #btn-new-parcelle,
   body.mode-consultatif #btn-new-cra,
   body.mode-consultatif #btn-deploiement-go,
+  body.mode-consultatif #user-changemdp,
   body.mode-consultatif .user-logout-text{display:none !important}
   body.mode-consultatif .task-card{cursor:default !important}
   body.mode-consultatif .task-card[draggable="true"]{cursor:default !important}
@@ -2399,6 +2400,7 @@
       <span class="user-name" id="user-name">—</span>
       <span class="user-role" id="user-role">—</span>
     </span>
+    <button class="user-logout" id="user-changemdp" title="Changer mon mot de passe">🔑</button>
     <button class="user-logout" id="user-logout" title="Se déconnecter">⏻</button>
   </div>
 </header>
@@ -3123,6 +3125,34 @@
     <div class="modal-foot">
       <button class="btn btn-ghost" data-close-modal>Annuler</button>
       <button class="btn btn-primary" id="f-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CHANGER MON MOT DE PASSE (self-service) ===== -->
+<div class="modal-backdrop" id="modal-changer-mdp">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <h2>Changer mon mot de passe</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Mot de passe actuel</label>
+        <input type="password" id="chg-ancien" autocomplete="current-password" placeholder="Mot de passe actuel">
+      </div>
+      <div class="form-group">
+        <label>Nouveau mot de passe — <span class="hint">8 caractères min</span></label>
+        <input type="password" id="chg-nouveau" autocomplete="new-password" placeholder="Nouveau mot de passe">
+      </div>
+      <div class="form-group">
+        <label>Confirmer le nouveau mot de passe</label>
+        <input type="password" id="chg-confirme" autocomplete="new-password" placeholder="Confirmer">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="chg-save">Changer</button>
     </div>
   </div>
 </div>
@@ -6672,9 +6702,41 @@ function setupLogin() {
     }
   });
 
+  // Bouton « Changer mon mot de passe » (utilisateur connecté)
+  const btnChgMdp = document.getElementById('user-changemdp');
+  if (btnChgMdp) btnChgMdp.addEventListener('click', ouvrirModalChangerMonMotDePasse);
+  const btnChgSave = document.getElementById('chg-save');
+  if (btnChgSave) btnChgSave.addEventListener('click', changerMonMotDePasse);
+
   // Bouton du bandeau "Mode consultation" → ouvre le login
   const btnBandeau = document.getElementById('btn-bandeau-connexion');
   if (btnBandeau) btnBandeau.addEventListener('click', ouvrirLoginScreen);
+}
+
+// Ouvre la modale de changement de son propre mot de passe (utilisateur connecté).
+function ouvrirModalChangerMonMotDePasse() {
+  if (!state.user) { toast('Connectez-vous d\'abord', ''); return; }
+  document.getElementById('chg-ancien').value = '';
+  document.getElementById('chg-nouveau').value = '';
+  document.getElementById('chg-confirme').value = '';
+  document.getElementById('modal-changer-mdp').classList.add('show');
+  setTimeout(() => document.getElementById('chg-ancien').focus(), 100);
+}
+
+async function changerMonMotDePasse() {
+  const ancien = document.getElementById('chg-ancien').value;
+  const nouveau = document.getElementById('chg-nouveau').value;
+  const confirme = document.getElementById('chg-confirme').value;
+  if (!ancien) { toast('Saisissez votre mot de passe actuel', 'error'); return; }
+  if (nouveau.length < 8) { toast('Nouveau mot de passe : 8 caractères minimum', 'error'); return; }
+  if (nouveau !== confirme) { toast('La confirmation ne correspond pas', 'error'); return; }
+  try {
+    await apiFetch('PATCH', '/auth/mon-mot-de-passe', { ancienMotDePasse: ancien, nouveauMotDePasse: nouveau });
+    toast('Mot de passe changé avec succès', 'success');
+    document.getElementById('modal-changer-mdp').classList.remove('show');
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
 }
 
 // Affiche le login screen pour qu'un visiteur puisse passer en mode connecté.
