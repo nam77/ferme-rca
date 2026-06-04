@@ -2,9 +2,18 @@ import { Router, type Request, type Response } from 'express'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { signerJeton } from '../lib/jeton.js'
+import {
+  signerJeton,
+  signerJetonReset,
+  lireUtilisateurIdReset,
+  verifierJetonReset,
+} from '../lib/jeton.js'
+import { envoyerEmail, emailConfigure } from '../lib/email.js'
 import { verifierAuth, verifierRole } from '../middleware/auth.js'
 import { Role, Filiere } from '../generated/prisma/enums.js'
+
+// URL publique de l'app (pour bâtir le lien de réinitialisation).
+const URL_APP = process.env.APP_URL ?? 'https://agri-pilot.com'
 
 export const routeurAuth = Router()
 
@@ -123,20 +132,85 @@ routeurAuth.post('/mot-de-passe-oublie', async (req: Request, res: Response) => 
   const { email } = parsed.data
   try {
     const utilisateur = await prisma.utilisateur.findUnique({ where: { email } })
-    if (utilisateur) {
-      console.warn(
-        `[auth] Demande de réinitialisation du mot de passe pour ${email} (id=${utilisateur.id}). ` +
-          `Aucune infrastructure email n'est disponible : un administrateur doit réinitialiser ` +
-          `manuellement via Prisma Studio (champ motDePasseHash).`,
-      )
+    // On envoie l'email seulement si le compte existe — mais la réponse reste
+    // générique pour ne pas révéler l'existence d'un compte (anti-énumération).
+    if (utilisateur && emailConfigure()) {
+      const jetonReset = signerJetonReset(utilisateur.id, utilisateur.motDePasseHash)
+      const lien = `${URL_APP}/reinitialiser?token=${encodeURIComponent(jetonReset)}`
+      try {
+        await envoyerEmail({
+          destinataire: utilisateur.email,
+          sujet: 'Réinitialisation de votre mot de passe — AgroPilot',
+          html: `
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#2d1f0e;line-height:1.6">
+              <p>Bonjour ${utilisateur.prenom},</p>
+              <p>Vous avez demandé à réinitialiser votre mot de passe AgroPilot.
+                 Cliquez sur le bouton ci-dessous (lien valable <strong>1 heure</strong>) :</p>
+              <p style="margin:24px 0">
+                <a href="${lien}" style="background:#4a8c3f;color:#fff;text-decoration:none;
+                   padding:12px 22px;border-radius:8px;font-weight:bold">Réinitialiser mon mot de passe</a>
+              </p>
+              <p style="font-size:13px;color:#5c3d1e">Si le bouton ne fonctionne pas, copiez ce lien :<br>
+                <a href="${lien}">${lien}</a></p>
+              <p style="font-size:13px;color:#8b5e3c">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+            </div>`,
+        })
+      } catch (e) {
+        console.error('[auth] échec envoi email reset:', e instanceof Error ? e.message : e)
+      }
+    } else if (utilisateur && !emailConfigure()) {
+      console.warn(`[auth] Reset demandé pour ${email} mais RESEND_API_KEY absent.`)
     }
     res.json({
       succes: true,
       message:
-        "Si un compte existe pour cette adresse, un administrateur sera notifié et pourra réinitialiser votre mot de passe.",
+        "Si un compte existe pour cette adresse, un email de réinitialisation vient d'être envoyé.",
     })
   } catch (erreur) {
     console.error('Erreur mot-de-passe-oublie:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+// ─────────── Réinitialisation via le jeton reçu par email ───────────
+const schemaReinitialiser = z.object({
+  token: z.string().min(10),
+  nouveauMotDePasse: z.string().min(8).max(100),
+})
+
+routeurAuth.post('/reinitialiser-mot-de-passe', async (req: Request, res: Response) => {
+  const parsed = schemaReinitialiser.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Données invalides (mot de passe : 8 caractères min)' })
+    return
+  }
+  try {
+    const utilisateurId = lireUtilisateurIdReset(parsed.data.token)
+    if (!utilisateurId) {
+      res.status(400).json({ succes: false, message: 'Lien invalide' })
+      return
+    }
+    const utilisateur = await prisma.utilisateur.findUnique({ where: { id: utilisateurId } })
+    if (!utilisateur) {
+      res.status(400).json({ succes: false, message: 'Lien invalide' })
+      return
+    }
+    // La clé de vérification dérive du hash actuel : un lien déjà utilisé
+    // (mot de passe changé) devient automatiquement invalide.
+    try {
+      verifierJetonReset(parsed.data.token, utilisateur.motDePasseHash)
+    } catch {
+      res.status(400).json({ succes: false, message: 'Lien expiré ou déjà utilisé' })
+      return
+    }
+    const motDePasseHash = await bcrypt.hash(parsed.data.nouveauMotDePasse, 10)
+    await prisma.utilisateur.update({
+      where: { id: utilisateur.id },
+      data: { motDePasseHash, actif: true },
+    })
+    res.json({ succes: true, message: 'Mot de passe réinitialisé. Vous pouvez vous connecter.' })
+  } catch (erreur) {
+    console.error('Erreur reinitialiser-mot-de-passe:', erreur)
     res.status(500).json({ succes: false, message: 'Erreur serveur' })
   }
 })

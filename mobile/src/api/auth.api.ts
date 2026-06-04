@@ -38,6 +38,20 @@ export const demanderReinitialisation = async (email: string): Promise<string> =
   return data.message ?? 'Demande envoyée.'
 }
 
+export const reinitialiserAvecToken = async (
+  token: string,
+  nouveauMotDePasse: string,
+): Promise<string> => {
+  const { data } = await client.post<ReponseApi<never>>('/api/auth/reinitialiser-mot-de-passe', {
+    token,
+    nouveauMotDePasse,
+  })
+  if (!data.succes) {
+    throw new Error(data.message ?? 'Échec de la réinitialisation')
+  }
+  return data.message ?? 'Mot de passe réinitialisé.'
+}
+
 export const recupererProfil = async (): Promise<Utilisateur> => {
   const { data } = await client.get<ReponseApi<Utilisateur>>('/api/auth/moi')
   if (!data.succes || !data.donnees) {

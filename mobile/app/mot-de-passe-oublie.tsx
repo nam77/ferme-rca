@@ -29,7 +29,7 @@ export default function EcranMotDePasseOublie() {
   return (
     <CadreAuth
       titre="Mot de passe oublié"
-      sousTitre="Saisissez votre adresse email. Un administrateur de la ferme sera notifié pour réinitialiser votre accès."
+      sousTitre="Saisissez votre adresse email : un lien de réinitialisation vous sera envoyé (valable 1 heure)."
     >
       {confirmation ? (
         <View style={styles.confirmation}>
