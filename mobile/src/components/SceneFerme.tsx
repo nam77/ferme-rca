@@ -15,8 +15,9 @@ import Animated, {
 } from 'react-native-reanimated'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES } from '@src/constants/theme'
 
-// Durée totale de la progression (champ préparé -> semis -> pousse -> luxuriant).
-export const DUREE_SCENE_MS = 5400
+// Durée totale de la progression (8 photos enchaînées). Ralentie pour laisser
+// le temps d'apprécier chaque image.
+export const DUREE_SCENE_MS = 12000
 
 type Props = {
   // Progression externe (0..1). Si absente, la scène crée et lance la sienne.
@@ -30,9 +31,14 @@ type Props = {
 // Vraies photos du champ de Yangana, du sol préparé jusqu'aux cultures
 // luxuriantes : l'animation enchaîne ces étapes au fil de la progression.
 const ETAPES: { src: number; debut: number; fin: number }[] = [
-  { src: require('../../assets/scene/champ-1-prepare.jpg'), debut: 0, fin: 0 },
-  { src: require('../../assets/scene/champ-2-semis.jpg'), debut: 0.22, fin: 0.5 },
-  { src: require('../../assets/scene/champ-3-leve.jpg'), debut: 0.58, fin: 0.9 },
+  { src: require('../../assets/scene/champ-1.jpg'), debut: 0, fin: 0 },
+  { src: require('../../assets/scene/champ-2.jpg'), debut: 0.10, fin: 0.18 },
+  { src: require('../../assets/scene/champ-3.jpg'), debut: 0.22, fin: 0.30 },
+  { src: require('../../assets/scene/champ-4.jpg'), debut: 0.34, fin: 0.42 },
+  { src: require('../../assets/scene/champ-5.jpg'), debut: 0.46, fin: 0.54 },
+  { src: require('../../assets/scene/champ-6.jpg'), debut: 0.58, fin: 0.66 },
+  { src: require('../../assets/scene/champ-7.jpg'), debut: 0.70, fin: 0.78 },
+  { src: require('../../assets/scene/champ-8.jpg'), debut: 0.82, fin: 0.90 },
 ]
 
 // ---------------------------------------------------------------------------
