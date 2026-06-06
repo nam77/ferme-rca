@@ -1,0 +1,33 @@
+name: Diagnostic email
+
+# Envoi test via Resend exécuté sur le serveur (config .env chargée), pour
+# voir la réponse exacte de l'API. Déclenchement manuel uniquement.
+
+on:
+  workflow_dispatch:
+    inputs:
+      destinataire:
+        description: "Adresse destinataire du test"
+        required: true
+        default: "nyona77@gmail.com"
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configuration SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Envoi test sur le serveur
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            TEST_TO='${{ github.event.inputs.destinataire }}' bash <<'REMOTE'
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_DIR }}"
+            set -a; source backend/.env; set +a
+            TEST_TO="${TEST_TO:-nyona77@gmail.com}" node scripts/diagnostic-email.mjs
+          REMOTE
