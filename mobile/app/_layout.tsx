@@ -47,7 +47,7 @@ export default function LayoutRoot() {
     )
   }
 
-  const ECRANS_AUTH = ['connexion', 'inscription', 'mot-de-passe-oublie']
+  const ECRANS_AUTH = ['connexion', 'inscription', 'mot-de-passe-oublie', 'reinitialiser']
   const surEcranAuth = ECRANS_AUTH.includes(segments[0] ?? '')
   const afficherNav = !surEcranAuth
 
@@ -62,6 +62,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="connexion" />
               <Stack.Screen name="inscription" />
               <Stack.Screen name="mot-de-passe-oublie" />
+              <Stack.Screen name="reinitialiser" />
               <Stack.Screen name="activite" />
               <Stack.Screen name="cultures" />
               <Stack.Screen name="dashboard" />
@@ -70,6 +71,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="projet" />
               <Stack.Screen name="cheptel" />
               <Stack.Screen name="cra" />
+              <Stack.Screen name="utilisateurs" />
               <Stack.Screen name="deploiement" />
             </Stack>
           </View>

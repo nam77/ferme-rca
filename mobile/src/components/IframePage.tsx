@@ -20,6 +20,7 @@ type Props = {
   vue:
     | 'kanban' | 'cultures' | 'cheptel'
     | 'dashboard' | 'budget' | 'ferme' | 'cra' | 'deploiement'
+    | 'utilisateurs'
     | 'projet'
   titreFallback: string
 }

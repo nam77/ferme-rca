@@ -109,6 +109,16 @@ const SECONDAIRES: Destination[] = [
     couleur: COULEURS_TOKEN.caprins,
   },
   {
+    cle: 'utilisateurs',
+    libelle: 'Utilisateurs',
+    route: '/utilisateurs',
+    icone: 'people-outline',
+    iconeActif: 'people',
+    prefixes: ['/utilisateurs'],
+    couleur: COULEURS_TOKEN.infrastructure,
+    rolesAutorises: ['admin'],
+  },
+  {
     cle: 'deploiement',
     libelle: 'Déploiement',
     route: '/deploiement',
