@@ -30,6 +30,7 @@ const schemaInscription = z.object({
     Filiere.caprins,
     Filiere.cultures,
     Filiere.infrastructure,
+    Filiere.habitat,
   ]).optional(),
 })
 
@@ -247,6 +248,103 @@ routeurAuth.patch(
       res.json({ succes: true, message: `Mot de passe réinitialisé pour ${cible.email}` })
     } catch (erreur) {
       console.error('Erreur reset mot de passe admin:', erreur)
+      res.status(500).json({ succes: false, message: 'Erreur serveur' })
+    }
+  },
+)
+
+// ─────────── Liste de tous les utilisateurs (admin) ───────────
+routeurAuth.get(
+  '/utilisateurs',
+  verifierAuth,
+  verifierRole(Role.admin),
+  async (_req: Request, res: Response) => {
+    try {
+      const utilisateurs = await prisma.utilisateur.findMany({
+        orderBy: [{ actif: 'desc' }, { role: 'asc' }, { nom: 'asc' }],
+        select: {
+          id: true,
+          prenom: true,
+          nom: true,
+          email: true,
+          telephone: true,
+          role: true,
+          filiere: true,
+          actif: true,
+          creeLe: true,
+        },
+      })
+      res.json({ succes: true, donnees: utilisateurs })
+    } catch (erreur) {
+      console.error('Erreur GET /auth/utilisateurs:', erreur)
+      res.status(500).json({ succes: false, message: 'Erreur serveur' })
+    }
+  },
+)
+
+// ─────────── Mise à jour d'un utilisateur (admin) ───────────
+const enumZodRole = z.enum([
+  Role.admin, Role.gestionnaire, Role.responsable, Role.ouvrier, Role.investisseur,
+])
+const enumZodFiliere = z.enum([
+  Filiere.pisciculture, Filiere.aviculture, Filiere.porcins, Filiere.caprins,
+  Filiere.cultures, Filiere.infrastructure, Filiere.habitat,
+])
+
+const schemaMajUtilisateur = z.object({
+  prenom: z.string().min(1).max(50).optional(),
+  nom: z.string().min(1).max(50).optional(),
+  telephone: z.string().max(40).optional().nullable(),
+  role: enumZodRole.optional(),
+  filiere: enumZodFiliere.optional().nullable(),
+  actif: z.boolean().optional(),
+})
+
+routeurAuth.patch(
+  '/utilisateurs/:id',
+  verifierAuth,
+  verifierRole(Role.admin),
+  async (req: Request, res: Response) => {
+    const parsed = schemaMajUtilisateur.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ succes: false, message: 'Données invalides' })
+      return
+    }
+    try {
+      const cible = await prisma.utilisateur.findUnique({ where: { id: req.params.id } })
+      if (!cible) {
+        res.status(404).json({ succes: false, message: 'Compte introuvable' })
+        return
+      }
+      // Garde-fou : empêche de retirer son propre rôle admin / de se désactiver
+      // soi-même (évite de se verrouiller dehors).
+      const estMoi = req.utilisateur!.utilisateurId === cible.id
+      if (estMoi && parsed.data.role !== undefined && parsed.data.role !== Role.admin) {
+        res.status(400).json({ succes: false, message: 'Vous ne pouvez pas retirer votre propre rôle admin' })
+        return
+      }
+      if (estMoi && parsed.data.actif === false) {
+        res.status(400).json({ succes: false, message: 'Vous ne pouvez pas désactiver votre propre compte' })
+        return
+      }
+      const data: Record<string, unknown> = {}
+      if (parsed.data.prenom !== undefined) data.prenom = parsed.data.prenom
+      if (parsed.data.nom !== undefined) data.nom = parsed.data.nom
+      if (parsed.data.telephone !== undefined) data.telephone = parsed.data.telephone
+      if (parsed.data.role !== undefined) data.role = parsed.data.role
+      if (parsed.data.filiere !== undefined) data.filiere = parsed.data.filiere
+      if (parsed.data.actif !== undefined) data.actif = parsed.data.actif
+      const misAJour = await prisma.utilisateur.update({
+        where: { id: req.params.id },
+        data,
+        select: {
+          id: true, prenom: true, nom: true, email: true, telephone: true,
+          role: true, filiere: true, actif: true, creeLe: true,
+        },
+      })
+      res.json({ succes: true, donnees: misAJour })
+    } catch (erreur) {
+      console.error('Erreur PATCH /auth/utilisateurs/:id:', erreur)
       res.status(500).json({ succes: false, message: 'Erreur serveur' })
     }
   },
