@@ -35,17 +35,24 @@ jobs:
 
       - name: Injecter la config email dans .env (idempotent)
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            RESEND_API_KEY='${{ secrets.RESEND_API_KEY }}' \
-            EMAIL_FROM='${{ secrets.EMAIL_FROM }}' \
-            bash <<'REMOTE'
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} bash <<'REMOTE'
             set -euo pipefail
             cd "${{ secrets.DEPLOY_DIR }}/backend"
             touch .env
+            # Valeurs définies ICI (dans le heredoc) pour préserver le quoting :
+            # EMAIL_FROM contient des espaces et des < > qui casseraient une
+            # transmission en argument SSH.
+            RESEND_API_KEY='${{ secrets.RESEND_API_KEY }}'
+            EMAIL_FROM='${{ secrets.EMAIL_FROM }}'
             upsert() {
               local k="$1" v="$2"
               [ -z "$v" ] && return 0
-              if grep -q "^$k=" .env; then sed -i "s#^$k=.*#$k=$v#" .env; else echo "$k=$v" >> .env; fi
+              # Écrit la valeur via awk (sûr avec espaces, <, >, /, &).
+              if grep -q "^$k=" .env; then
+                awk -v k="$k" -v v="$v" 'BEGIN{FS=OFS="="} $1==k{print k"="v; next} {print}' .env > .env.tmp && mv .env.tmp .env
+              else
+                printf '%s=%s\n' "$k" "$v" >> .env
+              fi
               echo "  $k mis à jour dans .env"
             }
             upsert RESEND_API_KEY "${RESEND_API_KEY:-}"
