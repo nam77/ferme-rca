@@ -1,0 +1,39 @@
+name: Diagnostic logs backend
+
+# Relance le flux "mot de passe oublié" côté serveur puis affiche les logs
+# récents du backend pour voir l'erreur d'envoi email. Manuel uniquement.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email à tester dans le flux mot de passe oublié"
+        required: true
+        default: "nyona77@gmail.com"
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configuration SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Déclencher le flux + lire les logs
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            EMAIL='${{ github.event.inputs.email }}' bash <<'REMOTE'
+            set -uo pipefail
+            echo "=== Appel /api/auth/mot-de-passe-oublie (localhost) ==="
+            curl -s -X POST http://localhost:3001/api/auth/mot-de-passe-oublie \
+              -H "Content-Type: application/json" \
+              -d "{\"email\":\"${EMAIL:-nyona77@gmail.com}\"}"
+            echo
+            sleep 3
+            echo "=== Logs backend récents (filtrés) ==="
+            pm2 logs agri-pilot-api --nostream --lines 120 2>/dev/null \
+              | grep -iE "email|reset|resend|mot-de-passe|auth|EMAIL_FROM|error" | tail -40 || echo "(aucune ligne pertinente)"
+          REMOTE
