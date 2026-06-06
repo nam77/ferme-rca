@@ -48,10 +48,13 @@ jobs:
               local k="$1" v="$2"
               [ -z "$v" ] && return 0
               # Écrit la valeur via awk (sûr avec espaces, <, >, /, &).
+              # Valeur écrite entre guillemets : sûr pour `source` (shell) ET
+              # pour dotenv (qui retire les guillemets). EMAIL_FROM contient
+              # espaces et < >.
               if grep -q "^$k=" .env; then
-                awk -v k="$k" -v v="$v" 'BEGIN{FS=OFS="="} $1==k{print k"="v; next} {print}' .env > .env.tmp && mv .env.tmp .env
+                awk -v k="$k" -v v="$v" 'BEGIN{FS="="} $1==k{print k"=\""v"\""; next} {print}' .env > .env.tmp && mv .env.tmp .env
               else
-                printf '%s=%s\n' "$k" "$v" >> .env
+                printf '%s="%s"\n' "$k" "$v" >> .env
               fi
               echo "  $k mis à jour dans .env"
             }

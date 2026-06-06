@@ -28,6 +28,5 @@ jobs:
             TEST_TO='${{ github.event.inputs.destinataire }}' bash <<'REMOTE'
             set -euo pipefail
             cd "${{ secrets.DEPLOY_DIR }}"
-            set -a; source backend/.env; set +a
-            TEST_TO="${TEST_TO:-nyona77@gmail.com}" node scripts/diagnostic-email.mjs
+            TEST_TO="${TEST_TO:-nyona77@gmail.com}" node --env-file=backend/.env scripts/diagnostic-email.mjs
           REMOTE

@@ -41,6 +41,7 @@ jobs:
             set -euo pipefail
             cd "${{ secrets.DEPLOY_DIR }}"
             # Charge RESEND_API_KEY + CLOUDFLARE_API_TOKEN depuis le .env serveur
-            set -a; source backend/.env; set +a
-            DOMAINE="${DOMAINE:-agri-pilot.com}" node scripts/configurer-domaine-email.mjs
+            # (parsing dotenv via --env-file : sûr même si une valeur contient
+            # des espaces ou des < >).
+            DOMAINE="${DOMAINE:-agri-pilot.com}" node --env-file=backend/.env scripts/configurer-domaine-email.mjs
           REMOTE
