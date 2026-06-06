@@ -61,34 +61,32 @@ for (const rec of records) {
   console.log(`  [${rec.type}] ${rec.name}  ->  ${rec.value}${rec.priority ? `  (priorité ${rec.priority})` : ''}`)
 }
 
-// ─────────── 2. Zone Cloudflare ───────────
+// ─────────── 2. Zone Cloudflare (best effort) ───────────
 console.log(`\n=== 2) Zone Cloudflare ===`)
 const zones = await (await cf(`/zones?name=${encodeURIComponent(DOMAINE)}`)).json()
 const zone = zones.result && zones.result[0]
 if (!zone) {
-  console.error(`✗ Zone Cloudflare introuvable pour ${DOMAINE} (le token a-t-il accès à cette zone ?)`)
-  console.error('  → Ajoute les enregistrements ci-dessus manuellement dans Cloudflare, puis relance avec action=verify.')
-  process.exit(1)
-}
-console.log(`✓ Zone trouvée (id=${zone.id})`)
-
-// ─────────── 3. Création des enregistrements DNS ───────────
-console.log(`\n=== 3) Création des enregistrements DNS sur Cloudflare ===`)
-// Index des enregistrements existants pour éviter les doublons
-const existants = await (await cf(`/zones/${zone.id}/dns_records?per_page=100`)).json()
-const dejaLa = (nom, type) =>
-  (existants.result || []).some((e) => e.name === nom.replace(/\.$/, '') && e.type === type)
-
-for (const rec of records) {
-  const nom = rec.name
-  const type = rec.type
-  if (dejaLa(nom, type)) { console.log(`  • ${type} ${nom} : déjà présent, ignoré`); continue }
-  const corps = { type, name: nom, content: rec.value, ttl: 1, proxied: false }
-  if (type === 'MX') corps.priority = rec.priority ?? 10
-  const res = await cf(`/zones/${zone.id}/dns_records`, 'POST', corps)
-  const d = await jsonOuErreur(res, `create ${type} ${nom}`)
-  console.log(res.ok ? `  ✓ ${type} ${nom} créé` : `  ✗ ${type} ${nom} échec`)
-  void d
+  console.warn(`⚠ Zone Cloudflare inaccessible avec ce token (scope Pages probablement).`)
+  console.warn('  → Ajoute les 3 enregistrements ci-dessus MANUELLEMENT dans Cloudflare,')
+  console.warn('    puis relance ce workflow : il passera directement à la vérification.')
+} else {
+  console.log(`✓ Zone trouvée (id=${zone.id})`)
+  // ───── 3. Création des enregistrements DNS ─────
+  console.log(`\n=== 3) Création des enregistrements DNS sur Cloudflare ===`)
+  const existants = await (await cf(`/zones/${zone.id}/dns_records?per_page=100`)).json()
+  const dejaLa = (nom, type) =>
+    (existants.result || []).some((e) => e.name === nom.replace(/\.$/, '') && e.type === type)
+  for (const rec of records) {
+    const nom = rec.name
+    const type = rec.type
+    if (dejaLa(nom, type)) { console.log(`  • ${type} ${nom} : déjà présent, ignoré`); continue }
+    const corps = { type, name: nom, content: rec.value, ttl: 1, proxied: false }
+    if (type === 'MX') corps.priority = rec.priority ?? 10
+    const res = await cf(`/zones/${zone.id}/dns_records`, 'POST', corps)
+    const d = await jsonOuErreur(res, `create ${type} ${nom}`)
+    console.log(res.ok ? `  ✓ ${type} ${nom} créé` : `  ✗ ${type} ${nom} échec`)
+    void d
+  }
 }
 
 // ─────────── 4. Déclenche la vérification Resend ───────────
