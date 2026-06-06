@@ -31,10 +31,8 @@ type Props = {
 // luxuriantes : l'animation enchaîne ces étapes au fil de la progression.
 const ETAPES: { src: number; debut: number; fin: number }[] = [
   { src: require('../../assets/scene/champ-1-prepare.jpg'), debut: 0, fin: 0 },
-  { src: require('../../assets/scene/champ-2-semis.jpg'), debut: 0.12, fin: 0.32 },
-  { src: require('../../assets/scene/champ-3-leve.jpg'), debut: 0.32, fin: 0.52 },
-  { src: require('../../assets/scene/champ-4-rangs.jpg'), debut: 0.52, fin: 0.72 },
-  { src: require('../../assets/scene/champ-5-luxuriant.jpg'), debut: 0.72, fin: 0.94 },
+  { src: require('../../assets/scene/champ-2-semis.jpg'), debut: 0.22, fin: 0.5 },
+  { src: require('../../assets/scene/champ-3-leve.jpg'), debut: 0.58, fin: 0.9 },
 ]
 
 // ---------------------------------------------------------------------------
@@ -198,10 +196,9 @@ export const SceneFerme = ({ progression: progExterne, afficherLegendes = false,
       {/* Légendes d'étape (intro uniquement) */}
       {afficherLegendes ? (
         <View style={styles.zoneLegende} pointerEvents="none">
-          <LegendeEtape progression={progression} texte="Le champ, préparé" debut={0} fin={0.22} />
-          <LegendeEtape progression={progression} texte="La pluie nourrit la terre" debut={0.2} fin={0.42} />
-          <LegendeEtape progression={progression} texte="Les semis lèvent" debut={0.4} fin={0.66} />
-          <LegendeEtape progression={progression} texte="Les cultures verdissent" debut={0.64} fin={1.01} />
+          <LegendeEtape progression={progression} texte="La terre, préparée" debut={0} fin={0.3} />
+          <LegendeEtape progression={progression} texte="Les cultures grandissent" debut={0.34} fin={0.62} />
+          <LegendeEtape progression={progression} texte="Une terre nourricière" debut={0.66} fin={1.01} />
         </View>
       ) : null}
     </View>
