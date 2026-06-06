@@ -49,7 +49,17 @@ const CoucheChamp = ({ progression, src, debut, fin }: CoucheProps) => {
   const style = useAnimatedStyle(() => ({
     opacity: debut === fin ? 1 : interpolate(progression.value, [debut, fin], [0, 1], Extrapolation.CLAMP),
   }))
-  return <Animated.Image source={src} resizeMode="cover" style={[StyleSheet.absoluteFill, style]} />
+  // width/height: '100%' est indispensable : sans dimensions explicites, une
+  // Image react-native-web garde sa taille intrinsèque (elle ne couvrait que
+  // le haut de l'écran) malgré absoluteFill. Avec 100%, elle remplit le
+  // conteneur et resizeMode="cover" recadre pour occuper tout l'écran.
+  return (
+    <Animated.Image
+      source={src}
+      resizeMode="cover"
+      style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }, style]}
+    />
+  )
 }
 
 // ---------------------------------------------------------------------------
