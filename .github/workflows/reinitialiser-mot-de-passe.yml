@@ -19,9 +19,15 @@ on:
   workflow_dispatch:
     inputs:
       email:
-        description: "Email du compte à réinitialiser"
+        description: "Email du compte à réinitialiser/créer"
         required: true
         default: "admin@ferme.rca"
+      role:
+        description: "Rôle (laisser vide pour ne pas changer)"
+        required: false
+        default: ""
+        type: choice
+        options: ["", "admin", "gestionnaire", "responsable", "ouvrier", "investisseur"]
 
 concurrency:
   group: reset-password-production
@@ -52,4 +58,4 @@ jobs:
           # il n'apparaît ni dans les arguments (ps) ni dans les logs.
           printf '%s' "${{ secrets.RESET_PASSWORD }}" | \
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ${{ secrets.DEPLOY_DIR }}/backend && RESET_EMAIL='${{ github.event.inputs.email }}' RESET_PASSWORD=\"\$(cat)\" npx tsx scripts/reinitialiser-mot-de-passe.ts"
+            "cd ${{ secrets.DEPLOY_DIR }}/backend && RESET_EMAIL='${{ github.event.inputs.email }}' RESET_ROLE='${{ github.event.inputs.role }}' RESET_PASSWORD=\"\$(cat)\" npx tsx scripts/reinitialiser-mot-de-passe.ts"
