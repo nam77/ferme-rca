@@ -43,3 +43,8 @@ deploiements/
 /PROMPT_DEPLOIEMENT_CRA.md
 # Aperçus vidéo d'animation (générés en session, non versionnés)
 /intro-preview.*
+
+# Fichiers de clés/secrets — ne jamais versionner (dépôt public)
+key_resnd
+*key_resnd*
+*.secret

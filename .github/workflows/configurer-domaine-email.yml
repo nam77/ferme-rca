@@ -1,0 +1,46 @@
+name: Configurer le domaine email
+
+# Configure le domaine d'envoi sur Resend + crée les enregistrements DNS sur
+# Cloudflare, puis déclenche la vérification.
+#
+# Exécuté SUR le serveur de prod via SSH : son backend/.env contient déjà
+# RESEND_API_KEY et CLOUDFLARE_API_TOKEN (aucune clé n'a besoin d'être un
+# secret GitHub, aucune clé n'est affichée). Les enregistrements DNS publics
+# apparaissent dans le log — c'est attendu.
+#
+# Déclenchement MANUEL uniquement.
+
+on:
+  workflow_dispatch:
+    inputs:
+      domaine:
+        description: "Domaine d'envoi"
+        required: true
+        default: "agri-pilot.com"
+
+concurrency:
+  group: configurer-domaine-email
+  cancel-in-progress: false
+
+jobs:
+  configurer:
+    name: Configurer le domaine email
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configuration SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Exécuter sur le serveur
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            DOMAINE='${{ github.event.inputs.domaine }}' bash <<'REMOTE'
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_DIR }}"
+            # Charge RESEND_API_KEY + CLOUDFLARE_API_TOKEN depuis le .env serveur
+            set -a; source backend/.env; set +a
+            DOMAINE="${DOMAINE:-agri-pilot.com}" node scripts/configurer-domaine-email.mjs
+          REMOTE
