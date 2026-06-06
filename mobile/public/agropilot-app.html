@@ -5770,13 +5770,23 @@ function setupUtilisateurs() {
 async function renderUtilisateurs() {
   const tbody = document.getElementById('utilisateurs-tbody');
   if (!tbody) return;
+  // Cette page exige une session admin authentifiée (jeton). Sans jeton, on
+  // affiche un message clair plutôt qu'une erreur 401 brute.
+  if (!API_JETON) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--clay);padding:24px;font-style:italic">
+      Connectez-vous en <strong>administrateur</strong> pour gérer les utilisateurs.</td></tr>`;
+    return;
+  }
   tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--clay);padding:20px">Chargement…</td></tr>`;
   let users = [];
   try {
     const r = await apiFetch('GET', '/auth/utilisateurs');
     users = r.donnees || [];
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:20px">Erreur : ${escapeHtml(e.message)}</td></tr>`;
+    const msg = /401|jeton/i.test(e.message)
+      ? 'Session expirée ou non administrateur. Reconnectez-vous en administrateur.'
+      : 'Erreur : ' + e.message;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:20px">${escapeHtml(msg)}</td></tr>`;
     return;
   }
   if (users.length === 0) {
