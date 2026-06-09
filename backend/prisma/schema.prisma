@@ -165,6 +165,9 @@ model Utilisateur {
   // Numéro de téléphone du salarié (au format libre, ex : "+236 75 12 34 56").
   // Optionnel pour les comptes existants qui n'en ont pas.
   telephone       String?
+  // URL de la photo de la pièce d'identité (CNI), uploadée à l'inscription
+  // et utilisée pour pré-remplir prénom/nom par OCR. Optionnel.
+  photoPieceIdentite String?
   role            Role     @default(ouvrier)
   filiere         Filiere?
   actif           Boolean  @default(true)

@@ -78,6 +78,7 @@ const schemaInscriptionSalarie = z.object({
   prenom: z.string().min(1).max(60),
   nom: z.string().min(1).max(60),
   telephone: z.string().max(40).optional().nullable(),
+  photoPieceIdentite: z.string().max(500).optional().nullable(),
   role: z.enum(Object.values(Role) as [string, ...string[]]).optional(),
   filiere: z.enum(Object.values(Filiere) as [string, ...string[]]).optional().nullable(),
 })
@@ -186,6 +187,7 @@ routeurCRA.post('/inscrire-salarie', async (req: Request, res: Response) => {
         prenom,
         nom,
         telephone: parsed.data.telephone?.trim() || null,
+        photoPieceIdentite: parsed.data.photoPieceIdentite?.trim() || null,
         email,
         motDePasseHash,
         role: (parsed.data.role as Role | undefined) ?? Role.ouvrier,
@@ -289,7 +291,7 @@ routeurCRA.get('/utilisateurs', async (_req: Request, res: Response) => {
   try {
     const users = await prisma.utilisateur.findMany({
       where: { actif: true },
-      select: { id: true, prenom: true, nom: true, telephone: true, role: true, filiere: true },
+      select: { id: true, prenom: true, nom: true, telephone: true, photoPieceIdentite: true, role: true, filiere: true },
       orderBy: [{ prenom: 'asc' }],
     })
     res.json({ succes: true, donnees: users })

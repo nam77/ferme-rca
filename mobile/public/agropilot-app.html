@@ -2136,11 +2136,32 @@
   .vm-btn:hover { background: rgba(201,169,110,0.12); }
   .vm-btn.active[data-action="affiche"] { background: #4a8c3f; color: #fff; }
   .vm-btn.active[data-action="cache"]   { background: #c0392b; color: #fff; }
+
+  /* ===== Scan pièce d'identité (OCR) ===== */
+  .cni-scan-bloc {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 12px; margin-bottom: 14px;
+    border: 1px dashed rgba(92,61,30,0.30); border-radius: 10px;
+    background: rgba(201,169,110,0.07);
+  }
+  .cni-scan-btn { align-self: flex-start; cursor: pointer; margin: 0; }
+  .cni-scan-statut {
+    font-family: 'DM Sans', sans-serif; font-size: 12.5px; color: #5c3d1e; min-height: 0;
+  }
+  .cni-scan-statut.actif { color: #1a6b8a; font-weight: 600; }
+  .cni-scan-statut.erreur { color: #c0392b; font-weight: 600; }
+  .cni-scan-statut.ok { color: #4a8c3f; font-weight: 600; }
+  .cni-scan-preview {
+    max-width: 100%; max-height: 160px; width: auto; border-radius: 8px;
+    border: 1px solid rgba(92,61,30,0.20); align-self: flex-start;
+  }
 </style>
 <!-- Chart.js pour graphiques dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- SheetJS pour export/import Excel du pointage CRA -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Tesseract.js : OCR navigateur pour lire la pièce d'identité (prénom/nom) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -3173,6 +3194,14 @@
       <button class="modal-close" data-close-modal>×</button>
     </div>
     <div class="modal-body">
+      <div class="cni-scan-bloc">
+        <label class="btn btn-ghost cni-scan-btn" title="Prendre en photo la pièce d'identité pour remplir automatiquement le prénom et le nom">
+          📷 Scanner la pièce d'identité
+          <input type="file" id="u-cni-input" accept="image/*" capture="environment" style="display:none">
+        </label>
+        <div class="cni-scan-statut" id="u-cni-statut"></div>
+        <img class="cni-scan-preview" id="u-cni-preview" alt="" style="display:none">
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label>Prénom</label>
@@ -3286,6 +3315,14 @@
       <button class="modal-close" data-close-modal>×</button>
     </div>
     <div class="modal-body">
+      <div class="cni-scan-bloc">
+        <label class="btn btn-ghost cni-scan-btn" title="Prendre en photo la pièce d'identité pour remplir automatiquement le prénom et le nom">
+          📷 Scanner la pièce d'identité
+          <input type="file" id="insc-cni-input" accept="image/*" capture="environment" style="display:none">
+        </label>
+        <div class="cni-scan-statut" id="insc-cni-statut"></div>
+        <img class="cni-scan-preview" id="insc-cni-preview" alt="" style="display:none">
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label>Prénom — <span class="hint">Qui ?</span></label>
@@ -5778,6 +5815,11 @@ function setupUtilisateurs() {
   if (s) s.addEventListener('click', creerUtilisateur);
   const rs = document.getElementById('reset-mdp-save');
   if (rs) rs.addEventListener('click', sauverResetMdpUtilisateur);
+  const cni = document.getElementById('u-cni-input');
+  if (cni) cni.addEventListener('change', () => scannerPieceIdentite({
+    cle: 'u', input: 'u-cni-input', statut: 'u-cni-statut', preview: 'u-cni-preview',
+    prenom: 'u-prenom', nom: 'u-nom',
+  }));
 }
 
 async function renderUtilisateurs() {
@@ -5818,6 +5860,7 @@ async function renderUtilisateurs() {
       <td>${u.actif ? '<span style="color:#4a8c3f;font-weight:600">● Actif</span>' : '<span style="color:#e74c3c">○ Inactif</span>'}</td>
       <td class="actions-col">
         <div class="row-actions">
+          ${u.photoPieceIdentite ? `<a class="row-act" href="${escapeHtml(urlPhotoComplete(u.photoPieceIdentite))}" target="_blank" rel="noopener" title="Voir la pièce d'identité" style="text-decoration:none">🪪</a>` : ''}
           <button class="row-act" data-reset-uid="${u.id}" data-email="${escapeHtml(u.email)}" title="Réinitialiser le mot de passe">🔑</button>
           <button class="row-act" data-toggle-uid="${u.id}" data-actif="${u.actif}" title="${u.actif ? 'Désactiver' : 'Activer'}">${u.actif ? '🚫' : '✅'}</button>
         </div>
@@ -5872,6 +5915,7 @@ function ouvrirModalUtilisateur() {
   ['u-prenom', 'u-nom', 'u-email', 'u-telephone', 'u-mdp'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('u-role').value = 'ouvrier';
   document.getElementById('u-filiere').value = '';
+  reinitScanPieceIdentite('u', 'u-cni-statut', 'u-cni-preview');
   document.getElementById('modal-utilisateur').classList.add('show');
 }
 
@@ -5887,7 +5931,7 @@ async function creerUtilisateur() {
   if (!email.includes('@')) { toast('Email invalide', 'error'); return; }
   if (motDePasse.length < 8) { toast('Mot de passe : 8 caractères minimum', 'error'); return; }
   try {
-    await apiFetch('POST', '/auth/inscription', { prenom, nom, email, telephone, motDePasse, role, filiere });
+    await apiFetch('POST', '/auth/inscription', { prenom, nom, email, telephone, photoPieceIdentite: state.cniUrls['u'] || undefined, motDePasse, role, filiere });
     toast('Utilisateur créé', 'success');
     document.getElementById('modal-utilisateur').classList.remove('show');
     renderUtilisateurs();
@@ -8422,6 +8466,117 @@ function urlPhotoComplete(url) {
   return origineApi + url;
 }
 
+// ─── Scan pièce d'identité (OCR navigateur via Tesseract) ───
+// URL des photos de pièce uploadées, par modale ('insc' = salarié, 'u' = utilisateur).
+state.cniUrls = {};
+
+// Met en Title Case un nom lu en majuscules ("KOTA" → "Kota", "N'GUÉ" → "N'Gué").
+function titreNom(s) {
+  return s.toLowerCase().replace(/(^|[\s'\-])([a-zà-ÿ])/g, (_, sep, c) => sep + c.toUpperCase());
+}
+
+// Extrait prénom + nom d'un texte OCR de pièce d'identité (libellés français,
+// avec repli anglais). Heuristique : on cherche les libellés "Nom"/"Prénom(s)"
+// et on prend la valeur sur la même ligne ou la ligne suivante.
+function extraireNomPrenomCNI(texte) {
+  const lignes = (texte || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const nettoyer = (s) => (s || '')
+    .replace(/[^A-Za-zÀ-ÿ' \-]/g, ' ')   // ne garde que lettres/accents/apostrophe/tiret/espace
+    .replace(/\s+/g, ' ').trim();
+  const estLabel = (s) => /^(nom|noms|surname|pr[ée]nom|pr[ée]noms|given|names?)$/i.test(s);
+
+  const valeurDepuis = (i, labelRe) => {
+    const m = lignes[i].match(labelRe);
+    let v = nettoyer(lignes[i].slice(m.index + m[0].length));
+    if ((!v || estLabel(v)) && lignes[i + 1]) v = nettoyer(lignes[i + 1]);
+    return estLabel(v) ? '' : v;
+  };
+
+  let prenom = '', nom = '';
+  for (let i = 0; i < lignes.length; i++) {
+    const L = lignes[i];
+    if (!prenom && /pr[ée]noms?|given\s*names?/i.test(L)) {
+      const v = valeurDepuis(i, /pr[ée]noms?|given\s*names?/i);
+      if (v) { prenom = v; continue; }
+    }
+    if (!nom && (/\bnoms?\b/i.test(L) || /surname/i.test(L)) && !/pr[ée]nom/i.test(L)) {
+      const v = valeurDepuis(i, /\bnoms?\b|surname/i);
+      if (v) { nom = v; continue; }
+    }
+  }
+  return {
+    prenom: prenom ? titreNom(prenom).slice(0, 60) : '',
+    nom: nom ? titreNom(nom).slice(0, 60) : '',
+  };
+}
+
+// Pipeline complet déclenché à la sélection d'une photo de pièce d'identité :
+// aperçu → OCR (français) → pré-remplissage prénom/nom → upload pour conservation.
+// cfg = { cle, input, statut, preview, prenom, nom }  (ids des éléments).
+async function scannerPieceIdentite(cfg) {
+  const input = document.getElementById(cfg.input);
+  const fichier = input && input.files && input.files[0];
+  if (input) input.value = ''; // autorise un nouveau scan du même fichier
+  if (!fichier) return;
+  const elStatut = document.getElementById(cfg.statut);
+  const elPreview = document.getElementById(cfg.preview);
+  const setStatut = (txt, cls) => {
+    if (elStatut) { elStatut.textContent = txt; elStatut.className = 'cni-scan-statut' + (cls ? ' ' + cls : ''); }
+  };
+
+  // Aperçu immédiat de la photo
+  try {
+    const apercu = URL.createObjectURL(fichier);
+    if (elPreview) { elPreview.src = apercu; elPreview.style.display = 'block'; }
+  } catch {}
+
+  // OCR
+  if (typeof Tesseract === 'undefined') {
+    setStatut('Module OCR non chargé (connexion internet requise au 1er usage).', 'erreur');
+  } else {
+    try {
+      setStatut('Lecture de la pièce… (10–20 s au 1er usage)', 'actif');
+      const r = await Tesseract.recognize(fichier, 'fra', {
+        logger: m => {
+          if (m && m.status === 'recognizing text') {
+            setStatut(`Lecture… ${Math.round((m.progress || 0) * 100)} %`, 'actif');
+          }
+        },
+      });
+      const texte = (r && r.data && r.data.text) || '';
+      const { prenom, nom } = extraireNomPrenomCNI(texte);
+      const inPrenom = document.getElementById(cfg.prenom);
+      const inNom = document.getElementById(cfg.nom);
+      // On ne remplit que les champs vides, pour ne pas écraser une saisie manuelle.
+      if (prenom && inPrenom && !inPrenom.value.trim()) inPrenom.value = prenom;
+      if (nom && inNom && !inNom.value.trim()) inNom.value = nom;
+      if (prenom || nom) setStatut('Prénom/nom pré-remplis — vérifiez et corrigez si besoin.', 'ok');
+      else setStatut('Texte lu mais prénom/nom non reconnus — saisie manuelle.', 'erreur');
+    } catch (e) {
+      console.error('OCR pièce identité :', e);
+      setStatut('Lecture impossible — saisissez le prénom/nom manuellement.', 'erreur');
+    }
+  }
+
+  // Upload pour conservation (indépendant du succès de l'OCR)
+  try {
+    const url = await apiUploadPhotoCRA(fichier);
+    if (url) state.cniUrls[cfg.cle] = url;
+  } catch (e) {
+    console.error('Upload pièce identité :', e);
+    // La création reste possible sans photo conservée ; on n'écrase pas le statut OCR.
+  }
+}
+
+// Réinitialise l'UI de scan d'une modale (aperçu, statut, URL stockée).
+function reinitScanPieceIdentite(cle, statutId, previewId) {
+  state.cniUrls[cle] = null;
+  const elStatut = document.getElementById(statutId);
+  if (elStatut) { elStatut.textContent = ''; elStatut.className = 'cni-scan-statut'; }
+  const elPreview = document.getElementById(previewId);
+  if (elPreview) { elPreview.src = ''; elPreview.style.display = 'none'; }
+}
+
 // ─── Utilitaires CRA ───
 function lundiDeLaSemaine(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -8448,10 +8603,11 @@ function formatXAF(n) {
   return Number(n || 0).toLocaleString('fr-FR') + ' XAF';
 }
 
-async function apiInscrireSalarie(prenom, nom, telephone, role, filiere) {
+async function apiInscrireSalarie(prenom, nom, telephone, role, filiere, photoPieceIdentite) {
   const dto = { prenom, nom, role };
   if (telephone) dto.telephone = telephone;
   if (filiere) dto.filiere = filiere;
+  if (photoPieceIdentite) dto.photoPieceIdentite = photoPieceIdentite;
   return apiFetch('POST', '/cra/inscrire-salarie', dto);
 }
 
@@ -8671,7 +8827,7 @@ async function gererInscriptionSalarie() {
     return;
   }
   try {
-    await apiInscrireSalarie(prenom, nom, telephone, role, filiere);
+    await apiInscrireSalarie(prenom, nom, telephone, role, filiere, state.cniUrls['insc'] || null);
     toast(`${prenom} ${nom} inscrit(e)`, 'success');
     document.getElementById('insc-prenom').value = '';
     document.getElementById('insc-nom').value = '';
@@ -8692,6 +8848,7 @@ function ouvrirModalInscriptionSalarie() {
   document.getElementById('insc-telephone').value = '';
   document.getElementById('insc-role').value = 'ouvrier';
   document.getElementById('insc-filiere').value = '';
+  reinitScanPieceIdentite('insc', 'insc-cni-statut', 'insc-cni-preview');
   document.getElementById('modal-cra-inscription').classList.add('show');
   setTimeout(() => document.getElementById('insc-prenom').focus(), 100);
 }
@@ -9146,6 +9303,11 @@ function setupCRA() {
   if (btnNouveauSalarie) btnNouveauSalarie.addEventListener('click', ouvrirModalInscriptionSalarie);
   const btnAjouter = document.getElementById('insc-ajouter');
   if (btnAjouter) btnAjouter.addEventListener('click', gererInscriptionSalarie);
+  const inscCni = document.getElementById('insc-cni-input');
+  if (inscCni) inscCni.addEventListener('change', () => scannerPieceIdentite({
+    cle: 'insc', input: 'insc-cni-input', statut: 'insc-cni-statut', preview: 'insc-cni-preview',
+    prenom: 'insc-prenom', nom: 'insc-nom',
+  }));
 
   // Modal photos preuve
   const btnSavePhotos = document.getElementById('cra-photos-save');
