@@ -76,6 +76,19 @@ routeurAuth.post('/inscription', verifierAuth, verifierRole(Role.admin), async (
       res.status(409).json({ succes: false, message: 'Cet email est déjà utilisé' })
       return
     }
+    // Refus des doublons de nom (prénom + nom) parmi les comptes actifs.
+    const memeNom = await prisma.utilisateur.findFirst({
+      where: {
+        actif: true,
+        prenom: { equals: prenom.trim(), mode: 'insensitive' },
+        nom: { equals: nom.trim(), mode: 'insensitive' },
+      },
+      select: { id: true },
+    })
+    if (memeNom) {
+      res.status(409).json({ succes: false, message: `Un utilisateur nommé « ${prenom.trim()} ${nom.trim()} » existe déjà` })
+      return
+    }
     const motDePasseHash = await bcrypt.hash(motDePasse, 10)
     const cree = await prisma.utilisateur.create({
       data: {

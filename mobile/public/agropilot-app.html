@@ -5891,7 +5891,7 @@ async function creerUtilisateur() {
     toast('Utilisateur créé', 'success');
     document.getElementById('modal-utilisateur').classList.remove('show');
     renderUtilisateurs();
-  } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+  } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }
 }
 
 /* ============ DASHBOARD ============ */
@@ -8661,6 +8661,15 @@ async function gererInscriptionSalarie() {
     toast('Prénom et nom requis', 'error');
     return;
   }
+  // Refus immédiat d'un doublon de nom (la liste est déjà chargée). Le backend
+  // vérifie aussi, mais ce contrôle évite un aller-retour et un message brut.
+  const existeDeja = state.craUtilisateurs.some(u =>
+    (u.prenom || '').trim().toLowerCase() === prenom.toLowerCase() &&
+    (u.nom || '').trim().toLowerCase() === nom.toLowerCase());
+  if (existeDeja) {
+    toast(`« ${prenom} ${nom} » est déjà dans la liste`, 'error');
+    return;
+  }
   try {
     await apiInscrireSalarie(prenom, nom, telephone, role, filiere);
     toast(`${prenom} ${nom} inscrit(e)`, 'success');
@@ -8671,7 +8680,7 @@ async function gererInscriptionSalarie() {
     state.craUtilisateurs = []; // forcer rechargement
     await renderCRA();
   } catch (e) {
-    toast('Erreur : ' + e.message, 'error');
+    toast('Erreur : ' + (e.body?.message || e.message), 'error');
   }
 }
 

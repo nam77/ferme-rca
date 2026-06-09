@@ -160,6 +160,21 @@ routeurCRA.post('/inscrire-salarie', async (req: Request, res: Response) => {
     return
   }
   try {
+    // Refus des doublons de nom (prénom + nom) parmi les salariés actifs.
+    const prenom = parsed.data.prenom.trim()
+    const nom = parsed.data.nom.trim()
+    const memeNom = await prisma.utilisateur.findFirst({
+      where: {
+        actif: true,
+        prenom: { equals: prenom, mode: 'insensitive' },
+        nom: { equals: nom, mode: 'insensitive' },
+      },
+      select: { id: true },
+    })
+    if (memeNom) {
+      res.status(409).json({ succes: false, message: `Un salarié nommé « ${prenom} ${nom} » existe déjà` })
+      return
+    }
     // Email synthétique : jamais utilisé pour login mais doit être unique
     const id = crypto.randomBytes(8).toString('hex')
     const email = `salarie-${id}@local.ferme.rca`
@@ -168,8 +183,8 @@ routeurCRA.post('/inscrire-salarie', async (req: Request, res: Response) => {
 
     const salarie = await prisma.utilisateur.create({
       data: {
-        prenom: parsed.data.prenom.trim(),
-        nom: parsed.data.nom.trim(),
+        prenom,
+        nom,
         telephone: parsed.data.telephone?.trim() || null,
         email,
         motDePasseHash,
