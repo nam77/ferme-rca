@@ -2139,6 +2139,8 @@
 </style>
 <!-- Chart.js pour graphiques dashboard -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- SheetJS pour export/import Excel du pointage CRA -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -2553,9 +2555,13 @@
     <div class="view-head">
       <div>
         <h2 class="view-title">Pointage — <em>Présences &amp; heures du mois</em></h2>
-        <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve.</p>
+        <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve. ⬇ Excel exporte le mois, ⬆ Importer le relit et complète le pointage.</p>
       </div>
       <div class="row">
+        <button class="btn btn-ghost" id="cra-export-excel" title="Télécharger le pointage du mois affiché au format Excel (à remplir hors-ligne)">⬇ Excel</button>
+        <label class="btn btn-ghost" id="cra-import-label" title="Importer un fichier Excel rempli et compléter le pointage" style="cursor:pointer;margin:0">⬆ Importer
+          <input type="file" id="cra-import-excel" accept=".xlsx,.xls,.csv" style="display:none">
+        </label>
         <button class="btn btn-primary" id="btn-new-salarie">＋ Ajouter un salarié</button>
       </div>
     </div>
@@ -8896,6 +8902,187 @@ async function sauverPhotosPreuve() {
   }
 }
 
+// ─── Export / Import Excel du pointage ───
+// Génère un classeur .xlsx du mois affiché (salariés × jours) avec les valeurs
+// effectives (modifications locales non encore enregistrées comprises), pour le
+// remplir hors-ligne puis le réimporter et compléter le CRA en un clic.
+// En-têtes des jours = numéros entiers (1..31) : Excel ne les convertit pas en
+// dates, et le mois est porté par le nom de feuille « Pointage AAAA-MM ».
+function exporterPointageExcel() {
+  if (typeof XLSX === 'undefined') { toast('Bibliothèque Excel non chargée (connexion requise)', 'error'); return; }
+  if (state.craUtilisateurs.length === 0) { toast('Aucun salarié à exporter', ''); return; }
+  const [y, m] = state.craMois.split('-').map(Number);
+  const dernier = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+  // Index des saisies en base : { uid: { 'YYYY-MM-DD': saisie } }
+  const idx = {};
+  for (const s of state.craSaisies) {
+    const dateK = s.date.split('T')[0];
+    (idx[s.utilisateurId] ||= {})[dateK] = s;
+  }
+
+  // En-tête : ID | Salarié | Rôle | 1 | 2 | … | dernier | Total (h)
+  const enTete = ['ID', 'Salarié', 'Rôle'];
+  for (let d = 1; d <= dernier; d++) enTete.push(d);
+  enTete.push('Total (h)');
+
+  const lignes = [enTete];
+  for (const u of state.craUtilisateurs) {
+    const modifs = state.craModifications[u.id] || {};
+    const ligne = [u.id, `${u.prenom} ${u.nom}`, u.role + (u.filiere ? ' · ' + u.filiere : '')];
+    let totalH = 0;
+    for (let d = 1; d <= dernier; d++) {
+      const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const saisie = idx[u.id]?.[dateStr];
+      const valeur = (modifs[dateStr] !== undefined)
+        ? modifs[dateStr]
+        : (saisie ? heuresEnPresence(saisie.heures) : 0);
+      totalH += valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
+      ligne.push(valeur === 0 ? '' : valeur); // 0 (absent) laissé vide pour faciliter la saisie
+    }
+    ligne.push(totalH);
+    lignes.push(ligne);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(lignes);
+  // Colonne ID masquée, colonnes Salarié/Rôle élargies, jours étroits
+  ws['!cols'] = [{ hidden: true }, { wch: 22 }, { wch: 16 }];
+  for (let d = 1; d <= dernier; d++) ws['!cols'].push({ wch: 4 });
+  ws['!cols'].push({ wch: 9 });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `Pointage ${state.craMois}`);
+  XLSX.writeFile(wb, `pointage-${state.craMois}.xlsx`);
+  toast('Pointage Excel téléchargé', 'success');
+}
+
+// Convertit une valeur de cellule en présence 0 / 0.5 / 1, ou null si la cellule
+// est vide (→ jour non modifié). Tolérant aux formats : nombres, "0,5", x, P, etc.
+function normaliserPresenceCRA(v) {
+  if (v === undefined || v === null) return null;
+  if (typeof v === 'number') {
+    if (v <= 0) return 0;
+    if (v <= 0.5) return 0.5;
+    return 1;
+  }
+  const s = String(v).trim().toLowerCase().replace(',', '.');
+  if (s === '') return null;
+  if (['1', 'p', 'présent', 'present', 'x', 'oui', 'j'].includes(s)) return 1;
+  if (['0.5', '½', 'demi', 'd'].includes(s)) return 0.5;
+  if (['0', 'absent', 'a', 'non'].includes(s)) return 0;
+  const n = parseFloat(s);
+  if (isNaN(n)) return null;
+  if (n <= 0) return 0;
+  if (n <= 0.5) return 0.5;
+  return 1;
+}
+
+// Lit le fichier Excel choisi, mappe chaque cellule en présence et enregistre
+// le tout via l'API (lots de 40 max par salarié), puis recharge le tableau.
+async function importerPointageExcel(evt) {
+  const fichier = evt.target.files && evt.target.files[0];
+  evt.target.value = ''; // permet de réimporter le même fichier ensuite
+  if (!fichier) return;
+  if (bloquerSiConsultatif()) return;
+  if (typeof XLSX === 'undefined') { toast('Bibliothèque Excel non chargée (connexion requise)', 'error'); return; }
+  if (state.craUtilisateurs.length === 0) {
+    state.craUtilisateurs = await apiChargerCRAUtilisateurs();
+  }
+  try {
+    const buffer = await fichier.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    if (!ws) { toast('Feuille introuvable dans le fichier', 'error'); return; }
+    const lignes = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, raw: true });
+    if (lignes.length < 2) { toast('Fichier vide ou sans données', 'error'); return; }
+
+    // Mois cible : extrait du nom de feuille « Pointage AAAA-MM », sinon mois affiché
+    const moisMatch = /(\d{4})-(\d{2})/.exec(wb.SheetNames[0] || '');
+    const moisCible = moisMatch ? `${moisMatch[1]}-${moisMatch[2]}` : state.craMois;
+    const [yy, mm] = moisCible.split('-').map(Number);
+    const dernierJour = new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+
+    // En-tête : repérer colonnes ID, Salarié et colonnes-jours (entiers 1..dernier)
+    const enTete = lignes[0];
+    const colId = enTete.findIndex(h => /^\s*id\s*$/i.test(String(h ?? '')));
+    const colSal = enTete.findIndex(h => /salari/i.test(String(h ?? '')));
+    const colsJour = [];
+    enTete.forEach((h, i) => {
+      const j = typeof h === 'number' ? h : parseInt(String(h).trim(), 10);
+      if (Number.isInteger(j) && j >= 1 && j <= dernierJour) {
+        colsJour.push({ i, date: `${moisCible}-${String(j).padStart(2, '0')}` });
+      }
+    });
+    if (colsJour.length === 0) {
+      toast('Aucune colonne « jour » (1 à 31) trouvée dans l\'en-tête', 'error');
+      return;
+    }
+
+    // Construire les saisies par salarié
+    const parSalarie = {}; // uid -> [{date, presence}]
+    let lignesIgnorees = 0;
+    for (let r = 1; r < lignes.length; r++) {
+      const row = lignes[r];
+      if (!row || row.length === 0) continue;
+      const uid = colId >= 0 ? String(row[colId] ?? '').trim() : '';
+      let u = uid ? state.craUtilisateurs.find(x => x.id === uid) : null;
+      if (!u && colSal >= 0) {
+        const nomCell = String(row[colSal] ?? '').trim().toLowerCase();
+        if (nomCell) {
+          const candidats = state.craUtilisateurs.filter(
+            x => `${x.prenom} ${x.nom}`.trim().toLowerCase() === nomCell);
+          if (candidats.length === 1) u = candidats[0];
+        }
+      }
+      if (!u) { lignesIgnorees++; continue; }
+      const saisies = [];
+      for (const { i, date } of colsJour) {
+        const presence = normaliserPresenceCRA(row[i]);
+        if (presence === null) continue; // cellule vide → jour non modifié
+        saisies.push({ date, presence });
+      }
+      if (saisies.length) (parSalarie[u.id] ||= []).push(...saisies);
+    }
+
+    const ids = Object.keys(parSalarie);
+    if (ids.length === 0) {
+      toast('Aucune donnée exploitable. Vérifiez la colonne « Salarié » et les valeurs (0 / 0.5 / 1).', 'error');
+      return;
+    }
+    const nbCellules = ids.reduce((n, id) => n + parSalarie[id].length, 0);
+    const moisLisible = new Date(moisCible + '-01T12:00:00Z')
+      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+    const ok = await confirmAction(
+      `Importer ${nbCellules} jour(s) de pointage pour ${ids.length} salarié(s) — ${moisLisible} ?\n\n` +
+      `Les valeurs existantes pour ces jours seront remplacées (cellules vides ignorées).` +
+      (lignesIgnorees ? `\n\n${lignesIgnorees} ligne(s) ignorée(s) : salarié introuvable.` : ''),
+      'Importer'
+    );
+    if (!ok) return;
+
+    let nbOk = 0;
+    for (const id of ids) {
+      // L'API limite à 40 saisies par lot — on découpe par sécurité (≤31 en pratique)
+      const saisies = parSalarie[id];
+      for (let i = 0; i < saisies.length; i += 40) {
+        const lot = saisies.slice(i, i + 40);
+        await apiSauverLot(id, lot);
+        nbOk += lot.length;
+      }
+    }
+
+    // Se positionner sur le mois importé et recharger
+    state.craMois = moisCible;
+    const inp = document.getElementById('cra-mois'); if (inp) inp.value = moisCible;
+    state.craModifications = {};
+    toast(`${nbOk} jour(s) importé(s) et enregistré(s)`, 'success');
+    await renderCRA();
+  } catch (e) {
+    console.error('Import Excel CRA :', e);
+    toast('Import échoué : ' + e.message, 'error');
+  }
+}
+
 // ─── Initialisation ───
 function setupCRA() {
   const moisInput = document.getElementById('cra-mois');
@@ -8929,6 +9116,12 @@ function setupCRA() {
       renderCRAPointageTable();
     });
   }
+
+  // Export / import Excel du pointage
+  const btnExportExcel = document.getElementById('cra-export-excel');
+  if (btnExportExcel) btnExportExcel.addEventListener('click', exporterPointageExcel);
+  const inputImportExcel = document.getElementById('cra-import-excel');
+  if (inputImportExcel) inputImportExcel.addEventListener('change', importerPointageExcel);
 
   // Inscription salarié (ouverture modale + enregistrement)
   const btnNouveauSalarie = document.getElementById('btn-new-salarie');
