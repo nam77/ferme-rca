@@ -1038,6 +1038,21 @@
     background:rgba(201,169,110,0.05);
     border-radius:0 0 16px 16px;
   }
+  /* Overlay dédié au déploiement : volontairement PAS .modal-backdrop pour
+     ne pas être fermé par les handlers génériques (clic backdrop / Échap /
+     data-close-modal) pendant qu'un déploiement tourne. */
+  .depl-overlay{
+    position:fixed;inset:0;background:rgba(45,31,14,0.62);
+    display:none;align-items:center;justify-content:center;
+    z-index:950;padding:20px;backdrop-filter:blur(4px);
+  }
+  .depl-overlay.show{display:flex;animation:fadeIn 0.2s ease}
+  .modal-depl{max-width:680px}
+  .modal-depl .modal-head{align-items:center}
+  .modal-depl .modal-head h2{font-size:18px;display:flex;align-items:center;gap:6px}
+  .modal-depl .modal-body{max-height:calc(90vh - 150px);overflow-y:auto}
+  .modal-depl .depl-output{margin-top:0}
+
   .form-group{margin-bottom:14px}
   .form-group label{display:block;font-family:var(--mono);font-size:11px;color:var(--clay);letter-spacing:0.06em;margin-bottom:5px}
   .form-group input,.form-group select,.form-group textarea{
@@ -3085,24 +3100,37 @@
       </div>
     </div>
 
-    <div class="dash-section" id="depl-progression-section" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <h3 id="depl-progression-titre" style="margin:0"><span class="icon">⏳</span>Progression du déploiement</h3>
-        <button class="btn btn-sm" id="depl-annuler" style="display:none;background:#c0392b;color:#fff">⛔ Annuler &amp; rollback</button>
-      </div>
-      <div id="depl-progression-bar" style="margin-top:10px"></div>
-      <div id="depl-progression-meta" style="font-family:'DM Mono',monospace;font-size:11.5px;color:#5c3d1e;margin:8px 0 14px"></div>
-      <div id="depl-etapes"></div>
-      <h4 style="font-family:'Fraunces',serif;font-size:14px;margin-top:16px;margin-bottom:6px;color:#2d1f0e">📋 Journal d'événements</h4>
-      <pre id="depl-journal" class="depl-output show" style="display:block"></pre>
-    </div>
-
     <div class="dash-section">
       <h3><span class="icon">📜</span>Historique des déploiements</h3>
       <div id="depl-historique"></div>
     </div>
   </section>
 </main>
+
+<!-- Fenêtre modale de progression du déploiement — placée HORS des vues pour
+     rester affichée quelle que soit la page active (overlay dédié, centré). -->
+<div class="depl-overlay" id="modal-deploiement">
+  <div class="modal modal-depl">
+    <div class="modal-head">
+      <div>
+        <span class="modal-tag" style="background:#2d5a27;color:#fff">PRODUCTION</span>
+        <h2 id="depl-progression-titre"><span class="icon">⏳</span>Progression du déploiement</h2>
+      </div>
+      <button class="modal-close" id="depl-fermer" aria-label="Fermer" title="Fermer" style="display:none">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="depl-progression-bar"></div>
+      <div id="depl-progression-meta" style="font-family:'DM Mono',monospace;font-size:11.5px;color:#5c3d1e;margin:8px 0 14px"></div>
+      <div id="depl-etapes"></div>
+      <h4 style="font-family:'Fraunces',serif;font-size:14px;margin-top:16px;margin-bottom:6px;color:#2d1f0e">📋 Journal d'événements</h4>
+      <pre id="depl-journal" class="depl-output show" style="display:block"></pre>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" id="depl-annuler" style="display:none;background:#c0392b;color:#fff">⛔ Annuler &amp; rollback</button>
+      <button class="btn btn-ghost" id="depl-fermer-foot" style="display:none">Fermer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== MODAL TASK ===== -->
 <div class="modal-backdrop" id="modal-task">
@@ -7809,6 +7837,15 @@ function setupDeploiement() {
   if (orch) orch.addEventListener('click', deplOrchestrer);
   const annuler = document.getElementById('depl-annuler');
   if (annuler) annuler.addEventListener('click', deplAnnuler);
+  // Fermeture de la modale (uniquement disponible une fois le run terminé)
+  const fermerModaleDepl = () => {
+    if (_deplRunId) return; // sécurité : pas de fermeture pendant un run
+    document.getElementById('modal-deploiement').classList.remove('show');
+  };
+  const fermer = document.getElementById('depl-fermer');
+  if (fermer) fermer.addEventListener('click', fermerModaleDepl);
+  const fermerFoot = document.getElementById('depl-fermer-foot');
+  if (fermerFoot) fermerFoot.addEventListener('click', fermerModaleDepl);
 }
 
 // ───── Nouveau pipeline auto (script bash + SSE) ─────
@@ -7861,7 +7898,11 @@ async function deplOrchestrer() {
 
 function deplDemarrerVue(runId) {
   _deplRunId = runId;
-  document.getElementById('depl-progression-section').style.display = '';
+  // Ouvre la fenêtre modale centrée et masque les boutons de fermeture
+  // (on ne ferme pas pendant qu'un déploiement tourne).
+  document.getElementById('modal-deploiement').classList.add('show');
+  const f1 = document.getElementById('depl-fermer'); if (f1) f1.style.display = 'none';
+  const f2 = document.getElementById('depl-fermer-foot'); if (f2) f2.style.display = 'none';
   document.getElementById('depl-progression-titre').innerHTML =
     `<span class="icon">⏳</span>Déploiement en cours… <code style="font-size:11px;color:#8b5e3c">${escapeHtml(runId)}</code>`;
   document.getElementById('depl-journal').textContent = '';
@@ -7996,6 +8037,9 @@ function deplTerminer(state) {
   }
   const btnAnnuler = document.getElementById('depl-annuler');
   if (btnAnnuler) btnAnnuler.style.display = 'none';
+  // Run terminé : on autorise la fermeture de la modale.
+  const f1 = document.getElementById('depl-fermer'); if (f1) f1.style.display = '';
+  const f2 = document.getElementById('depl-fermer-foot'); if (f2) f2.style.display = '';
   const titre = document.getElementById('depl-progression-titre');
   if (titre) {
     if (state.status === 'success') {
