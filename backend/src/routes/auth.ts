@@ -22,6 +22,7 @@ const schemaInscription = z.object({
   motDePasse: z.string().min(8).max(100),
   prenom: z.string().min(1).max(50),
   nom: z.string().min(1).max(50),
+  telephone: z.string().max(40).optional().nullable(),
   role: z.enum([Role.admin, Role.gestionnaire, Role.responsable, Role.ouvrier, Role.investisseur]).optional(),
   filiere: z.enum([
     Filiere.pisciculture,
@@ -68,7 +69,7 @@ routeurAuth.post('/inscription', verifierAuth, verifierRole(Role.admin), async (
     res.status(400).json({ succes: false, message: 'Données invalides', details: parsed.error.issues })
     return
   }
-  const { email, motDePasse, prenom, nom, role, filiere } = parsed.data
+  const { email, motDePasse, prenom, nom, telephone, role, filiere } = parsed.data
   try {
     const existant = await prisma.utilisateur.findUnique({ where: { email } })
     if (existant) {
@@ -82,6 +83,7 @@ routeurAuth.post('/inscription', verifierAuth, verifierRole(Role.admin), async (
         motDePasseHash,
         prenom,
         nom,
+        telephone: telephone?.trim() || null,
         role: role ?? Role.ouvrier,
         filiere: filiere ?? null,
       },

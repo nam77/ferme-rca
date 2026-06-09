@@ -3019,6 +3019,7 @@
           <tr>
             <th>Nom</th>
             <th>Email</th>
+            <th>Téléphone</th>
             <th>Rôle</th>
             <th>Filière</th>
             <th>Statut</th>
@@ -3182,9 +3183,15 @@
           <input type="text" id="u-nom" placeholder="Ex: Kota" maxlength="50">
         </div>
       </div>
-      <div class="form-group">
-        <label>Email — <span class="hint">sert d'identifiant de connexion</span></label>
-        <input type="email" id="u-email" placeholder="vous@ferme.rca" autocomplete="off">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email — <span class="hint">sert d'identifiant de connexion</span></label>
+          <input type="email" id="u-email" placeholder="vous@ferme.rca" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Téléphone — <span class="hint">optionnel</span></label>
+          <input type="tel" id="u-telephone" placeholder="+236 75 12 34 56" maxlength="40" autocomplete="off">
+        </div>
       </div>
       <div class="form-group">
         <label>Mot de passe — <span class="hint">8 caractères min</span></label>
@@ -5779,11 +5786,11 @@ async function renderUtilisateurs() {
   // Cette page exige une session admin authentifiée (jeton). Sans jeton, on
   // affiche un message clair plutôt qu'une erreur 401 brute.
   if (!API_JETON) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--clay);padding:24px;font-style:italic">
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clay);padding:24px;font-style:italic">
       Connectez-vous en <strong>administrateur</strong> pour gérer les utilisateurs.</td></tr>`;
     return;
   }
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--clay);padding:20px">Chargement…</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clay);padding:20px">Chargement…</td></tr>`;
   let users = [];
   try {
     const r = await apiFetch('GET', '/auth/utilisateurs');
@@ -5792,11 +5799,11 @@ async function renderUtilisateurs() {
     const msg = /401|jeton/i.test(e.message)
       ? 'Session expirée ou non administrateur. Reconnectez-vous en administrateur.'
       : 'Erreur : ' + e.message;
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:20px">${escapeHtml(msg)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:20px">${escapeHtml(msg)}</td></tr>`;
     return;
   }
   if (users.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--clay);padding:20px">Aucun utilisateur.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clay);padding:20px">Aucun utilisateur.</td></tr>`;
     return;
   }
   const optionsRole = (sel) => Object.entries(ROLES_LABELS)
@@ -5805,6 +5812,7 @@ async function renderUtilisateurs() {
     <tr style="${u.actif ? '' : 'opacity:0.55'}">
       <td>${escapeHtml(u.prenom)} ${escapeHtml(u.nom)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${escapeHtml(u.email)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${u.telephone ? escapeHtml(u.telephone) : '—'}</td>
       <td><select data-role-uid="${u.id}">${optionsRole(u.role)}</select></td>
       <td>${escapeHtml(u.filiere || '—')}</td>
       <td>${u.actif ? '<span style="color:#4a8c3f;font-weight:600">● Actif</span>' : '<span style="color:#e74c3c">○ Inactif</span>'}</td>
@@ -5861,7 +5869,7 @@ async function sauverResetMdpUtilisateur() {
 }
 
 function ouvrirModalUtilisateur() {
-  ['u-prenom', 'u-nom', 'u-email', 'u-mdp'].forEach(id => { document.getElementById(id).value = ''; });
+  ['u-prenom', 'u-nom', 'u-email', 'u-telephone', 'u-mdp'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('u-role').value = 'ouvrier';
   document.getElementById('u-filiere').value = '';
   document.getElementById('modal-utilisateur').classList.add('show');
@@ -5871,6 +5879,7 @@ async function creerUtilisateur() {
   const prenom = document.getElementById('u-prenom').value.trim();
   const nom = document.getElementById('u-nom').value.trim();
   const email = document.getElementById('u-email').value.trim().toLowerCase();
+  const telephone = document.getElementById('u-telephone').value.trim() || undefined;
   const motDePasse = document.getElementById('u-mdp').value;
   const role = document.getElementById('u-role').value;
   const filiere = document.getElementById('u-filiere').value || undefined;
@@ -5878,7 +5887,7 @@ async function creerUtilisateur() {
   if (!email.includes('@')) { toast('Email invalide', 'error'); return; }
   if (motDePasse.length < 8) { toast('Mot de passe : 8 caractères minimum', 'error'); return; }
   try {
-    await apiFetch('POST', '/auth/inscription', { prenom, nom, email, motDePasse, role, filiere });
+    await apiFetch('POST', '/auth/inscription', { prenom, nom, email, telephone, motDePasse, role, filiere });
     toast('Utilisateur créé', 'success');
     document.getElementById('modal-utilisateur').classList.remove('show');
     renderUtilisateurs();
