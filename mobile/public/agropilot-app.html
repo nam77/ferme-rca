@@ -3883,7 +3883,7 @@
       <h2 id="confirm-title">Confirmation</h2>
     </div>
     <div class="modal-body">
-      <p id="confirm-message" style="font-size:14px;color:var(--earth);line-height:1.55"></p>
+      <p id="confirm-message" style="font-size:14px;color:var(--earth);line-height:1.55;white-space:pre-line"></p>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="confirm-cancel">Annuler</button>
@@ -8063,7 +8063,10 @@ let _deplRunId = null;
 async function deplOrchestrer() {
   const btn = document.getElementById('depl-orchestrer');
   if (!btn) return;
-  if (!confirm("Lancer un déploiement complet en production ?\n\nLe serveur va :\n• git pull origin/main\n• migrer la BDD (avec backup auto)\n• rebuild + reload le backend (zéro downtime)\n• rebuild + uploader le frontend Cloudflare\n• exécuter les tests post-déploiement\n\nDurée estimée : 4-6 min.")) return;
+  const confirme = await confirmAction(
+    "Lancer un déploiement complet en production ?\n\nLe serveur va :\n• git pull origin/main\n• migrer la BDD (avec backup auto)\n• rebuild + reload le backend (zéro downtime)\n• rebuild + uploader le frontend Cloudflare\n• exécuter les tests post-déploiement\n\nDurée estimée : 4-6 min.",
+    'Déploiement en production');
+  if (!confirme) return;
 
   btn.disabled = true;
   btn.textContent = '⏳ Démarrage…';
@@ -8075,7 +8078,10 @@ async function deplOrchestrer() {
   } catch (e) {
     // 409 = un run est déjà en cours
     if (e && e.status === 409 && e.donnees && e.donnees.runId) {
-      if (confirm("Un déploiement est déjà en cours. Suivre sa progression ?")) {
+      const suivre = await confirmAction(
+        'Un déploiement est déjà en cours. Suivre sa progression ?',
+        'Déploiement en cours');
+      if (suivre) {
         deplDemarrerVue(e.donnees.runId);
         return;
       }
@@ -8121,7 +8127,10 @@ function deplInitEtapes() {
 
 async function deplAnnuler() {
   if (!_deplRunId) return;
-  if (!confirm("Annuler le déploiement en cours ?\n\nLe serveur va :\n• tuer le processus en cours\n• restaurer la version précédente (git reset + pm2 reload)\n• rebuild + redeploy le frontend si nécessaire\n\nDurée estimée du rollback : 1-3 min.\n\nLe service reste en ligne pendant tout le rollback.")) return;
+  const confirme = await confirmAction(
+    "Annuler le déploiement en cours ?\n\nLe serveur va :\n• tuer le processus en cours\n• restaurer la version précédente (git reset + pm2 reload)\n• rebuild + redeploy le frontend si nécessaire\n\nDurée estimée du rollback : 1-3 min.\n\nLe service reste en ligne pendant tout le rollback.",
+    'Annuler le déploiement');
+  if (!confirme) return;
   const btn = document.getElementById('depl-annuler');
   if (btn) { btn.disabled = true; btn.textContent = '⛔ Annulation en cours…'; }
   try {
