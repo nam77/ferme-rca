@@ -51,15 +51,6 @@ const PRINCIPAUX: Destination[] = [
     couleur: COULEURS_TOKEN.mint,
   },
   {
-    cle: 'cultures',
-    libelle: 'Agriculture',
-    route: '/cultures',
-    icone: 'flower-outline',
-    iconeActif: 'flower',
-    prefixes: ['/cultures'],
-    couleur: COULEURS_TOKEN.cultures,
-  },
-  {
     cle: 'cheptel',
     libelle: 'Élevage',
     route: '/cheptel',
@@ -83,6 +74,15 @@ const PRINCIPAUX: Destination[] = [
 
 // Le reste, accessible via « ⋯ » dans une feuille.
 const SECONDAIRES: Destination[] = [
+  {
+    cle: 'cultures',
+    libelle: 'Agriculture',
+    route: '/cultures',
+    icone: 'flower-outline',
+    iconeActif: 'flower',
+    prefixes: ['/cultures'],
+    couleur: COULEURS_TOKEN.cultures,
+  },
   {
     cle: 'dashboard',
     libelle: 'Tableau de bord',
