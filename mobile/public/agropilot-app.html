@@ -1045,12 +1045,23 @@
     position:fixed;inset:0;background:rgba(45,31,14,0.62);
     display:none;align-items:center;justify-content:center;
     z-index:950;padding:20px;backdrop-filter:blur(4px);
+    overflow-y:auto;  /* sécurité si l'écran est plus petit que la modale */
   }
   .depl-overlay.show{display:flex;animation:fadeIn 0.2s ease}
-  .modal-depl{max-width:680px}
-  .modal-depl .modal-head{align-items:center}
+  /* Pop-up centré et borné (comme les formulaires .modal-backdrop) : colonne
+     flex avec en-tête/pied fixes et corps défilant. max-height en dvh pour
+     tenir compte de la barre d'URL mobile (sinon 90vh dépasse l'écran visible
+     et le centrage flex rogne le haut → la modale « colle » en haut). */
+  .modal-depl{
+    max-width:680px;width:100%;margin:auto;
+    max-height:calc(90vh - 40px);
+    max-height:calc(100dvh - 40px);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .modal-depl .modal-head{align-items:center;flex-shrink:0}
   .modal-depl .modal-head h2{font-size:18px;display:flex;align-items:center;gap:6px}
-  .modal-depl .modal-body{max-height:calc(90vh - 150px);overflow-y:auto}
+  .modal-depl .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto}
+  .modal-depl .modal-foot{flex-shrink:0}
   .modal-depl .depl-output{margin-top:0}
 
   .form-group{margin-bottom:14px}
