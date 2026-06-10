@@ -1181,6 +1181,12 @@
     .login-card{padding:24px 22px 22px}
     .login-brand h1{font-size:22px}
     .login-logo-img{max-height:55px}
+
+    /* Pointage : sur mobile, on remplace la grille mensuelle par la saisie
+       « jour » (plus lisible, gros boutons), la grille reste sur le web. */
+    .cra-pointage-wrap{display:none}
+    .cra-legend{display:none}
+    .cra-jour-mobile{display:block}
   }
 
   /* ========== ÉCRAN DE CONNEXION ========== */
@@ -1874,6 +1880,66 @@
   @media(max-width:600px){
     .cra-photos-liste { grid-template-columns: 1fr; }
   }
+  /* ===== Vue « jour » mobile du pointage (masquée sur desktop) ===== */
+  .cra-jour-mobile { display: none; }
+  .cra-jour-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .cra-jour-fleche {
+    flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px;
+    border: 1px solid rgba(92,61,30,0.20); background: #fff;
+    font-size: 20px; color: #2d5a27; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cra-jour-fleche:disabled { opacity: 0.35; cursor: default; }
+  #cra-jour-date {
+    flex: 1 1 auto; height: 48px; padding: 0 14px;
+    border: 1px solid rgba(92,61,30,0.20); border-radius: 12px; background: #fff;
+    font-family: 'DM Mono', monospace; font-size: 16px; color: #2d1f0e; text-align: center;
+  }
+  .cra-jour-libelle {
+    text-align: center; font-family: 'Fraunces', serif; font-size: 16px;
+    color: #2d1f0e; margin-bottom: 14px; text-transform: capitalize;
+  }
+  .cra-jour-liste { display: flex; flex-direction: column; gap: 10px; }
+  .cra-jour-carte {
+    border: 1px solid rgba(92,61,30,0.16); border-radius: 14px;
+    background: var(--paper); padding: 14px;
+  }
+  .cra-jour-carte.modifiee { border-color: #e8943a; box-shadow: 0 0 0 2px rgba(232,148,58,0.18); }
+  .cra-jour-carte-tete {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px;
+  }
+  .cra-jour-nom { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 17px; color: #2d1f0e; line-height: 1.2; }
+  .cra-jour-role { font-family: 'DM Mono', monospace; font-size: 11px; color: #8b5e3c; letter-spacing: 0.4px; margin-top: 2px; }
+  .cra-jour-photo {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px;
+    border: 1px solid rgba(92,61,30,0.20); background: #faf6ee; font-size: 18px; cursor: pointer;
+  }
+  .cra-jour-photo.a-photo { background: #4a8c3f; border-color: #4a8c3f; }
+  .cra-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cra-seg-btn {
+    min-height: 52px; border-radius: 10px; border: 1px solid rgba(92,61,30,0.20);
+    background: #faf6ee; color: #5c3d1e; font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.12s;
+  }
+  .cra-seg-btn.actif { color: #fff; }
+  .cra-seg-btn[data-jour-val="0"].actif { background: #e74c3c; border-color: #e74c3c; }
+  .cra-seg-btn[data-jour-val="0.5"].actif { background: #e8943a; border-color: #e8943a; }
+  .cra-seg-btn[data-jour-val="1"].actif { background: #4a8c3f; border-color: #4a8c3f; }
+  .cra-jour-pied {
+    /* collé au-dessus de la barre d'onglets fixe (≈58px + zone sûre) */
+    position: sticky; bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    margin-top: 14px; padding: 12px 0 4px;
+    background: linear-gradient(to top, var(--cream) 72%, transparent);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .cra-jour-resume { text-align: center; font-family: 'DM Mono', monospace; font-size: 13px; color: #5c3d1e; }
+  .cra-jour-vide { padding: 24px; text-align: center; color: #8b5e3c; font-style: italic; }
+  .cra-jour-save {
+    width: 100%; min-height: 52px; border-radius: 12px; border: none;
+    background: #2d5a27; color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 17px; font-weight: 600; cursor: pointer;
+  }
+  .cra-jour-save:disabled { opacity: 0.4; cursor: default; }
   .cra-recap-semaine-table {
     width: 100%; border-collapse: collapse;
   }
@@ -2714,6 +2780,9 @@
       <button class="btn btn-ghost btn-sm" id="cra-prev">◂ Mois préc.</button>
       <button class="btn btn-ghost btn-sm" id="cra-next">Mois suiv. ▸</button>
     </div>
+
+    <!-- Saisie « jour » optimisée mobile (remplace la grille mensuelle sur petit écran) -->
+    <div class="cra-jour-mobile" id="cra-jour-mobile"></div>
 
     <div class="cra-pointage-wrap">
       <table class="cra-pointage-table" id="cra-pointage-table"></table>
@@ -8546,6 +8615,7 @@ state.craMois = new Date().toISOString().slice(0,7);
 state.craUtilisateurs = [];
 state.craSaisies = []; // toutes les saisies du mois, tous salariés confondus
 state.craModifications = {}; // { utilisateurId: { 'YYYY-MM-DD': 0|0.5|1 } }
+state.craJour = new Date().toISOString().slice(0,10); // jour sélectionné (vue mobile)
 // TJM (Taux Journalier Moyen) en XAF, persisté dans localStorage.
 // Valeur unique appliquée à tous les salariés.
 const CLE_TJM = 'cra_tjm_xaf';
@@ -8792,6 +8862,150 @@ async function renderCRA() {
   state.craSaisies = await apiChargerCRA(state.craMois, null);
 
   renderCRAPointageTable();
+  renderCRAJourMobile();
+}
+
+// Garantit que le jour sélectionné (vue mobile) appartient au mois affiché :
+// sinon aujourd'hui s'il y tombe, à défaut le 1er du mois.
+function ajusterJourCRA() {
+  const dansLeMois = state.craJour && state.craJour.slice(0,7) === state.craMois;
+  if (!dansLeMois) {
+    const auj = new Date().toISOString().slice(0,10);
+    state.craJour = (auj.slice(0,7) === state.craMois) ? auj : `${state.craMois}-01`;
+  }
+}
+
+// ─── Vue « jour » mobile : une carte par salarié avec saisie 0 / ½ / 1 ───
+function renderCRAJourMobile() {
+  const wrap = document.getElementById('cra-jour-mobile');
+  if (!wrap) return;
+  ajusterJourCRA();
+  const jour = state.craJour;
+  const [y, m] = state.craMois.split('-').map(Number);
+  const dernier = new Date(y, m, 0).getDate();
+  const jourNum = Number(jour.split('-')[2]);
+  const libJour = new Date(jour + 'T12:00:00Z').toLocaleDateString('fr-FR',
+    { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+  const navHtml = `
+    <div class="cra-jour-nav">
+      <button type="button" class="cra-jour-fleche" id="cra-jour-prec"${jourNum <= 1 ? ' disabled' : ''} aria-label="Jour précédent">◂</button>
+      <input type="date" id="cra-jour-date" value="${jour}" min="${state.craMois}-01" max="${state.craMois}-${String(dernier).padStart(2,'0')}">
+      <button type="button" class="cra-jour-fleche" id="cra-jour-suiv"${jourNum >= dernier ? ' disabled' : ''} aria-label="Jour suivant">▸</button>
+    </div>
+    <div class="cra-jour-libelle">${libJour}</div>`;
+
+  if (!state.craUtilisateurs.length) {
+    wrap.innerHTML = navHtml + `<div class="cra-jour-vide">Aucun salarié inscrit. Utilisez « ＋ Ajouter un salarié ».</div>`;
+    cablerNavJourCRA();
+    return;
+  }
+
+  // Saisies du jour, indexées par salarié
+  const idx = {};
+  for (const s of state.craSaisies) {
+    if (s.date.split('T')[0] === jour) idx[s.utilisateurId] = s;
+  }
+
+  let presents = 0, totalH = 0;
+  const cartes = state.craUtilisateurs.map(u => {
+    const modifs = state.craModifications[u.id] || {};
+    const saisie = idx[u.id];
+    const valeur = (modifs[jour] !== undefined)
+      ? modifs[jour]
+      : (saisie ? heuresEnPresence(saisie.heures) : 0);
+    const modifie = modifs[jour] !== undefined;
+    if (valeur > 0) presents++;
+    totalH += valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
+    const aPhoto = !!(saisie?.photoDebut || saisie?.photoFin);
+    const seg = [{ v: 0, lbl: 'Absent' }, { v: 0.5, lbl: '½ jour' }, { v: 1, lbl: '1 jour' }].map(o =>
+      `<button type="button" class="cra-seg-btn${valeur === o.v ? ' actif' : ''}" data-jour-uid="${u.id}" data-jour-val="${o.v}">${o.lbl}</button>`
+    ).join('');
+    return `<div class="cra-jour-carte${modifie ? ' modifiee' : ''}">
+      <div class="cra-jour-carte-tete">
+        <div>
+          <div class="cra-jour-nom">${escapeHtml(u.prenom + ' ' + u.nom)}</div>
+          <div class="cra-jour-role">${escapeHtml(u.role)}${u.filiere ? ' · ' + escapeHtml(u.filiere) : ''}</div>
+        </div>
+        <button type="button" class="cra-jour-photo${aPhoto ? ' a-photo' : ''}" data-jour-photo="${u.id}" title="Photos preuve" aria-label="Photos preuve">📷</button>
+      </div>
+      <div class="cra-seg">${seg}</div>
+    </div>`;
+  }).join('');
+
+  const pending = Object.values(state.craModifications).reduce((n, o) => n + Object.keys(o).length, 0);
+  wrap.innerHTML = navHtml + `
+    <div class="cra-jour-liste">${cartes}</div>
+    <div class="cra-jour-pied">
+      <div class="cra-jour-resume">${presents}/${state.craUtilisateurs.length} présent(s) · ${totalH} h · ${(totalH/8).toFixed(1)} j</div>
+      <button type="button" class="cra-jour-save" id="cra-jour-enregistrer"${pending ? '' : ' disabled'}>
+        ${pending ? `Enregistrer (${pending} changement${pending > 1 ? 's' : ''})` : 'Enregistré ✓'}
+      </button>
+    </div>`;
+
+  cablerNavJourCRA();
+  // Boutons de présence
+  wrap.querySelectorAll('.cra-seg-btn[data-jour-uid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (bloquerSiConsultatif()) return;
+      const uid = btn.dataset.jourUid;
+      const val = parseFloat(btn.dataset.jourVal);
+      if (!state.craModifications[uid]) state.craModifications[uid] = {};
+      state.craModifications[uid][state.craJour] = val;
+      renderCRAJourMobile();
+    });
+  });
+  // Badge photo par salarié
+  wrap.querySelectorAll('.cra-jour-photo[data-jour-photo]').forEach(b => {
+    b.addEventListener('click', () => ouvrirModalPhotosPreuve(b.dataset.jourPhoto, state.craJour));
+  });
+  // Enregistrer le jour
+  const btnSave = document.getElementById('cra-jour-enregistrer');
+  if (btnSave) btnSave.addEventListener('click', sauverJourMobile);
+}
+
+// Câblage du sélecteur de jour (flèches + champ date) de la vue mobile.
+function cablerNavJourCRA() {
+  const prec = document.getElementById('cra-jour-prec');
+  const suiv = document.getElementById('cra-jour-suiv');
+  const date = document.getElementById('cra-jour-date');
+  if (prec) prec.addEventListener('click', () => decalerJourCRA(-1));
+  if (suiv) suiv.addEventListener('click', () => decalerJourCRA(+1));
+  if (date) date.addEventListener('change', () => {
+    if (date.value && date.value.slice(0,7) === state.craMois) {
+      state.craJour = date.value;
+      renderCRAJourMobile();
+    }
+  });
+}
+
+function decalerJourCRA(delta) {
+  const [y, m, d] = state.craJour.split('-').map(Number);
+  const dernier = new Date(y, m, 0).getDate();
+  const nd = Math.min(dernier, Math.max(1, d + delta));
+  state.craJour = `${state.craMois}-${String(nd).padStart(2,'0')}`;
+  renderCRAJourMobile();
+}
+
+// Enregistre toutes les modifications en attente (tous salariés/jours confondus).
+async function sauverJourMobile() {
+  if (bloquerSiConsultatif()) return;
+  const ids = Object.keys(state.craModifications)
+    .filter(uid => Object.keys(state.craModifications[uid]).length > 0);
+  if (!ids.length) { toast('Aucune modification à enregistrer', ''); return; }
+  try {
+    let total = 0;
+    for (const uid of ids) {
+      const saisies = Object.entries(state.craModifications[uid]).map(([date, presence]) => ({ date, presence }));
+      await apiSauverLot(uid, saisies);
+      total += saisies.length;
+      delete state.craModifications[uid];
+    }
+    toast(`${total} jour(s) enregistré(s)`, 'success');
+    await renderCRA();
+  } catch (e) {
+    toast('Erreur : ' + e.message, 'error');
+  }
 }
 
 function renderCRAPointageTable() {
