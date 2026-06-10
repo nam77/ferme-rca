@@ -2190,6 +2190,154 @@
   }
   .btn-remplir-grand[data-val="0.5"]:hover { background: rgba(232,148,58,0.15); border-color: #e8943a; }
 
+  /* ===== Messagerie (chat d'équipe) ===== */
+  .chat-wrap {
+    display: flex;
+    flex-direction: column;
+    /* Occupe l'espace disponible sous l'en-tête de la vue */
+    height: min(72vh, 720px);
+    background: #fff;
+    border: 1px solid #e3dcc8;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .chat-messages {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f6f3ea;
+  }
+  .chat-empty {
+    margin: auto;
+    color: #8b8470;
+    font-size: 15px;
+    text-align: center;
+  }
+  .chat-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    align-self: flex-start;
+  }
+  .chat-msg.is-moi { align-self: flex-end; }
+  .chat-msg-auteur {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 0 3px 4px;
+    color: #1a6b8a;
+  }
+  .chat-msg.is-moi .chat-msg-auteur { text-align: right; color: #4a8c3f; }
+  .chat-bulle {
+    background: #fff;
+    border: 1px solid #e3dcc8;
+    border-radius: 14px;
+    border-top-left-radius: 4px;
+    padding: 10px 13px;
+    font-size: 16px;
+    line-height: 1.45;
+    color: #2c2417;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .chat-msg.is-moi .chat-bulle {
+    background: #dcf3d4;
+    border-color: #c2e3b3;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 4px;
+  }
+  .chat-msg-heure {
+    font-size: 11px;
+    color: #a39c86;
+    margin: 3px 6px 0;
+  }
+  .chat-msg.is-moi .chat-msg-heure { text-align: right; }
+  .chat-msg-supprimer {
+    background: none; border: none; cursor: pointer;
+    color: #c0392b; font-size: 11px; padding: 0 4px;
+  }
+  /* Pièces jointes dans une bulle */
+  .chat-piece { margin-top: 6px; }
+  .chat-piece:first-child { margin-top: 0; }
+  .chat-piece img {
+    max-width: 240px; max-height: 240px;
+    border-radius: 10px; display: block; cursor: pointer;
+  }
+  .chat-piece video {
+    max-width: 260px; max-height: 260px;
+    border-radius: 10px; display: block; background: #000;
+  }
+  .chat-doc {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #1a6b8a;
+    background: #f0ece0; border: 1px solid #e3dcc8;
+    border-radius: 10px; padding: 10px 12px;
+    min-height: 48px; max-width: 260px;
+  }
+  .chat-doc-ico { font-size: 26px; line-height: 1; }
+  .chat-doc-meta { display: flex; flex-direction: column; min-width: 0; }
+  .chat-doc-nom {
+    font-size: 14px; font-weight: 600; color: #2c2417;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chat-doc-taille { font-size: 12px; color: #8b8470; }
+  /* Aperçu pièce jointe avant envoi */
+  .chat-attach-preview {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; background: #f0ece0;
+    border-top: 1px solid #e3dcc8; font-size: 14px;
+  }
+  .chat-attach-ico { font-size: 20px; }
+  .chat-attach-name {
+    flex: 1 1 auto; min-width: 0; color: #2c2417;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chat-attach-remove {
+    background: none; border: none; cursor: pointer;
+    color: #c0392b; font-size: 18px; padding: 4px 8px;
+  }
+  /* Barre de saisie */
+  .chat-composer {
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 10px; background: #fff;
+    border-top: 1px solid #e3dcc8;
+  }
+  .chat-input {
+    flex: 1 1 auto;
+    resize: none;
+    font-size: 16px;
+    font-family: inherit;
+    line-height: 1.4;
+    padding: 12px 14px;
+    border: 1px solid #d8d0bb;
+    border-radius: 22px;
+    max-height: 140px;
+    color: #2c2417;
+    background: #f9f7f1;
+  }
+  .chat-input:focus { outline: none; border-color: #1a6b8a; background: #fff; }
+  .chat-btn-attach, .chat-btn-send {
+    flex: 0 0 auto;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: none; cursor: pointer;
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chat-btn-attach { background: #f0ece0; color: #6b6b6b; }
+  .chat-btn-attach:hover { background: #e3dcc8; }
+  .chat-btn-send { background: #1a6b8a; color: #fff; }
+  .chat-btn-send:hover { background: #155873; }
+  .chat-btn-send:disabled { opacity: .5; cursor: default; }
+  @media (max-width: 640px) {
+    .chat-wrap { height: calc(100vh - 220px); }
+    .chat-msg { max-width: 88%; }
+  }
+
   /* ===== Déploiement ===== */
   .depl-output {
     margin-top: 10px;
@@ -2597,6 +2745,7 @@
     <button data-view="cheptel"><span class="tab-icon">🐾</span>Élevage</button>
     <button data-view="dashboard"><span class="tab-icon">📊</span>Dashboard</button>
     <button data-view="budget" data-restrict="admin,responsable,ouvrier"><span class="tab-icon">💰</span>Budget et Ventes</button>
+    <button data-view="messagerie" data-restrict="admin,gestionnaire,responsable,ouvrier"><span class="tab-icon">💬</span>Messagerie</button>
     <button data-view="utilisateurs" data-restrict="admin"><span class="tab-icon">👥</span>Utilisateurs</button>
     <button data-view="deploiement" data-restrict="admin"><span class="tab-icon">🚀</span>Déploiement</button>
   </nav>
@@ -3252,6 +3401,38 @@
         </thead>
         <tbody id="utilisateurs-tbody"></tbody>
       </table>
+    </div>
+  </section>
+
+  <!-- ============ MESSAGERIE (équipe connectée) ============ -->
+  <section class="view" id="view-messagerie">
+    <div class="view-head">
+      <div>
+        <h2 class="view-title">💬 Messagerie — <em>canal de l'équipe</em></h2>
+        <p class="view-sub">Échangez avec toute l'équipe et partagez des documents (PDF, Word, Excel), photos et vidéos. Réservé aux personnes connectées.</p>
+      </div>
+    </div>
+
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-messages" aria-live="polite">
+        <div class="chat-empty" id="chat-empty">Chargement des messages…</div>
+      </div>
+
+      <!-- Aperçu de la pièce jointe sélectionnée (avant envoi) -->
+      <div class="chat-attach-preview" id="chat-attach-preview" style="display:none">
+        <span class="chat-attach-ico" id="chat-attach-ico">📎</span>
+        <span class="chat-attach-name" id="chat-attach-name"></span>
+        <button type="button" class="chat-attach-remove" id="chat-attach-remove" aria-label="Retirer la pièce jointe">✕</button>
+      </div>
+
+      <form class="chat-composer" id="chat-composer" autocomplete="off">
+        <input type="file" id="chat-file-input"
+               accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+               style="display:none" />
+        <button type="button" class="chat-btn-attach" id="chat-btn-attach" aria-label="Joindre un fichier" title="Joindre un document, une photo ou une vidéo">📎</button>
+        <textarea id="chat-input" class="chat-input" rows="1" placeholder="Écrire un message…" aria-label="Votre message"></textarea>
+        <button type="submit" class="chat-btn-send" id="chat-btn-send" aria-label="Envoyer le message">➤</button>
+      </form>
     </div>
   </section>
 
@@ -3937,7 +4118,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: true,      // SEUL admin peut supprimer des tâches/activités
     canResetData: true,
-    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra','utilisateurs','deploiement']
+    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra','messagerie','utilisateurs','deploiement']
   },
   gestionnaire: {
     label: 'Gestionnaire', icon: '📋',
@@ -3948,7 +4129,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: false,     // suppression réservée à admin
     canResetData: false,
-    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','ferme','cra']
+    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','ferme','cra','messagerie']
   },
   responsable: {
     label: 'Responsable', icon: '🛠️',
@@ -3959,7 +4140,7 @@ const ROLES = {
     canEditAnyTask: true,
     canDeleteTask: false,     // ne peut PAS supprimer
     canResetData: false,
-    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra']
+    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','budget','ferme','cra','messagerie']
   },
   ouvrier: {
     label: 'Ouvrier', icon: '👷',
@@ -3970,7 +4151,7 @@ const ROLES = {
     canEditAnyTask: true,     // peut mettre à jour le statut/dates des tâches existantes
     canDeleteTask: false,
     canResetData: false,
-    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','ferme','cra']
+    visibleTabs: ['accueil','kanban','activites','cultures','cheptel','dashboard','ferme','cra','messagerie']
   },
   // Rôle virtuel attribué à tout visiteur public non connecté.
   // Toutes les permissions sont à false : Jira public-style.
@@ -4017,6 +4198,8 @@ const MODULES_ACCUEIL = [
     desc:"Indicateurs de progression, échéances, activité récente." },
   { id:'budget',      titre:'Budget & Ventes', icone:'💰', tag:'Finance',    couleur:'#e8943a',
     desc:"Prévu vs réel par phase, chiffre d'affaires des ventes." },
+  { id:'messagerie', titre:'Messagerie',       icone:'💬', tag:'Équipe',     couleur:'#1a6b8a',
+    desc:"Canal d'échange de l'équipe : messages et partage de documents, photos, vidéos." },
   { id:'utilisateurs', titre:'Utilisateurs',   icone:'👥', tag:'Admin',      couleur:'#6b6b6b',
     desc:"Comptes & accès : rôles, activation, réinitialisation des mots de passe." },
   { id:'deploiement', titre:'Déploiement',     icone:'🚀', tag:'Admin',      couleur:'#c0392b',
@@ -4974,6 +5157,7 @@ function setupTabs() {
       if (view === 'cultures') renderCultures();
       if (view === 'cheptel') renderCheptel();
       if (view === 'cra') renderCRA();
+      if (view === 'messagerie') renderMessagerie();
       if (view === 'deploiement') renderDeploiement();
       if (view === 'dashboard') renderDashboard();
       if (view === 'budget') renderBudget();
@@ -7895,6 +8079,282 @@ function setupVentes() {
   });
   const back = document.getElementById('modal-vente');
   if (back) back.addEventListener('click', e => { if (e.target === back) back.classList.remove('show'); });
+}
+
+/* ============ MESSAGERIE (canal d'équipe connectée) ============ */
+let _chatVus = new Set();        // ids déjà affichés (dédoublonnage du polling)
+let _chatDernierISO = null;      // creeLe du dernier message reçu (curseur polling)
+let _chatPoll = null;            // timer setInterval
+let _chatPieceJointe = null;     // pièce jointe sélectionnée et déjà téléversée
+let _chatListenersPrets = false; // listeners attachés une seule fois
+
+const CHAT_INTERVALLE_MS = 5000; // fréquence du rafraîchissement
+
+function chatViewActive() {
+  const v = document.getElementById('view-messagerie');
+  return !!(v && v.classList.contains('active'));
+}
+
+function chatFormatHeure(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const ajd = new Date();
+  const memeJour = d.toDateString() === ajd.toDateString();
+  const heure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  if (memeJour) return heure;
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' ' + heure;
+}
+
+function chatFormatTaille(octets) {
+  if (!octets || octets < 0) return '';
+  if (octets < 1024) return octets + ' o';
+  if (octets < 1024 * 1024) return (octets / 1024).toFixed(0) + ' Ko';
+  return (octets / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+function chatIconeDoc(type, nom) {
+  const t = (type || '').toLowerCase();
+  const n = (nom || '').toLowerCase();
+  if (t === 'application/pdf' || n.endsWith('.pdf')) return '📄';
+  if (t.includes('word') || /\.(doc|docx)$/.test(n)) return '📝';
+  if (t.includes('sheet') || t.includes('excel') || /\.(xls|xlsx|csv)$/.test(n)) return '📊';
+  return '📎';
+}
+
+/* Construit le HTML d'une pièce jointe selon son type. */
+function chatRenduPiece(pj) {
+  if (!pj || !pj.url) return '';
+  const url = urlPhotoComplete(pj.url);
+  const type = (pj.type || '').toLowerCase();
+  if (type.startsWith('image/')) {
+    return `<div class="chat-piece"><img src="${escapeHtml(url)}" alt="${escapeHtml(pj.nom || 'image')}"
+      onclick="window.open('${escapeHtml(url)}','_blank')" /></div>`;
+  }
+  if (type.startsWith('video/')) {
+    return `<div class="chat-piece"><video src="${escapeHtml(url)}" controls preload="metadata"></video></div>`;
+  }
+  // Document (PDF, Word, Excel, CSV) : lien téléchargeable.
+  return `<div class="chat-piece"><a class="chat-doc" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+      <span class="chat-doc-ico">${chatIconeDoc(pj.type, pj.nom)}</span>
+      <span class="chat-doc-meta">
+        <span class="chat-doc-nom">${escapeHtml(pj.nom || 'Document')}</span>
+        <span class="chat-doc-taille">${chatFormatTaille(pj.taille)}</span>
+      </span>
+    </a></div>`;
+}
+
+/* Ajoute un message au fil (en bas). Retourne true si réellement ajouté. */
+function chatAjouterMessage(m) {
+  if (!m || _chatVus.has(m.id)) return false;
+  _chatVus.add(m.id);
+  _chatDernierISO = m.creeLe;
+
+  const moiId = state.user && state.user.id;
+  const estMoi = moiId && m.auteur && m.auteur.id === moiId;
+  const estAdmin = state.user && state.user.role === 'admin';
+  const peutSupprimer = estMoi || estAdmin;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-msg' + (estMoi ? ' is-moi' : '');
+  wrap.dataset.id = m.id;
+
+  const nomAuteur = m.auteur ? `${m.auteur.prenom || ''} ${m.auteur.nom || ''}`.trim() : 'Inconnu';
+  const piece = m.pieceJointe ? chatRenduPiece(m.pieceJointe) : '';
+  const texte = m.contenu ? escapeHtml(m.contenu) : '';
+  const corps = (piece || texte)
+    ? `<div class="chat-bulle">${piece}${texte}</div>`
+    : '';
+
+  wrap.innerHTML =
+    (estMoi ? '' : `<div class="chat-msg-auteur">${escapeHtml(nomAuteur)}</div>`) +
+    corps +
+    `<div class="chat-msg-heure">${chatFormatHeure(m.creeLe)}` +
+      (peutSupprimer ? ` · <button type="button" class="chat-msg-supprimer" data-suppr="${m.id}">Supprimer</button>` : '') +
+    `</div>`;
+
+  const liste = document.getElementById('chat-messages');
+  liste.appendChild(wrap);
+  return true;
+}
+
+/* Charge les messages : premier appel = 100 derniers, ensuite = incrémental. */
+async function chatCharger(initial) {
+  try {
+    const chemin = (initial || !_chatDernierISO)
+      ? '/chat/messages'
+      : '/chat/messages?apres=' + encodeURIComponent(_chatDernierISO);
+    const r = await apiFetch('GET', chemin);
+    const messages = (r && r.donnees) || [];
+
+    const liste = document.getElementById('chat-messages');
+    const empty = document.getElementById('chat-empty');
+    // Auto-scroll seulement si l'utilisateur est déjà près du bas.
+    const presDuBas = liste.scrollHeight - liste.scrollTop - liste.clientHeight < 120;
+
+    let ajout = 0;
+    messages.forEach(m => { if (chatAjouterMessage(m)) ajout++; });
+
+    if (_chatVus.size === 0) {
+      if (empty) { empty.style.display = ''; empty.textContent = 'Aucun message pour l’instant. Lancez la conversation !'; }
+    } else if (empty) {
+      empty.style.display = 'none';
+    }
+    if (ajout > 0 && (initial || presDuBas)) {
+      liste.scrollTop = liste.scrollHeight;
+    }
+  } catch (e) {
+    console.warn('[chat] chargement', e.message);
+    const empty = document.getElementById('chat-empty');
+    if (_chatVus.size === 0 && empty) {
+      empty.style.display = '';
+      empty.textContent = 'Connexion à la messagerie impossible.';
+    }
+  }
+}
+
+/* Téléverse le fichier choisi puis l'affiche en aperçu (prêt à envoyer). */
+async function chatTeleverser(fichier) {
+  if (!fichier) return;
+  if (fichier.size > 50 * 1024 * 1024) {
+    toast('Fichier trop volumineux (50 Mo max)', 'error');
+    return;
+  }
+  const btn = document.getElementById('chat-btn-attach');
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const fd = new FormData();
+    fd.append('fichier', fichier);
+    const opts = { method: 'POST', body: fd, headers: {} };
+    if (API_JETON) opts.headers['Authorization'] = 'Bearer ' + API_JETON;
+    const r = await fetch(API_BASE + '/chat/televersement', opts);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.succes) {
+      throw new Error(data.message || 'Téléversement refusé');
+    }
+    _chatPieceJointe = data.donnees;
+    chatAfficherApercu();
+  } catch (e) {
+    toast(e.message || 'Échec du téléversement', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '📎';
+  }
+}
+
+function chatAfficherApercu() {
+  const zone = document.getElementById('chat-attach-preview');
+  if (!_chatPieceJointe) { zone.style.display = 'none'; return; }
+  document.getElementById('chat-attach-ico').textContent =
+    (_chatPieceJointe.type || '').startsWith('image/') ? '🖼️'
+    : (_chatPieceJointe.type || '').startsWith('video/') ? '🎬'
+    : chatIconeDoc(_chatPieceJointe.type, _chatPieceJointe.nom);
+  document.getElementById('chat-attach-name').textContent =
+    (_chatPieceJointe.nom || 'fichier') + ' · ' + chatFormatTaille(_chatPieceJointe.taille);
+  zone.style.display = '';
+}
+
+function chatRetirerPiece() {
+  _chatPieceJointe = null;
+  document.getElementById('chat-attach-preview').style.display = 'none';
+  document.getElementById('chat-file-input').value = '';
+}
+
+async function chatEnvoyer() {
+  const input = document.getElementById('chat-input');
+  const texte = (input.value || '').trim();
+  if (!texte && !_chatPieceJointe) return;
+
+  const btn = document.getElementById('chat-btn-send');
+  btn.disabled = true;
+  try {
+    const r = await apiFetch('POST', '/chat/messages', {
+      contenu: texte || null,
+      pieceJointe: _chatPieceJointe || null,
+    });
+    // Afficher immédiatement le message renvoyé par le serveur.
+    if (r && r.donnees) {
+      const empty = document.getElementById('chat-empty');
+      if (empty) empty.style.display = 'none';
+      if (chatAjouterMessage(r.donnees)) {
+        const liste = document.getElementById('chat-messages');
+        liste.scrollTop = liste.scrollHeight;
+      }
+    }
+    input.value = '';
+    input.style.height = 'auto';
+    chatRetirerPiece();
+  } catch (e) {
+    toast('Envoi impossible : ' + (e.message || ''), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function chatSupprimer(id) {
+  const ok = await confirmAction('Supprimer ce message ?', 'Messagerie');
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/chat/messages/' + encodeURIComponent(id));
+    const el = document.querySelector(`.chat-msg[data-id="${id}"]`);
+    if (el) el.remove();
+    _chatVus.delete(id);
+    toast('Message supprimé', 'success');
+  } catch (e) {
+    toast('Suppression impossible', 'error');
+  }
+}
+
+function chatInitListeners() {
+  if (_chatListenersPrets) return;
+  _chatListenersPrets = true;
+
+  const form = document.getElementById('chat-composer');
+  const input = document.getElementById('chat-input');
+  const fileInput = document.getElementById('chat-file-input');
+
+  form.addEventListener('submit', (e) => { e.preventDefault(); chatEnvoyer(); });
+
+  // Entrée = envoyer, Maj+Entrée = nouvelle ligne.
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatEnvoyer(); }
+  });
+  // Auto-agrandissement de la zone de texte.
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  });
+
+  document.getElementById('chat-btn-attach').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) chatTeleverser(fileInput.files[0]);
+  });
+  document.getElementById('chat-attach-remove').addEventListener('click', chatRetirerPiece);
+
+  // Suppression d'un message (délégation d'événement).
+  document.getElementById('chat-messages').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-suppr]');
+    if (b) chatSupprimer(b.dataset.suppr);
+  });
+}
+
+async function renderMessagerie() {
+  if (!state.user) return; // sécurité : réservé aux connectés
+  chatInitListeners();
+
+  // Réinitialise le fil à chaque ouverture pour repartir propre.
+  _chatVus = new Set();
+  _chatDernierISO = null;
+  const liste = document.getElementById('chat-messages');
+  liste.innerHTML = '<div class="chat-empty" id="chat-empty">Chargement des messages…</div>';
+
+  await chatCharger(true);
+
+  // Polling : ne tourne que tant que la vue est active.
+  if (_chatPoll) clearInterval(_chatPoll);
+  _chatPoll = setInterval(() => {
+    if (!chatViewActive()) { clearInterval(_chatPoll); _chatPoll = null; return; }
+    if (!state.user) { clearInterval(_chatPoll); _chatPoll = null; return; }
+    chatCharger(false);
+  }, CHAT_INTERVALLE_MS);
 }
 
 /* ============ DÉPLOIEMENT (admin uniquement) ============ */

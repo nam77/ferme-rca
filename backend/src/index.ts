@@ -15,6 +15,7 @@ import { routeurCRA } from './routes/cra.js'
 import { routeurVentes } from './routes/ventes.js'
 import { routeurDeploiement } from './routes/deploiement.js'
 import { routeurAdminDeploy } from './routes/admin-deploy.js'
+import { routeurChat } from './routes/chat.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
@@ -74,6 +75,7 @@ app.use('/api/zones', routeurZones)
 app.use('/api/lots', routeurLots)
 app.use('/api/parcelles', routeurParcelles)
 app.use('/api/cra', routeurCRA)
+app.use('/api/chat', routeurChat)
 app.use('/api/ventes', routeurVentes)
 app.use('/api/deploiement', routeurDeploiement)
 // Nouveau pipeline de déploiement automatisé (script whitelisté + SSE).

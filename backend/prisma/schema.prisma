@@ -183,6 +183,7 @@ model Utilisateur {
   saisiesCRA             SaisieJourCRA[]
   saisiesCRASupervisees  SaisieJourCRA[]    @relation("ResponsableCRA")
   ventesEnregistrees     Vente[]            @relation("EnregistreurVente")
+  messagesEquipe         MessageEquipe[]    @relation("AuteurMessageEquipe")
 }
 
 model Tache {
@@ -455,4 +456,24 @@ model Mouvement {
   auteur       Utilisateur @relation(fields: [auteurId], references: [id])
 
   @@index([tacheId])
+}
+
+// Messagerie d'équipe : un canal unique partagé par tous les utilisateurs
+// connectés. Chaque message porte un texte optionnel et/ou une pièce jointe
+// (PDF, Word, Excel, photo, vidéo) stockée dans backend/uploads/chat/.
+model MessageEquipe {
+  id              String   @id @default(cuid())
+  contenu         String?  // texte du message (optionnel si pièce jointe seule)
+  creeLe          DateTime @default(now())
+
+  // Pièce jointe optionnelle (un fichier par message).
+  pieceJointeUrl    String?  // URL relative servie via /uploads/chat/...
+  pieceJointeNom    String?  // nom d'origine affiché à l'utilisateur
+  pieceJointeType   String?  // type MIME (image/*, video/*, application/pdf, ...)
+  pieceJointeTaille Int?     // taille en octets
+
+  auteurId String
+  auteur   Utilisateur @relation("AuteurMessageEquipe", fields: [auteurId], references: [id], onDelete: Cascade)
+
+  @@index([creeLe])
 }
