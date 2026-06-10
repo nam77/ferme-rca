@@ -68,6 +68,17 @@ const PRINCIPAUX: Destination[] = [
     prefixes: ['/cheptel'],
     couleur: COULEURS_TOKEN.porcins,
   },
+  {
+    cle: 'messagerie',
+    libelle: 'Messagerie',
+    route: '/messagerie',
+    icone: 'chatbubbles-outline',
+    iconeActif: 'chatbubbles',
+    prefixes: ['/messagerie'],
+    couleur: COULEURS_TOKEN.water,
+    // Canal d'équipe : tout le monde sauf l'investisseur (lecture seule).
+    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
+  },
 ]
 
 // Le reste, accessible via « ⋯ » dans une feuille.
@@ -119,17 +130,6 @@ const SECONDAIRES: Destination[] = [
     rolesAutorises: ['admin'],
   },
   {
-    cle: 'messagerie',
-    libelle: 'Messagerie',
-    route: '/messagerie',
-    icone: 'chatbubbles-outline',
-    iconeActif: 'chatbubbles',
-    prefixes: ['/messagerie'],
-    couleur: COULEURS_TOKEN.water,
-    // Canal d'équipe : tout le monde sauf l'investisseur (lecture seule).
-    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
-  },
-  {
     cle: 'deploiement',
     libelle: 'Déploiement',
     route: '/deploiement',
@@ -154,11 +154,14 @@ export const BarreNavigation = () => {
     return dest.prefixes.some((p) => pathname.startsWith(p))
   }
 
-  const secondairesVisibles = SECONDAIRES.filter((dest) => {
+  const estVisible = (dest: Destination): boolean => {
     if (!dest.rolesAutorises) return true
     if (!utilisateur) return false
     return dest.rolesAutorises.includes(utilisateur.role as RoleAutorise)
-  })
+  }
+
+  const principauxVisibles = PRINCIPAUX.filter(estVisible)
+  const secondairesVisibles = SECONDAIRES.filter(estVisible)
 
   const plusActif = secondairesVisibles.some((dest) => estActif(dest))
 
@@ -175,7 +178,7 @@ export const BarreNavigation = () => {
         end={{ x: 1, y: 1 }}
         style={styles.pilule}
       >
-        {PRINCIPAUX.map((dest) => {
+        {principauxVisibles.map((dest) => {
           const actif = estActif(dest)
           return (
             <Pressable
