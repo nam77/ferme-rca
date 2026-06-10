@@ -8,7 +8,7 @@ import Animated, { FadeIn } from 'react-native-reanimated'
 import { useAuthStore } from '../../store/authStore'
 import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../../constants/theme'
 
-type RoleAutorise = 'admin' | 'responsable' | 'ouvrier' | 'investisseur'
+type RoleAutorise = 'admin' | 'gestionnaire' | 'responsable' | 'ouvrier' | 'investisseur'
 
 type Destination = {
   cle: string
@@ -117,6 +117,17 @@ const SECONDAIRES: Destination[] = [
     prefixes: ['/utilisateurs'],
     couleur: COULEURS_TOKEN.infrastructure,
     rolesAutorises: ['admin'],
+  },
+  {
+    cle: 'messagerie',
+    libelle: 'Messagerie',
+    route: '/messagerie',
+    icone: 'chatbubbles-outline',
+    iconeActif: 'chatbubbles',
+    prefixes: ['/messagerie'],
+    couleur: COULEURS_TOKEN.water,
+    // Canal d'équipe : tout le monde sauf l'investisseur (lecture seule).
+    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
   },
   {
     cle: 'deploiement',

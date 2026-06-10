@@ -72,6 +72,7 @@ export default function LayoutRoot() {
               <Stack.Screen name="cheptel" />
               <Stack.Screen name="cra" />
               <Stack.Screen name="utilisateurs" />
+              <Stack.Screen name="messagerie" />
               <Stack.Screen name="deploiement" />
             </Stack>
           </View>

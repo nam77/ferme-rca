@@ -2492,6 +2492,22 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Tesseract.js : OCR navigateur pour lire la pièce d'identité (prénom/nom) -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<!-- Mode embarqué (?embed=1, iframe/WebView React Native) : on masque le header
+     (logo + barre d'onglets + user-pill) DÈS le parse, avant tout appel API, pour
+     éviter le « flash » du menu qui apparaît puis disparaît à la fin de init(). -->
+<style id="embed-precoce">
+  html.embed header.app-header{display:none !important}
+  html.embed body{background:transparent !important}
+  html.embed main{padding-top:0 !important}
+  html.embed #bandeau-consultatif{display:none !important}
+</style>
+<script>
+  try {
+    if (new URLSearchParams(location.search).get('embed') === '1') {
+      document.documentElement.classList.add('embed');
+    }
+  } catch (e) { void e; }
+</script>
 </head>
 <body>
 
@@ -11033,18 +11049,13 @@ async function init() {
       const target = document.querySelector('nav.tabs button[data-view="' + requestedView + '"]');
       if (target) target.click();
     }
-    // Mode embarqué (?embed=1) : masquer le header (logo + nav + user-pill)
-    // pour ne pas faire doublon avec la BarreNavigation React Native.
+    // Mode embarqué (?embed=1) : le header (logo + nav + user-pill) est déjà
+    // masqué dès le parse via la classe html.embed (style #embed-precoce), ce qui
+    // évite le « flash » du menu. On s'assure juste que la classe est bien posée
+    // (robustesse si le script précoce a échoué) pour ne pas faire doublon avec
+    // la BarreNavigation React Native.
     if (params.get('embed') === '1') {
-      const header = document.querySelector('header');
-      if (header) header.style.display = 'none';
-      document.body.style.background = 'transparent';
-      const main = document.querySelector('main');
-      if (main) main.style.paddingTop = '0';
-      // En mode embarqué, le bandeau "Mode consultation" n'a pas de sens :
-      // l'utilisateur est déjà authentifié via le wrapper natif.
-      const bandeau = document.getElementById('bandeau-consultatif');
-      if (bandeau) bandeau.style.display = 'none';
+      document.documentElement.classList.add('embed');
     }
   } catch (e) {
     void e;

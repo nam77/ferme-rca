@@ -21,6 +21,7 @@ type Props = {
     | 'kanban' | 'cultures' | 'cheptel'
     | 'dashboard' | 'budget' | 'ferme' | 'cra' | 'deploiement'
     | 'utilisateurs'
+    | 'messagerie'
     | 'projet'
   titreFallback: string
 }
