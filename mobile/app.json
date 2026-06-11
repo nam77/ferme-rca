@@ -49,6 +49,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1d389f99-be98-41cc-8b36-c7b122e7b4c2"
+      }
+    },
+    "owner": "oksar"
   }
 }
