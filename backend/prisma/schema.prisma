@@ -184,6 +184,7 @@ model Utilisateur {
   saisiesCRASupervisees  SaisieJourCRA[]    @relation("ResponsableCRA")
   ventesEnregistrees     Vente[]            @relation("EnregistreurVente")
   messagesEquipe         MessageEquipe[]    @relation("AuteurMessageEquipe")
+  jetonsPush             JetonPush[]        @relation("JetonsPushUtilisateur")
 }
 
 model Tache {
@@ -476,4 +477,21 @@ model MessageEquipe {
   auteur   Utilisateur @relation("AuteurMessageEquipe", fields: [auteurId], references: [id], onDelete: Cascade)
 
   @@index([creeLe])
+}
+
+// Jeton de notification push (Expo) d'un appareil rattaché à un utilisateur.
+// Un utilisateur peut posséder plusieurs jetons (un par appareil/installation).
+// Le jeton est unique : un même appareil ne réenregistre pas de doublon, et
+// s'il change de compte le jeton est réattribué (upsert sur `jeton`).
+model JetonPush {
+  id            String   @id @default(cuid())
+  jeton         String   @unique // ExpoPushToken[...] renvoyé par expo-notifications
+  plateforme    String?  // ios | android | web (indicatif)
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+
+  utilisateurId String
+  utilisateur   Utilisateur @relation("JetonsPushUtilisateur", fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([utilisateurId])
 }

@@ -8,6 +8,7 @@ import {
   sInscrire,
   type DonneesInscription,
 } from '../api/auth.api'
+import { CLE_JETON_PUSH, supprimerJetonPush } from '../api/notifications.api'
 import type { Utilisateur } from '../types/auth.types'
 
 const CLE_UTILISATEUR = 'ferme_rca_utilisateur'
@@ -98,6 +99,14 @@ export const useAuthStore = create<EtatAuth>((set) => ({
   },
 
   deconnexion: async () => {
+    // Désenregistrer le jeton push AVANT d'effacer le JWT (la route l'exige).
+    try {
+      const jetonPush = await AsyncStorage.getItem(CLE_JETON_PUSH)
+      if (jetonPush) await supprimerJetonPush(jetonPush)
+    } catch {
+      // best-effort : on déconnecte même si la suppression échoue.
+    }
+    await AsyncStorage.removeItem(CLE_JETON_PUSH)
     await AsyncStorage.removeItem(CLE_JETON)
     await AsyncStorage.removeItem(CLE_UTILISATEUR)
     set({ utilisateur: null, jeton: null, erreur: null })

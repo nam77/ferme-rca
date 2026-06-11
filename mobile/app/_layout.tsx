@@ -12,6 +12,7 @@ import { BandeauReseau } from '@src/components/BandeauReseau'
 import { IntroAnimee } from '@src/components/IntroAnimee'
 import { BarreNavigation } from '@src/components/ui'
 import { usePolices } from '@src/hooks/usePolices'
+import { usePush } from '@src/hooks/usePush'
 
 export default function LayoutRoot() {
   const initialiser = useAuthStore((s) => s.initialiser)
@@ -20,6 +21,8 @@ export default function LayoutRoot() {
   const router = useRouter()
   const segments = useSegments()
   const policesPretes = usePolices()
+  // Notifications push : enregistrement à la connexion + ouverture messagerie au tap.
+  usePush()
   // Intro animée (champ préparé -> pluie -> semis -> cultures) jouée une fois au lancement.
   const [introVisible, setIntroVisible] = useState(true)
 

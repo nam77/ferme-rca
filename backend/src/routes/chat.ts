@@ -7,6 +7,7 @@ import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { prisma } from '../lib/prisma.js'
 import { verifierAuth } from '../middleware/auth.js'
+import { envoyerPushNouveauMessage } from '../lib/push.js'
 
 export const routeurChat = Router()
 
@@ -196,6 +197,20 @@ routeurChat.post('/messages', async (req: Request, res: Response) => {
       include: { auteur: { select: selectionAuteur } },
     })
     res.status(201).json({ succes: true, donnees: formaterMessage(message) })
+
+    // Notification push aux coéquipiers (best-effort, hors du chemin de réponse).
+    const apercu = texte
+      ? texte.length > 140 ? `${texte.slice(0, 137)}…` : texte
+      : pieceJointe?.type?.startsWith('image/')
+        ? '📷 Photo'
+        : pieceJointe?.type?.startsWith('video/')
+          ? '🎬 Vidéo'
+          : '📎 Pièce jointe'
+    void envoyerPushNouveauMessage({
+      auteurId: message.auteur.id,
+      auteurNom: `${message.auteur.prenom} ${message.auteur.nom}`.trim() || 'Équipe',
+      apercu,
+    })
   } catch (erreur) {
     console.error('Erreur POST /chat/messages:', erreur)
     res.status(500).json({ succes: false, message: 'Erreur serveur' })
