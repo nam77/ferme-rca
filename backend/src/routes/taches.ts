@@ -34,7 +34,21 @@ const inclureRelations = {
   createur: { select: { id: true, prenom: true, nom: true } },
   zone: { select: { id: true, nom: true } },
   sousTaches: { orderBy: { ordre: 'asc' as const } },
+  operations: { orderBy: { date: 'asc' as const } },
 } as const
+
+// Recalcule le montantDepense d'une tâche = somme des montants de ses
+// opérations. Appelé après chaque mutation d'opération. Le montantReel de la
+// ligne budgétaire est lui recalculé à la volée par GET /budget.
+async function recalculerDepense(tacheId: string): Promise<number> {
+  const agg = await prisma.operationTache.aggregate({
+    where: { tacheId },
+    _sum: { montant: true },
+  })
+  const total = Number(agg._sum.montant ?? 0)
+  await prisma.tache.update({ where: { id: tacheId }, data: { montantDepense: total } })
+  return total
+}
 
 // Mode consultatif : GET ouvert au public anonyme,
 // mutations bloquées (401) sans authentification.
@@ -270,6 +284,56 @@ routeurTaches.delete('/:id/sous-taches/:sousId', async (req: Request, res: Respo
     res.json({ succes: true, message: 'Sous-tâche supprimée' })
   } catch (erreur) {
     console.error('Erreur DELETE sous-tache:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+// ──────────────── Opérations de dépense (consommation budget) ────────────────
+
+const schemaOperationCreation = z.object({
+  libelle: z.string().min(1).max(200),
+  montant: z.number().nonnegative().max(999_999_999.99),
+})
+
+routeurTaches.post('/:id/operations', async (req: Request, res: Response) => {
+  const parsed = schemaOperationCreation.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ succes: false, message: 'Données invalides' })
+    return
+  }
+  try {
+    const tache = await prisma.tache.findUnique({ where: { id: req.params.id }, select: { id: true } })
+    if (!tache) {
+      res.status(404).json({ succes: false, message: 'Tâche introuvable' })
+      return
+    }
+    const operation = await prisma.operationTache.create({
+      data: {
+        tacheId: req.params.id,
+        libelle: parsed.data.libelle,
+        montant: parsed.data.montant,
+      },
+    })
+    const montantDepense = await recalculerDepense(req.params.id)
+    res.status(201).json({ succes: true, donnees: { operation, montantDepense } })
+  } catch (erreur) {
+    console.error('Erreur POST operation:', erreur)
+    res.status(500).json({ succes: false, message: 'Erreur serveur' })
+  }
+})
+
+routeurTaches.delete('/:id/operations/:opId', async (req: Request, res: Response) => {
+  try {
+    const operation = await prisma.operationTache.findUnique({ where: { id: req.params.opId } })
+    if (!operation || operation.tacheId !== req.params.id) {
+      res.status(404).json({ succes: false, message: 'Opération introuvable' })
+      return
+    }
+    await prisma.operationTache.delete({ where: { id: req.params.opId } })
+    const montantDepense = await recalculerDepense(req.params.id)
+    res.json({ succes: true, donnees: { montantDepense } })
+  } catch (erreur) {
+    console.error('Erreur DELETE operation:', erreur)
     res.status(500).json({ succes: false, message: 'Erreur serveur' })
   }
 })

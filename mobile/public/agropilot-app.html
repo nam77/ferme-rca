@@ -463,6 +463,25 @@
   }
   .task-budget .tb-neg .tb-val{color:var(--red)}
 
+  /* Opérations de dépense dans le modal tâche */
+  .operations-liste{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:4px}
+  .operations-liste:empty{display:none}
+  .operations-liste li{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 8px;border:1px solid var(--border);border-radius:6px;
+    background:rgba(201,169,110,0.06);font-size:13px;
+  }
+  .operations-liste .op-libelle{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .operations-liste .op-montant{font-family:var(--mono);font-weight:600;color:var(--soil);white-space:nowrap}
+  .operations-liste .op-del{
+    border:0;background:transparent;color:var(--red);cursor:pointer;
+    font-size:14px;padding:0 2px;line-height:1;
+  }
+  .operations-ajout{display:flex;gap:6px;align-items:center}
+  .operations-ajout #f-op-libelle{flex:1;min-width:0}
+  .operations-ajout #f-op-montant{width:110px;flex:none}
+  .operations-hint{font-size:12px;color:var(--clay);font-style:italic;padding:4px 0}
+
   .col-add{
     width:100%;background:transparent;border:1.5px dashed var(--border);
     color:var(--clay);padding:9px;border-radius:8px;font-size:12.5px;
@@ -3587,8 +3606,20 @@
           <input type="number" id="f-budget" min="0" step="500" placeholder="Ex: 50000">
         </div>
         <div class="form-group">
-          <label>Dépense (XAF) — <span class="hint">Compte dans le réel du budget parent</span></label>
-          <input type="number" id="f-depense" min="0" step="500" placeholder="Ex: 12500">
+          <label>Dépensé (XAF) — <span class="hint">Total des opérations (auto)</span></label>
+          <input type="number" id="f-depense" min="0" step="500" placeholder="0" readonly>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Opérations — <span class="hint">Détail des dépenses qui consomment le budget</span></label>
+        <ul id="f-operations-liste" class="operations-liste"></ul>
+        <div id="f-operations-ajout" class="operations-ajout">
+          <input type="text" id="f-op-libelle" placeholder="Libellé (ex: Achat ciment)" maxlength="200">
+          <input type="number" id="f-op-montant" min="0" step="500" placeholder="Coût XAF">
+          <button type="button" class="btn btn-ghost" id="f-op-add">+ Ajouter</button>
+        </div>
+        <div id="f-operations-hint" class="operations-hint" style="display:none">
+          Enregistrez d'abord la tâche pour pouvoir ajouter des opérations.
         </div>
       </div>
     </div>
@@ -3688,6 +3719,30 @@
     <div class="modal-foot">
       <button class="btn btn-ghost" data-close-modal>Annuler</button>
       <button class="btn btn-primary" id="reset-mdp-save">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ÉDITER LE NOM D'UN UTILISATEUR (admin) ===== -->
+<div class="modal-backdrop" id="modal-edit-nom">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head">
+      <h2 id="edit-nom-titre">Modifier le nom</h2>
+      <button class="modal-close" data-close-modal>×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" id="edit-nom-prenom" placeholder="Prénom" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="edit-nom-nom" placeholder="Nom" autocomplete="off">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close-modal>Annuler</button>
+      <button class="btn btn-primary" id="edit-nom-save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -4886,6 +4941,9 @@ function tacheApiVersHtml(t) {
     budget: t.montantBudget != null ? Number(t.montantBudget) : null,
     depense: t.montantDepense != null ? Number(t.montantDepense) : null,
     budgetLigne: t.budgetLigneId || null,
+    operations: (t.operations || []).map(o => ({
+      id: o.id, libelle: o.libelle, montant: Number(o.montant), date: o.date,
+    })),
     _apiId: t.id,
   };
 }
@@ -6062,6 +6120,7 @@ function setupTaskModal() {
 
   document.getElementById('btn-new-task').addEventListener('click', () => openTaskModal(null));
   document.getElementById('f-save').addEventListener('click', saveTaskFromModal);
+  document.getElementById('f-op-add').addEventListener('click', ajouterOperationModal);
 
   // close handlers (tous les modals)
   document.querySelectorAll('[data-close-modal]').forEach(b => {
@@ -6141,6 +6200,7 @@ function openTaskModal(id, defaultStatut) {
   populateBudgetLigneSelect(t ? (t.budgetLigne || '') : '');
   // Remplir le select catégorie filtré par la filière, et sélectionner la valeur courante
   populateCategorieSelect(filiere, t ? (t.categorie || '') : '');
+  renderOperationsModal(t);
   document.getElementById('modal-task').classList.add('show');
   setTimeout(() => document.getElementById('f-titre').focus(), 100);
 }
@@ -6191,6 +6251,72 @@ function refreshAfterTaskChange() {
   if (typeof renderBudget === 'function') renderBudget();
 }
 
+/* ===== OPÉRATIONS DE DÉPENSE (consomment le budget) ===== */
+// Rend la liste des opérations dans le modal tâche, met le total dans f-depense,
+// et active l'ajout seulement si la tâche est déjà enregistrée côté API (_apiId).
+function renderOperationsModal(t) {
+  const liste = document.getElementById('f-operations-liste');
+  const ajout = document.getElementById('f-operations-ajout');
+  const hint  = document.getElementById('f-operations-hint');
+  if (!liste) return;
+  const ops = (t && t.operations) || [];
+  liste.innerHTML = ops.map(o => `
+    <li>
+      <span class="op-libelle">${escapeHtml(o.libelle)}</span>
+      <span class="op-montant">${fmtFCFA(Number(o.montant) || 0)}</span>
+      <button type="button" class="op-del" data-op-del="${o.id}" title="Supprimer l'opération">✕</button>
+    </li>`).join('');
+  liste.querySelectorAll('[data-op-del]').forEach(b => {
+    b.addEventListener('click', () => supprimerOperationModal(b.dataset.opDel));
+  });
+  // Le dépensé reflète la somme des opérations dès qu'il y en a.
+  const apiPret = !!(t && t._apiId);
+  if (apiPret && ops.length) {
+    const total = ops.reduce((s, o) => s + (Number(o.montant) || 0), 0);
+    document.getElementById('f-depense').value = total;
+  }
+  ajout.style.display = apiPret ? 'flex' : 'none';
+  hint.style.display  = apiPret ? 'none' : 'block';
+}
+
+async function ajouterOperationModal() {
+  const t = state.taches.find(x => x.id === state.editingTaskId);
+  if (!t || !t._apiId) { toast('Enregistrez d\'abord la tâche', 'error'); return; }
+  const libelle = document.getElementById('f-op-libelle').value.trim();
+  const montant = Number(document.getElementById('f-op-montant').value);
+  if (!libelle) { toast('Libellé de l\'opération requis', 'error'); return; }
+  if (!isFinite(montant) || montant < 0) { toast('Montant invalide', 'error'); return; }
+  try {
+    const r = await apiFetch('POST', '/taches/' + t._apiId + '/operations', { libelle, montant });
+    const op = r.donnees.operation;
+    t.operations = t.operations || [];
+    t.operations.push({ id: op.id, libelle: op.libelle, montant: Number(op.montant), date: op.date });
+    t.depense = Number(r.donnees.montantDepense);
+    document.getElementById('f-op-libelle').value = '';
+    document.getElementById('f-op-montant').value = '';
+    renderOperationsModal(t);
+    await saveTaches();
+    refreshAfterTaskChange();
+    toast('Opération ajoutée', 'success');
+  } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }
+}
+
+async function supprimerOperationModal(opId) {
+  const t = state.taches.find(x => x.id === state.editingTaskId);
+  if (!t || !t._apiId) return;
+  const ok = await confirmAction('Supprimer cette opération ?', 'Supprimer l\'opération');
+  if (!ok) return;
+  try {
+    const r = await apiFetch('DELETE', '/taches/' + t._apiId + '/operations/' + opId);
+    t.operations = (t.operations || []).filter(o => o.id !== opId);
+    t.depense = Number(r.donnees.montantDepense);
+    renderOperationsModal(t);
+    await saveTaches();
+    refreshAfterTaskChange();
+    toast('Opération supprimée', 'success');
+  } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }
+}
+
 async function duplicateTache(id) {
   if (!requirePermission('canCreateTask', 'Vous n\'avez pas l\'autorisation de créer une tâche')) return;
   const src = state.taches.find(t => t.id === id);
@@ -6233,6 +6359,8 @@ function setupUtilisateurs() {
   if (s) s.addEventListener('click', creerUtilisateur);
   const rs = document.getElementById('reset-mdp-save');
   if (rs) rs.addEventListener('click', sauverResetMdpUtilisateur);
+  const en = document.getElementById('edit-nom-save');
+  if (en) en.addEventListener('click', sauverEditNomUtilisateur);
   const cni = document.getElementById('u-cni-input');
   if (cni) cni.addEventListener('change', () => scannerPieceIdentite({
     cle: 'u', input: 'u-cni-input', statut: 'u-cni-statut', preview: 'u-cni-preview',
@@ -6279,8 +6407,10 @@ async function renderUtilisateurs() {
       <td class="actions-col">
         <div class="row-actions">
           ${u.photoPieceIdentite ? `<a class="row-act" href="${escapeHtml(urlPhotoComplete(u.photoPieceIdentite))}" target="_blank" rel="noopener" title="Voir la pièce d'identité" style="text-decoration:none">🪪</a>` : ''}
+          <button class="row-act" data-edit-uid="${u.id}" data-prenom="${escapeHtml(u.prenom)}" data-nom="${escapeHtml(u.nom)}" title="Modifier le nom">✏️</button>
           <button class="row-act" data-reset-uid="${u.id}" data-email="${escapeHtml(u.email)}" title="Réinitialiser le mot de passe">🔑</button>
           <button class="row-act" data-toggle-uid="${u.id}" data-actif="${u.actif}" title="${u.actif ? 'Désactiver' : 'Activer'}">${u.actif ? '🚫' : '✅'}</button>
+          <button class="row-act" data-del-uid="${u.id}" data-nom="${escapeHtml(u.prenom)} ${escapeHtml(u.nom)}" title="Supprimer le compte">🗑️</button>
         </div>
       </td>
     </tr>`).join('');
@@ -6292,6 +6422,12 @@ async function renderUtilisateurs() {
   });
   tbody.querySelectorAll('[data-toggle-uid]').forEach(b => {
     b.addEventListener('click', () => basculerActifUtilisateur(b.dataset.toggleUid, b.dataset.actif !== 'true'));
+  });
+  tbody.querySelectorAll('[data-edit-uid]').forEach(b => {
+    b.addEventListener('click', () => ouvrirEditNomUtilisateur(b.dataset.editUid, b.dataset.prenom, b.dataset.nom));
+  });
+  tbody.querySelectorAll('[data-del-uid]').forEach(b => {
+    b.addEventListener('click', () => supprimerUtilisateur(b.dataset.delUid, b.dataset.nom));
   });
 }
 
@@ -6308,6 +6444,42 @@ async function basculerActifUtilisateur(id, actif) {
     toast(actif ? 'Compte activé' : 'Compte désactivé', 'success');
     renderUtilisateurs();
   } catch (e) { toast('Erreur : ' + e.message, 'error'); }
+}
+
+let _editNomUserId = null;
+function ouvrirEditNomUtilisateur(id, prenom, nom) {
+  _editNomUserId = id;
+  document.getElementById('edit-nom-titre').textContent = `Modifier — ${prenom} ${nom}`;
+  document.getElementById('edit-nom-prenom').value = prenom || '';
+  document.getElementById('edit-nom-nom').value = nom || '';
+  document.getElementById('modal-edit-nom').classList.add('show');
+  setTimeout(() => document.getElementById('edit-nom-prenom').focus(), 100);
+}
+
+async function sauverEditNomUtilisateur() {
+  if (!_editNomUserId) return;
+  const prenom = document.getElementById('edit-nom-prenom').value.trim();
+  const nom = document.getElementById('edit-nom-nom').value.trim();
+  if (!prenom || !nom) { toast('Prénom et nom requis', 'error'); return; }
+  try {
+    await apiFetch('PATCH', '/auth/utilisateurs/' + _editNomUserId, { prenom, nom });
+    toast('Nom mis à jour', 'success');
+    document.getElementById('modal-edit-nom').classList.remove('show');
+    renderUtilisateurs();
+  } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }
+}
+
+async function supprimerUtilisateur(id, nomComplet) {
+  const ok = await confirmAction(
+    `Supprimer définitivement le compte « ${nomComplet} » ? Cette action est irréversible.`,
+    'Supprimer le compte',
+  );
+  if (!ok) return;
+  try {
+    await apiFetch('DELETE', '/auth/utilisateurs/' + id);
+    toast('Compte supprimé', 'success');
+    renderUtilisateurs();
+  } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }
 }
 
 function ouvrirResetMdpUtilisateur(id, email) {

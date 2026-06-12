@@ -368,6 +368,44 @@ routeurAuth.patch(
   },
 )
 
+// ─────────── Suppression d'un utilisateur (admin) ───────────
+// Suppression dure. Garde-fou : on ne peut pas se supprimer soi-même.
+// Un compte rattaché à des données (tâches, CRA, ventes, messages…) ne peut
+// pas être supprimé sans casser ces enregistrements : Prisma lève alors une
+// violation de clé étrangère (P2003). On renvoie un 409 explicite invitant à
+// désactiver le compte plutôt que de le supprimer.
+routeurAuth.delete(
+  '/utilisateurs/:id',
+  verifierAuth,
+  verifierRole(Role.admin),
+  async (req: Request, res: Response) => {
+    try {
+      if (req.utilisateur!.utilisateurId === req.params.id) {
+        res.status(400).json({ succes: false, message: 'Vous ne pouvez pas supprimer votre propre compte' })
+        return
+      }
+      const cible = await prisma.utilisateur.findUnique({ where: { id: req.params.id } })
+      if (!cible) {
+        res.status(404).json({ succes: false, message: 'Compte introuvable' })
+        return
+      }
+      await prisma.utilisateur.delete({ where: { id: req.params.id } })
+      res.json({ succes: true })
+    } catch (erreur) {
+      // P2003 : l'utilisateur est référencé par d'autres enregistrements.
+      if (typeof erreur === 'object' && erreur !== null && (erreur as { code?: string }).code === 'P2003') {
+        res.status(409).json({
+          succes: false,
+          message: 'Compte rattaché à des données (tâches, CRA, ventes…). Désactivez-le plutôt que de le supprimer.',
+        })
+        return
+      }
+      console.error('Erreur DELETE /auth/utilisateurs/:id:', erreur)
+      res.status(500).json({ succes: false, message: 'Erreur serveur' })
+    }
+  },
+)
+
 // ─────────── Changer son propre mot de passe (self-service) ───────────
 // L'utilisateur connecté fournit son ancien mot de passe + le nouveau.
 const schemaChangerMonMotDePasse = z.object({

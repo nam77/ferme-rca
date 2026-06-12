@@ -221,6 +221,7 @@ model Tache {
 
   mouvements    Mouvement[]
   sousTaches    SousTache[]
+  operations    OperationTache[]
 
   @@index([statut])
   @@index([filiere])
@@ -235,6 +236,22 @@ model SousTache {
   ordre     Int      @default(0)
   creeLe    DateTime @default(now())
   modifieLe DateTime @updatedAt
+
+  tacheId   String
+  tache     Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+
+  @@index([tacheId])
+}
+
+// Opération de dépense rattachée à une tâche : détail ligne par ligne qui
+// consomme le budget. La somme des `montant` d'une tâche = son montantDepense
+// (recalculé côté backend), lequel alimente le montantReel de la ligne budgétaire.
+model OperationTache {
+  id        String   @id @default(cuid())
+  libelle   String
+  montant   Decimal  @db.Decimal(12, 2) // XAF, cohérent avec BudgetLigne/Tache
+  date      DateTime @default(now())
+  creeLe    DateTime @default(now())
 
   tacheId   String
   tache     Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
