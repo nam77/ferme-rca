@@ -57,6 +57,10 @@ T_FRONT_BUILD=600  # 10 min
 T_FRONT_DEPLOY=300 # 5 min
 T_TESTS=60         # 1 min
 
+# Retry de l'étape Cloudflare (erreurs réseau transitoires de l'API).
+CF_DEPLOY_TENTATIVES=3 # nombre total d'essais de `wrangler pages deploy`
+CF_DEPLOY_DELAI=10     # secondes d'attente entre deux essais
+
 # ────────────────────────── Helpers exécution ─────────────────────────
 
 # avec_timeout <secondes> <id-étape> -- <commande...>
@@ -359,15 +363,33 @@ log "Fichiers à uploader : $NB_TMP"
 log "wrangler pages deploy → $PROJET..."
 # wrangler@3 reste compatible Node 18+. wrangler@4 exige Node 22+, ce que
 # le serveur Hetzner (Node 20) ne fournit pas encore.
-if ! avec_timeout "$T_FRONT_DEPLOY" frontend-deploy -- env \
-     CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" \
-     CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
-     npx --yes wrangler@3 pages deploy "$TMP_DIST" \
-       --project-name="$PROJET" \
-       --branch=main \
-       --commit-dirty=true 2>&1 | tail -20; then
+#
+# Retry automatique : l'API Cloudflare renvoie parfois une erreur réseau
+# transitoire (constaté en prod le 12/06 — échec en 71s, succès à la relance
+# sans changement). On retente quelques fois avant d'abandonner pour ne pas
+# gâcher un déploiement dont backup + builds ont déjà tourné. Le timeout
+# T_FRONT_DEPLOY s'applique à CHAQUE tentative.
+CF_DEPLOY_OK=0
+for tentative in $(seq 1 "$CF_DEPLOY_TENTATIVES"); do
+  log "Upload Cloudflare — tentative ${tentative}/${CF_DEPLOY_TENTATIVES}..."
+  if avec_timeout "$T_FRONT_DEPLOY" frontend-deploy -- env \
+       CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" \
+       CLOUDFLARE_ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID" \
+       npx --yes wrangler@3 pages deploy "$TMP_DIST" \
+         --project-name="$PROJET" \
+         --branch=main \
+         --commit-dirty=true 2>&1 | tail -20; then
+    CF_DEPLOY_OK=1
+    break
+  fi
+  if [ "$tentative" -lt "$CF_DEPLOY_TENTATIVES" ]; then
+    log "Échec tentative ${tentative} — nouvelle tentative dans ${CF_DEPLOY_DELAI}s..."
+    sleep "$CF_DEPLOY_DELAI"
+  fi
+done
+if [ "$CF_DEPLOY_OK" -ne 1 ]; then
   rm -rf "$TMP_DIST"
-  fail "Upload Cloudflare a échoué"
+  fail "Upload Cloudflare a échoué (après ${CF_DEPLOY_TENTATIVES} tentatives)"
 fi
 rm -rf "$TMP_DIST"
 FRONTEND_DEPLOYE=1
