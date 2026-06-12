@@ -3723,21 +3723,58 @@
   </div>
 </div>
 
-<!-- ===== MODAL ÉDITER LE NOM D'UN UTILISATEUR (admin) ===== -->
+<!-- ===== MODAL ÉDITER UN UTILISATEUR (admin) ===== -->
 <div class="modal-backdrop" id="modal-edit-nom">
-  <div class="modal" style="max-width:460px">
+  <div class="modal">
     <div class="modal-head">
-      <h2 id="edit-nom-titre">Modifier le nom</h2>
+      <h2 id="edit-nom-titre">Modifier l'utilisateur</h2>
       <button class="modal-close" data-close-modal>×</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>Prénom</label>
-        <input type="text" id="edit-nom-prenom" placeholder="Prénom" autocomplete="off">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom</label>
+          <input type="text" id="edit-u-prenom" placeholder="Prénom" maxlength="50" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Nom</label>
+          <input type="text" id="edit-u-nom" placeholder="Nom" maxlength="50" autocomplete="off">
+        </div>
       </div>
-      <div class="form-group">
-        <label>Nom</label>
-        <input type="text" id="edit-nom-nom" placeholder="Nom" autocomplete="off">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email — <span class="hint">identifiant de connexion</span></label>
+          <input type="email" id="edit-u-email" placeholder="vous@ferme.rca" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Téléphone — <span class="hint">optionnel</span></label>
+          <input type="tel" id="edit-u-telephone" placeholder="+236 75 12 34 56" maxlength="40" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rôle</label>
+          <select id="edit-u-role">
+            <option value="ouvrier">Ouvrier</option>
+            <option value="responsable">Responsable</option>
+            <option value="gestionnaire">Gestionnaire</option>
+            <option value="admin">Administrateur</option>
+            <option value="investisseur">Investisseur</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Filière — <span class="hint">optionnel</span></label>
+          <select id="edit-u-filiere">
+            <option value="">— Aucune —</option>
+            <option value="pisciculture">Pisciculture</option>
+            <option value="aviculture">Aviculture</option>
+            <option value="porcins">Porcins</option>
+            <option value="caprins">Caprins/Ovins</option>
+            <option value="cultures">Cultures</option>
+            <option value="infrastructure">Infrastructure</option>
+            <option value="habitat">Habitat</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -6351,6 +6388,7 @@ const ROLES_LABELS = {
   ouvrier: 'Ouvrier', investisseur: 'Investisseur',
 };
 let _resetMdpUserId = null;
+let _utilisateursCache = [];
 
 function setupUtilisateurs() {
   const b = document.getElementById('btn-new-utilisateur');
@@ -6360,7 +6398,7 @@ function setupUtilisateurs() {
   const rs = document.getElementById('reset-mdp-save');
   if (rs) rs.addEventListener('click', sauverResetMdpUtilisateur);
   const en = document.getElementById('edit-nom-save');
-  if (en) en.addEventListener('click', sauverEditNomUtilisateur);
+  if (en) en.addEventListener('click', sauverEditUtilisateur);
   const cni = document.getElementById('u-cni-input');
   if (cni) cni.addEventListener('change', () => scannerPieceIdentite({
     cle: 'u', input: 'u-cni-input', statut: 'u-cni-statut', preview: 'u-cni-preview',
@@ -6394,6 +6432,7 @@ async function renderUtilisateurs() {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--clay);padding:20px">Aucun utilisateur.</td></tr>`;
     return;
   }
+  _utilisateursCache = users;
   const optionsRole = (sel) => Object.entries(ROLES_LABELS)
     .map(([v, l]) => `<option value="${v}"${v === sel ? ' selected' : ''}>${l}</option>`).join('');
   tbody.innerHTML = users.map(u => `
@@ -6407,7 +6446,7 @@ async function renderUtilisateurs() {
       <td class="actions-col">
         <div class="row-actions">
           ${u.photoPieceIdentite ? `<a class="row-act" href="${escapeHtml(urlPhotoComplete(u.photoPieceIdentite))}" target="_blank" rel="noopener" title="Voir la pièce d'identité" style="text-decoration:none">🪪</a>` : ''}
-          <button class="row-act" data-edit-uid="${u.id}" data-prenom="${escapeHtml(u.prenom)}" data-nom="${escapeHtml(u.nom)}" title="Modifier le nom">✏️</button>
+          <button class="row-act" data-edit-uid="${u.id}" title="Modifier l'utilisateur">✏️</button>
           <button class="row-act" data-reset-uid="${u.id}" data-email="${escapeHtml(u.email)}" title="Réinitialiser le mot de passe">🔑</button>
           <button class="row-act" data-toggle-uid="${u.id}" data-actif="${u.actif}" title="${u.actif ? 'Désactiver' : 'Activer'}">${u.actif ? '🚫' : '✅'}</button>
           <button class="row-act" data-del-uid="${u.id}" data-nom="${escapeHtml(u.prenom)} ${escapeHtml(u.nom)}" title="Supprimer le compte">🗑️</button>
@@ -6424,7 +6463,7 @@ async function renderUtilisateurs() {
     b.addEventListener('click', () => basculerActifUtilisateur(b.dataset.toggleUid, b.dataset.actif !== 'true'));
   });
   tbody.querySelectorAll('[data-edit-uid]').forEach(b => {
-    b.addEventListener('click', () => ouvrirEditNomUtilisateur(b.dataset.editUid, b.dataset.prenom, b.dataset.nom));
+    b.addEventListener('click', () => ouvrirEditUtilisateur(b.dataset.editUid));
   });
   tbody.querySelectorAll('[data-del-uid]').forEach(b => {
     b.addEventListener('click', () => supprimerUtilisateur(b.dataset.delUid, b.dataset.nom));
@@ -6446,24 +6485,40 @@ async function basculerActifUtilisateur(id, actif) {
   } catch (e) { toast('Erreur : ' + e.message, 'error'); }
 }
 
-let _editNomUserId = null;
-function ouvrirEditNomUtilisateur(id, prenom, nom) {
-  _editNomUserId = id;
-  document.getElementById('edit-nom-titre').textContent = `Modifier — ${prenom} ${nom}`;
-  document.getElementById('edit-nom-prenom').value = prenom || '';
-  document.getElementById('edit-nom-nom').value = nom || '';
+let _editUserId = null;
+function ouvrirEditUtilisateur(id) {
+  const u = (_utilisateursCache || []).find(x => x.id === id);
+  if (!u) { toast('Utilisateur introuvable', 'error'); return; }
+  _editUserId = id;
+  document.getElementById('edit-nom-titre').textContent = `Modifier — ${u.prenom} ${u.nom}`;
+  document.getElementById('edit-u-prenom').value = u.prenom || '';
+  document.getElementById('edit-u-nom').value = u.nom || '';
+  document.getElementById('edit-u-email').value = u.email || '';
+  document.getElementById('edit-u-telephone').value = u.telephone || '';
+  document.getElementById('edit-u-role').value = u.role || 'ouvrier';
+  document.getElementById('edit-u-filiere').value = u.filiere || '';
   document.getElementById('modal-edit-nom').classList.add('show');
-  setTimeout(() => document.getElementById('edit-nom-prenom').focus(), 100);
+  setTimeout(() => document.getElementById('edit-u-prenom').focus(), 100);
 }
 
-async function sauverEditNomUtilisateur() {
-  if (!_editNomUserId) return;
-  const prenom = document.getElementById('edit-nom-prenom').value.trim();
-  const nom = document.getElementById('edit-nom-nom').value.trim();
+async function sauverEditUtilisateur() {
+  if (!_editUserId) return;
+  const prenom = document.getElementById('edit-u-prenom').value.trim();
+  const nom = document.getElementById('edit-u-nom').value.trim();
+  const email = document.getElementById('edit-u-email').value.trim().toLowerCase();
+  const telephone = document.getElementById('edit-u-telephone').value.trim();
+  const role = document.getElementById('edit-u-role').value;
+  const filiere = document.getElementById('edit-u-filiere').value;
   if (!prenom || !nom) { toast('Prénom et nom requis', 'error'); return; }
+  if (!email.includes('@')) { toast('Email invalide', 'error'); return; }
+  const payload = {
+    prenom, nom, email, role,
+    telephone: telephone || null,
+    filiere: filiere || null,
+  };
   try {
-    await apiFetch('PATCH', '/auth/utilisateurs/' + _editNomUserId, { prenom, nom });
-    toast('Nom mis à jour', 'success');
+    await apiFetch('PATCH', '/auth/utilisateurs/' + _editUserId, payload);
+    toast('Utilisateur mis à jour', 'success');
     document.getElementById('modal-edit-nom').classList.remove('show');
     renderUtilisateurs();
   } catch (e) { toast('Erreur : ' + (e.body?.message || e.message), 'error'); }

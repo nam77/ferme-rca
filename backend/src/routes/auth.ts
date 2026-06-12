@@ -312,6 +312,7 @@ const enumZodFiliere = z.enum([
 const schemaMajUtilisateur = z.object({
   prenom: z.string().min(1).max(50).optional(),
   nom: z.string().min(1).max(50).optional(),
+  email: z.string().email().max(120).optional(),
   telephone: z.string().max(40).optional().nullable(),
   role: enumZodRole.optional(),
   filiere: enumZodFiliere.optional().nullable(),
@@ -348,6 +349,7 @@ routeurAuth.patch(
       const data: Record<string, unknown> = {}
       if (parsed.data.prenom !== undefined) data.prenom = parsed.data.prenom
       if (parsed.data.nom !== undefined) data.nom = parsed.data.nom
+      if (parsed.data.email !== undefined) data.email = parsed.data.email.toLowerCase()
       if (parsed.data.telephone !== undefined) data.telephone = parsed.data.telephone
       if (parsed.data.role !== undefined) data.role = parsed.data.role
       if (parsed.data.filiere !== undefined) data.filiere = parsed.data.filiere
@@ -362,6 +364,11 @@ routeurAuth.patch(
       })
       res.json({ succes: true, donnees: misAJour })
     } catch (erreur) {
+      // P2002 : violation de la contrainte d'unicité (email déjà utilisé).
+      if (typeof erreur === 'object' && erreur !== null && (erreur as { code?: string }).code === 'P2002') {
+        res.status(409).json({ succes: false, message: 'Cet email est déjà utilisé par un autre compte' })
+        return
+      }
       console.error('Erreur PATCH /auth/utilisateurs/:id:', erreur)
       res.status(500).json({ succes: false, message: 'Erreur serveur' })
     }
