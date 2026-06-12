@@ -31,31 +31,35 @@ de 8 hectares en République Centrafricaine (RCA).
   Auth : JWT (jsonwebtoken) + bcrypt
   State : Zustand
   Offline : AsyncStorage + NetInfo
+  Push : expo-notifications (jetons ExpoPushToken) + build EAS (Android)
 
 ## Structure des dossiers
   /ferme-rca
     /backend
       /src/routes/      -- routes Express : auth, taches, budget, zones, dashboard,
-                           cra, deploiement, lots, parcelles, ventes, admin-deploy
+                           cra, deploiement, lots, parcelles, ventes, admin-deploy,
+                           chat (messagerie équipe), notifications (push)
       /src/middleware/  -- auth.ts (auth JWT, validation Zod)
       /src/lib/         -- prisma.ts singleton, jeton.ts (JWT), helpers
       /src/generated/prisma/ -- client Prisma généré (ne pas versionner, gitignoré)
       /prisma/
-        schema.prisma   -- 13 modèles, 16 enums (PAS de migrations : workflow `prisma db push`)
+        schema.prisma   -- 15 modèles, 16 enums (PAS de migrations : workflow `prisma db push`)
         seed.ts
       /scripts/         -- scripts d'admin (ex. creer-gestionnaire.ts)
-      /uploads/         -- photos CRA uploadées (contenu gitignoré, .gitkeep versionné)
+      /uploads/         -- fichiers uploadés (contenu gitignoré, .gitkeep versionné) :
+                           photos CRA + pièces jointes messagerie (/uploads/chat/...)
       .env.example
     /mobile
       /app/             -- routes Expo Router (file-based) : index, connexion, inscription,
-                           mot-de-passe-oublie, dashboard, budget, activite, ferme, projet,
-                           cheptel, cultures, cra, deploiement, _layout
+                           mot-de-passe-oublie, reinitialiser, dashboard, budget, activite,
+                           ferme, projet, cheptel, cultures, cra, deploiement, messagerie,
+                           utilisateurs, _layout
       /src/screens/     -- EcranTableauDeBord, EcranBudget, EcranFerme, EcranActivite, EcranProjet
       /src/components/  -- BandeauReseau, IframePage, Toaster + /ui (BarreNavigation,
                            Bouton, Card, Hero, Pastille, Tag, EnteteSection)
-      /src/hooks/       -- usePolices, useReseau
+      /src/hooks/       -- usePolices, useReseau, usePush (enregistrement jeton push)
       /src/store/       -- Zustand stores (authStore, toastStore)
-      /src/api/         -- appels axios (client.ts, auth.api.ts)
+      /src/api/         -- appels axios (client.ts, auth.api.ts, notifications.api.ts)
       /src/types/       -- types TypeScript
       /src/constants/
         couleurs.ts     -- couleurs par filière (NE PAS MODIFIER)
@@ -125,6 +129,13 @@ de 8 hectares en République Centrafricaine (RCA).
   Cultures        -- Parcelle + EvenementCulture (types de culture, statuts parcelle)
   Ventes          -- Vente (catégories produit, unités)
   CRA             -- SaisieJourCRA : compte-rendu d'activité journalier + Photo (uploads)
+                     (scan OCR pièce d'identité, photo de pointage multi-ouvriers)
+  Messagerie      -- MessageEquipe : canal d'échange d'équipe + pièces jointes
+                     (/uploads/chat), alerte « pompier » web + push natif
+  Notifications   -- JetonPush : enregistrement des ExpoPushToken, envoi push natif
+  Cheptel         -- LotAnimaux + MouvementAnimal (achat/vente/naissance/mortalité/transfert)
+  Historique Kanban -- Mouvement : trace des changements de statut (ancien -> nouveau)
+  Utilisateurs    -- gestion des comptes (page utilisateurs, réinitialisation mot de passe)
   Zones / Dashboard / Déploiement (admin-deploy : déploiement piloté depuis l'app)
 
 ## JAMAIS toucher sans validation explicite
