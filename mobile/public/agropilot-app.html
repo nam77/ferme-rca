@@ -1982,16 +1982,26 @@
     border: 1px solid rgba(92,61,30,0.20); background: #faf6ee; font-size: 18px; cursor: pointer;
   }
   .cra-jour-photo.a-photo { background: #4a8c3f; border-color: #4a8c3f; }
-  .cra-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  /* Saisie du jour : trois pastilles rondes color-codées (feu tricolore),
+     harmonisées avec la légende — rouge (0), jaune/amber (½), vert (1),
+     texte blanc. La valeur choisie est mise en avant, les autres estompées. */
+  .cra-seg { display: flex; justify-content: center; gap: 18px; padding: 2px 0; }
   .cra-seg-btn {
-    min-height: 52px; border-radius: 10px; border: 1px solid rgba(92,61,30,0.20);
-    background: #faf6ee; color: #5c3d1e; font-family: 'DM Sans', sans-serif;
-    font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.12s;
+    width: 60px; height: 60px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px solid transparent; color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 21px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0.34;
+    transition: transform 0.14s, opacity 0.14s, box-shadow 0.14s;
   }
-  .cra-seg-btn.actif { color: #fff; }
-  .cra-seg-btn[data-jour-val="0"].actif { background: #e74c3c; border-color: #e74c3c; }
-  .cra-seg-btn[data-jour-val="0.5"].actif { background: #e8943a; border-color: #e8943a; }
-  .cra-seg-btn[data-jour-val="1"].actif { background: #4a8c3f; border-color: #4a8c3f; }
+  .cra-seg-btn[data-jour-val="0"]   { background: #e74c3c; }
+  .cra-seg-btn[data-jour-val="0.5"] { background: #e8943a; }
+  .cra-seg-btn[data-jour-val="1"]   { background: #4a8c3f; }
+  .cra-seg-btn.actif {
+    opacity: 1; transform: scale(1.08);
+    box-shadow: 0 0 0 3px var(--cream, #faf6ee), 0 0 0 5px rgba(45,31,14,0.22);
+  }
+  .cra-seg-btn:active { transform: scale(0.96); }
   .cra-jour-pied {
     /* collé au-dessus de la barre d'onglets fixe (≈58px + zone sûre) */
     position: sticky; bottom: calc(58px + env(safe-area-inset-bottom, 0px));
@@ -9912,8 +9922,12 @@ function renderCRAJourMobile() {
     if (valeur > 0) presents++;
     totalH += valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
     const aPhoto = !!(saisie?.photoDebut || saisie?.photoFin);
-    const seg = [{ v: 0, lbl: 'Absent' }, { v: 0.5, lbl: '½ jour' }, { v: 1, lbl: '1 jour' }].map(o =>
-      `<button type="button" class="cra-seg-btn${valeur === o.v ? ' actif' : ''}" data-jour-uid="${u.id}" data-jour-val="${o.v}">${o.lbl}</button>`
+    const seg = [
+      { v: 0,   lbl: '0', aria: 'Absent' },
+      { v: 0.5, lbl: '½', aria: 'Demi-journée' },
+      { v: 1,   lbl: '1', aria: 'Journée complète' },
+    ].map(o =>
+      `<button type="button" class="cra-seg-btn${valeur === o.v ? ' actif' : ''}" data-jour-uid="${u.id}" data-jour-val="${o.v}" aria-label="${o.aria}" title="${o.aria}">${o.lbl}</button>`
     ).join('');
     return `<div class="cra-jour-carte${modifie ? ' modifiee' : ''}">
       <div class="cra-jour-carte-tete">
