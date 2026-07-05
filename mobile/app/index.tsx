@@ -46,6 +46,7 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.clay,
     route: '/cra',
     tag: 'Terrain',
+    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
   },
   {
     id: 'activite',
@@ -55,6 +56,7 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.mint,
     route: '/activite',
     tag: 'Opérations',
+    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
     vitrine: true,
   },
   {
@@ -65,6 +67,7 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.water,
     route: '/messagerie',
     tag: 'Équipe',
+    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
   },
   {
     id: 'ferme',
@@ -107,7 +110,7 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.water,
     route: '/dashboard',
     tag: 'Pilotage',
-    rolesAutorises: ['admin'],
+    rolesAutorises: ['admin', 'investisseur'],
     vitrine: true,
   },
   {
@@ -118,7 +121,7 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.aviculture,
     route: '/budget',
     tag: 'Finance',
-    rolesAutorises: ['admin'],
+    rolesAutorises: ['admin', 'investisseur'],
     vitrine: true,
   },
 ]

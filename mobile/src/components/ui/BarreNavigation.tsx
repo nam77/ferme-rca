@@ -10,6 +10,10 @@ import { COULEURS_TOKEN, ESPACEMENTS, POLICES, RAYONS } from '../../constants/th
 
 type RoleAutorise = 'admin' | 'gestionnaire' | 'responsable' | 'ouvrier' | 'investisseur'
 
+// Profils « terrain » : navigation opérationnelle (Pointage, Tâches, Messagerie).
+// L'investisseur en est exclu : il est en lecture seule sur Dashboard + Budget.
+const PROFILS_TERRAIN: RoleAutorise[] = ['admin', 'gestionnaire', 'responsable', 'ouvrier']
+
 type Destination = {
   cle: string
   libelle: string
@@ -40,6 +44,7 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'time',
     prefixes: ['/cra'],
     couleur: COULEURS_TOKEN.clay,
+    rolesAutorises: PROFILS_TERRAIN,
   },
   {
     cle: 'activite',
@@ -49,6 +54,7 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'grid',
     prefixes: ['/activite'],
     couleur: COULEURS_TOKEN.mint,
+    rolesAutorises: PROFILS_TERRAIN,
   },
   {
     cle: 'cheptel',
@@ -70,7 +76,8 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'chatbubbles',
     prefixes: ['/messagerie'],
     couleur: COULEURS_TOKEN.water,
-    // Canal d'équipe : visible par tous les profils.
+    // Canal d'équipe : profils terrain uniquement (pas l'investisseur).
+    rolesAutorises: PROFILS_TERRAIN,
   },
 ]
 
@@ -96,7 +103,8 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'stats-chart',
     prefixes: ['/dashboard'],
     couleur: COULEURS_TOKEN.water,
-    rolesAutorises: ['admin'],
+    // Investisseur : lecture seule sur Tableau de bord + Budget.
+    rolesAutorises: ['admin', 'investisseur'],
   },
   {
     cle: 'budget',
@@ -106,7 +114,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'wallet',
     prefixes: ['/budget'],
     couleur: COULEURS_TOKEN.aviculture,
-    rolesAutorises: ['admin'],
+    rolesAutorises: ['admin', 'investisseur'],
   },
   {
     cle: 'projet',
