@@ -1,7 +1,13 @@
 // Crée (ou met à jour) le compte gestionnaire « gestion » sur la base
 // actuelle, sans réinitialiser les autres données.
 //
-//   cd backend && npx tsx scripts/creer-gestionnaire.ts
+//   cd backend && GESTION_PASSWORD='...' npx tsx scripts/creer-gestionnaire.ts
+//
+// Le mot de passe est lu depuis l'environnement (GESTION_PASSWORD) — jamais
+// codé en dur : ce dépôt est public. Il ne sert qu'à la CRÉATION du compte
+// (upsert non destructif : un compte existant conserve son mot de passe).
+// Pour réinitialiser le mot de passe d'un compte existant, utiliser plutôt
+// scripts/reinitialiser-mot-de-passe.ts (workflow « break-glass »).
 //
 // Le rôle « gestionnaire » doit exister dans la base (voir schema.prisma) :
 //   npx prisma db push   # synchronise l'enum Role avant d'exécuter ce script
@@ -10,9 +16,14 @@ import { prisma } from '../src/lib/prisma.js'
 import { Role } from '../src/generated/prisma/enums.js'
 
 const EMAIL = 'gestion@ferme.rca'
-const MOT_DE_PASSE = 'Yimbassa26'
+const MOT_DE_PASSE = process.env.GESTION_PASSWORD ?? ''
 
 async function main() {
+  if (MOT_DE_PASSE.length < 8) {
+    console.error('✗ GESTION_PASSWORD manquant ou trop court (8 caractères minimum).')
+    console.error("  Exemple : GESTION_PASSWORD='motdepasse' npx tsx scripts/creer-gestionnaire.ts")
+    process.exit(1)
+  }
   const motDePasseHash = await bcrypt.hash(MOT_DE_PASSE, 10)
 
   // Idempotent et non destructif : si le compte existe déjà, on ne réinitialise
@@ -37,8 +48,8 @@ async function main() {
 
   console.log('✅ Compte gestionnaire prêt :')
   console.log(`   email    : ${compte.email}`)
-  console.log(`   mot de passe : ${MOT_DE_PASSE}`)
   console.log(`   rôle     : ${compte.role}`)
+  // Le mot de passe n'est jamais affiché (dépôt public / logs).
 }
 
 main()
