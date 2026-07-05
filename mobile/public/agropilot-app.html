@@ -1206,6 +1206,19 @@
     .cra-pointage-wrap{display:none}
     .cra-legend{display:none}
     .cra-jour-mobile{display:block}
+
+    /* Barre d'outils Pointage empilée proprement sur mobile : champs pleine
+       largeur, navigation et actions en boutons pleine largeur (usage terrain). */
+    .cra-champ{flex:1 1 140px}
+    .cra-champ input{width:100%}
+    .cra-champ-tjm{margin-left:0;flex:1 1 100%}
+    .cra-champ .cra-tjm-input{width:100%}
+    .cra-mois-nav{flex:1 1 100%}
+    .cra-mois-nav .btn{flex:1;justify-content:center;min-height:44px}
+    .cra-actions{width:100%}
+    .cra-actions > .btn,.cra-export-groupe{flex:1}
+    .cra-export-groupe .btn{flex:1;justify-content:center}
+    .cra-actions .btn{min-height:44px}
   }
 
   /* ========== ÉCRAN DE CONNEXION ========== */
@@ -1622,17 +1635,48 @@
   }
 
   /* ===== CRA ===== */
-  .cra-toolbar {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-    margin-bottom: 16px;
+  /* Barre d'actions du Pointage (entête) : groupe export segmenté + un seul
+     bouton primaire, pour une hiérarchie claire et harmonisée. */
+  .cra-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .cra-export-groupe {
+    display: inline-flex; background: #fff;
+    border: 1px solid rgba(92,61,30,0.20); border-radius: 9px; overflow: hidden;
+    box-shadow: var(--shadow-sm);
   }
-  .cra-toolbar select, .cra-toolbar input[type=month] {
-    padding: 7px 10px;
+  .cra-export-groupe .btn {
+    border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+    background: transparent;
+  }
+  .cra-export-groupe .btn + .btn { border-left: 1px solid rgba(92,61,30,0.18) !important; }
+
+  /* Barre d'outils : carte claire, champs étiquetés groupés, sans espaceurs. */
+  .cra-toolbar {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 14px;
+    margin-bottom: 16px;
+    background: #fff;
+    border: 1px solid rgba(92,61,30,0.14);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .cra-champ { display: flex; flex-direction: column; gap: 5px; }
+  .cra-champ .cra-lbl { margin: 0; }
+  .cra-champ-tjm { margin-left: auto; }
+  .cra-mois-nav { display: flex; gap: 8px; align-self: flex-end; }
+  .cra-toolbar select,
+  .cra-toolbar input[type=month],
+  .cra-toolbar input[type=number] {
+    padding: 8px 11px;
     border: 1px solid rgba(92,61,30,0.20);
     border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     background: #fff;
+    min-height: 40px;
+  }
+  .cra-tjm-input {
+    width: 130px; text-align: right;
+    font-family: 'DM Mono', monospace !important;
   }
   .cra-grid {
     display: grid;
@@ -2958,25 +3002,31 @@
         <h2 class="view-title">Pointage — <em>Présences &amp; heures du mois</em></h2>
         <p class="view-sub">Sous chaque jour : 0 (absent) · 0.5 (demi-journée) · 1 (journée complète). Cliquez 📷 pour joindre les photos preuve. ⬇ Excel exporte le mois, ⬆ Importer le relit et complète le pointage.</p>
       </div>
-      <div class="row">
-        <button class="btn btn-ghost" id="cra-export-excel" title="Télécharger le pointage du mois affiché au format Excel (à remplir hors-ligne)">⬇ Excel</button>
-        <label class="btn btn-ghost" id="cra-import-label" title="Importer un fichier Excel rempli et compléter le pointage" style="cursor:pointer;margin:0">⬆ Importer
-          <input type="file" id="cra-import-excel" accept=".xlsx,.xls,.csv" style="display:none">
-        </label>
-        <button class="btn btn-primary" id="cra-photo-pointage" title="Joindre une photo preuve de début/fin de travaux à plusieurs ouvriers">📷 Photo de pointage</button>
+      <div class="cra-actions">
+        <div class="cra-export-groupe" role="group" aria-label="Export / import Excel">
+          <button class="btn btn-ghost btn-sm" id="cra-export-excel" title="Télécharger le pointage du mois affiché au format Excel (à remplir hors-ligne)">⬇ Excel</button>
+          <label class="btn btn-ghost btn-sm" id="cra-import-label" title="Importer un fichier Excel rempli et compléter le pointage" style="cursor:pointer;margin:0">⬆ Importer
+            <input type="file" id="cra-import-excel" accept=".xlsx,.xls,.csv" style="display:none">
+          </label>
+        </div>
+        <button class="btn btn-ghost" id="cra-photo-pointage" title="Joindre une photo preuve de début/fin de travaux à plusieurs ouvriers">📷 Photo de pointage</button>
         <button class="btn btn-primary" id="btn-new-salarie">＋ Ajouter un salarié</button>
       </div>
     </div>
 
     <div class="cra-toolbar">
-      <label class="cra-lbl">Mois</label>
-      <input type="month" id="cra-mois">
-      <span style="flex:1"></span>
-      <label class="cra-lbl" style="margin-left:0">TJM (XAF)</label>
-      <input type="number" id="cra-tjm" min="0" step="500" value="5000" style="width:110px;padding:7px 10px;border:1px solid rgba(92,61,30,0.20);border-radius:8px;font-family:'DM Mono',monospace;font-size:13px;background:#fff;text-align:right" title="Taux journalier moyen appliqué à tous les salariés">
-      <span style="flex:1"></span>
-      <button class="btn btn-ghost btn-sm" id="cra-prev">◂ Mois préc.</button>
-      <button class="btn btn-ghost btn-sm" id="cra-next">Mois suiv. ▸</button>
+      <div class="cra-champ">
+        <label class="cra-lbl" for="cra-mois">Mois</label>
+        <input type="month" id="cra-mois">
+      </div>
+      <div class="cra-mois-nav" role="group" aria-label="Changer de mois">
+        <button class="btn btn-ghost btn-sm" id="cra-prev" aria-label="Mois précédent">◂ Préc.</button>
+        <button class="btn btn-ghost btn-sm" id="cra-next" aria-label="Mois suivant">Suiv. ▸</button>
+      </div>
+      <div class="cra-champ cra-champ-tjm">
+        <label class="cra-lbl" for="cra-tjm">TJM (XAF)</label>
+        <input type="number" id="cra-tjm" min="0" step="500" value="5000" class="cra-tjm-input" inputmode="numeric" title="Taux journalier moyen appliqué à tous les salariés">
+      </div>
     </div>
 
     <!-- Saisie « jour » optimisée mobile (remplace la grille mensuelle sur petit écran) -->
