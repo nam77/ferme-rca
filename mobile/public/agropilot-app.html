@@ -2519,13 +2519,27 @@
   html.embed body{background:transparent !important}
   html.embed main{padding-top:0 !important}
   html.embed #bandeau-consultatif{display:none !important}
+  /* Anti-flash : pendant le préchargement embarqué, on masque l'écran de login
+     (plein écran, affiché par défaut) et la vue Accueil (active par défaut dans
+     le HTML) tant que init() n'a pas basculé sur la vue demandée et appliqué
+     l'état d'auth. La classe embed-preload est retirée en fin d'init(). Si la
+     vue demandée EST l'accueil (data-vue="accueil"), on ne le masque pas. */
+  html.embed-preload #login-screen{display:none !important}
+  html.embed-preload:not([data-vue="accueil"]) #view-accueil{display:none !important}
 </style>
 <script>
-  try {
-    if (new URLSearchParams(location.search).get('embed') === '1') {
-      document.documentElement.classList.add('embed');
-    }
-  } catch (e) { void e; }
+  (function () {
+    try {
+      var p = new URLSearchParams(location.search);
+      if (p.get('embed') !== '1') return;
+      var racine = document.documentElement;
+      racine.classList.add('embed', 'embed-preload');
+      // Vue demandée (défaut : accueil) — sert au ciblage CSS anti-flash.
+      racine.setAttribute('data-vue', p.get('view') || 'accueil');
+      // Failsafe : révèle le contenu même si init() échoue ou traîne.
+      setTimeout(function () { racine.classList.remove('embed-preload'); }, 4000);
+    } catch (e) { void e; }
+  })();
 </script>
 </head>
 <body>
@@ -11542,6 +11556,9 @@ async function init() {
   } catch (e) {
     void e;
   }
+  // Anti-flash : la vue demandée est désormais active et l'état d'auth appliqué,
+  // on révèle le contenu (retire le masque de préchargement embarqué).
+  document.documentElement.classList.remove('embed-preload');
 }
 
 /* ============ ANIMATION ENGRENAGES LOGO ============
