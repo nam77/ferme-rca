@@ -126,7 +126,7 @@ export const IframePage = ({ vue, titreFallback }: Props) => {
             <View style={styles.fallback}>
               <Text style={styles.fallbackTitre}>{titreFallback}</Text>
               <Text style={styles.fallbackTexte}>
-                Impossible de charger l'application web embarquée.
+                Impossible de charger l&apos;application web embarquée.
                 {'\n'}({e})
               </Text>
             </View>
