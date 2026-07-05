@@ -60,12 +60,18 @@ const b64Url = (s: string): string => {
   }
 }
 
+// Jeton anti-cache, figé une fois par lancement d'application. Le HTML embarqué
+// est servi avec `Cache-Control: max-age=0`, mais certaines WebView / navigateurs
+// conservent malgré tout l'ancienne version après un déploiement. En variant
+// l'URL à chaque ouverture de l'app, on garantit un rechargement du HTML frais.
+const JETON_CACHE = String(Date.now())
+
 export const IframePage = ({ vue, titreFallback }: Props) => {
   const jeton = useAuthStore((s) => s.jeton)
   const utilisateur = useAuthStore((s) => s.utilisateur)
 
   const queryString = useMemo(() => {
-    const params = new URLSearchParams({ view: vue, embed: '1' })
+    const params = new URLSearchParams({ view: vue, embed: '1', v: JETON_CACHE })
     // Transmet l'URL réelle de l'API (résolue par client.ts depuis
     // EXPO_PUBLIC_API_URL en prod, fallback localhost:3001 en dev)
     // pour que le HTML embarqué ne devine plus via window.location.
