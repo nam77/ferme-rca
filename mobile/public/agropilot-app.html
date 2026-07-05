@@ -3575,7 +3575,8 @@
       <div class="form-row">
         <div class="form-group">
           <label>Responsable — <span class="hint">Qui ?</span></label>
-          <input type="text" id="f-resp" placeholder="Ex: Jean K." maxlength="40">
+          <input type="text" id="f-resp" placeholder="Ex: Jean K." maxlength="40" list="f-resp-suggestions" autocomplete="off">
+          <datalist id="f-resp-suggestions"></datalist>
         </div>
         <div class="form-group">
           <label>Date limite — <span class="hint">Quand ?</span></label>
@@ -6225,9 +6226,17 @@ function openTaskModal(id, defaultStatut) {
   document.getElementById('modal-task-title').textContent = id ? 'Modifier la tâche' : 'Nouvelle tâche';
   document.getElementById('f-titre').value = t ? t.titre : '';
   document.getElementById('f-desc').value = t ? (t.description || '') : '';
-  const filiere = t ? t.filiere : 'infrastructure';
+  // Valeur par défaut intelligente : à la création, on pré-sélectionne la
+  // filière de l'utilisateur connecté (sinon « infrastructure »).
+  const filiere = t ? t.filiere : ((state.user && state.user.filiere) || 'infrastructure');
   document.getElementById('f-filiere').value = filiere;
   document.getElementById('f-priorite').value = t ? t.priorite : 'moyenne';
+  // Autocomplétion du responsable : noms déjà saisis sur d'autres tâches.
+  const dlResp = document.getElementById('f-resp-suggestions');
+  if (dlResp) {
+    const nomsResp = [...new Set(state.taches.map(x => (x.responsable || '').trim()).filter(Boolean))].sort();
+    dlResp.innerHTML = nomsResp.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '"></option>').join('');
+  }
   document.getElementById('f-resp').value = t ? (t.responsable || '') : '';
   document.getElementById('f-date').value = t ? (t.dateFin || '') : '';
   document.getElementById('f-comment').value = t ? (t.comment || '') : '';
@@ -11335,7 +11344,28 @@ async function sauverMouvement() {
   }
 }
 
+/* ============ FACILITATION DES SAISIES ============
+   Améliore l'ergonomie des champs sur mobile (usage terrain RCA) :
+   - clavier numérique adapté sur les champs nombre (inputmode)
+   - clavier téléphone sur les champs tel
+   Les modals sont statiques dans le DOM, donc un seul passage suffit.
+   Idempotent : ne réécrit jamais un inputmode déjà posé. */
+function ameliorerSaisiesGlobales() {
+  document.querySelectorAll('input[type="number"]').forEach(function (inp) {
+    if (inp.getAttribute('inputmode')) return;
+    // step fractionnaire (0.1, 0.01…) → clavier décimal, sinon entier.
+    var step = inp.getAttribute('step') || '';
+    inp.setAttribute('inputmode', step.indexOf('.') !== -1 ? 'decimal' : 'numeric');
+  });
+  document.querySelectorAll('input[type="tel"]').forEach(function (inp) {
+    if (!inp.getAttribute('inputmode')) inp.setAttribute('inputmode', 'tel');
+  });
+}
+
 async function init() {
+  // Clavier adapté (numérique / téléphone) sur tous les champs de saisie.
+  try { ameliorerSaisiesGlobales(); } catch (e) { void e; }
+
   // Bascule PRÉCOCE sur la vue demandée (?view=...) AVANT tout appel API.
   // Sans cela, la vue « Accueil » (active par défaut) reste affichée pendant
   // toute la durée du chargement, puis saute vers la vraie page en fin d'init —
