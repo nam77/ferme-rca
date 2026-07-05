@@ -58,6 +58,9 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'paw',
     prefixes: ['/cheptel'],
     couleur: COULEURS_TOKEN.porcins,
+    // Élevage : réservé à l'admin (organisation complète). Les autres profils
+    // n'ont que Accueil · Pointage · Tâches & opérations · Messagerie.
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'messagerie',
@@ -67,12 +70,13 @@ const PRINCIPAUX: Destination[] = [
     iconeActif: 'chatbubbles',
     prefixes: ['/messagerie'],
     couleur: COULEURS_TOKEN.water,
-    // Canal d'équipe : tout le monde sauf l'investisseur (lecture seule).
-    rolesAutorises: ['admin', 'gestionnaire', 'responsable', 'ouvrier'],
+    // Canal d'équipe : visible par tous les profils.
   },
 ]
 
 // Le reste, accessible via « ⋯ » dans une feuille.
+// Réservé à l'admin : les autres profils gardent une navigation simplifiée
+// (Accueil · Pointage · Tâches & opérations · Messagerie).
 const SECONDAIRES: Destination[] = [
   {
     cle: 'cultures',
@@ -82,6 +86,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'flower',
     prefixes: ['/cultures'],
     couleur: COULEURS_TOKEN.cultures,
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'dashboard',
@@ -91,6 +96,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'stats-chart',
     prefixes: ['/dashboard'],
     couleur: COULEURS_TOKEN.water,
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'budget',
@@ -100,6 +106,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'wallet',
     prefixes: ['/budget'],
     couleur: COULEURS_TOKEN.aviculture,
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'projet',
@@ -109,6 +116,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'document-text',
     prefixes: ['/projet'],
     couleur: COULEURS_TOKEN.straw,
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'ferme',
@@ -118,6 +126,7 @@ const SECONDAIRES: Destination[] = [
     iconeActif: 'leaf',
     prefixes: ['/ferme'],
     couleur: COULEURS_TOKEN.caprins,
+    rolesAutorises: ['admin'],
   },
   {
     cle: 'utilisateurs',

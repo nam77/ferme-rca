@@ -19,6 +19,8 @@ const LIBELLES_ROLES = {
   investisseur: 'Investisseur',
 } as const
 
+type RoleAutorise = 'admin' | 'gestionnaire' | 'responsable' | 'ouvrier' | 'investisseur'
+
 type Module = {
   id: string
   titre: string
@@ -27,17 +29,23 @@ type Module = {
   couleur: string
   route: string
   tag: string
+  // Rôles connectés autorisés (l'admin voit toujours tout). Absent = tous les
+  // profils connectés. Les non-admin ne conservent que Pointage,
+  // Tâches & opérations et Messagerie.
+  rolesAutorises?: RoleAutorise[]
+  // Visible pour le visiteur non connecté (vitrine en lecture seule).
+  vitrine?: boolean
 }
 
 const MODULES: Module[] = [
   {
-    id: 'ferme',
-    titre: 'Plan de la ferme',
-    description: '8 zones interactives sur les 8 hectares.',
-    icone: '🗺️',
-    couleur: COULEURS_TOKEN.caprins,
-    route: '/ferme',
-    tag: 'Spatial',
+    id: 'pointage',
+    titre: 'Pointage',
+    description: "Compte rendu d'activité journalier : présences et pointage des ouvriers.",
+    icone: '🕒',
+    couleur: COULEURS_TOKEN.clay,
+    route: '/cra',
+    tag: 'Terrain',
   },
   {
     id: 'activite',
@@ -47,6 +55,27 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.mint,
     route: '/activite',
     tag: 'Opérations',
+    vitrine: true,
+  },
+  {
+    id: 'messagerie',
+    titre: 'Messagerie',
+    description: "Canal d'échange de l'équipe : messages, pièces jointes et alertes.",
+    icone: '💬',
+    couleur: COULEURS_TOKEN.water,
+    route: '/messagerie',
+    tag: 'Équipe',
+  },
+  {
+    id: 'ferme',
+    titre: 'Plan de la ferme',
+    description: '8 zones interactives sur les 8 hectares.',
+    icone: '🗺️',
+    couleur: COULEURS_TOKEN.caprins,
+    route: '/ferme',
+    tag: 'Spatial',
+    rolesAutorises: ['admin'],
+    vitrine: true,
   },
   {
     id: 'cultures',
@@ -56,6 +85,8 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.cultures,
     route: '/cultures',
     tag: 'Végétal',
+    rolesAutorises: ['admin'],
+    vitrine: true,
   },
   {
     id: 'cheptel',
@@ -65,6 +96,8 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.porcins,
     route: '/cheptel',
     tag: 'Animaux',
+    rolesAutorises: ['admin'],
+    vitrine: true,
   },
   {
     id: 'tableau',
@@ -74,6 +107,8 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.water,
     route: '/dashboard',
     tag: 'Pilotage',
+    rolesAutorises: ['admin'],
+    vitrine: true,
   },
   {
     id: 'budget',
@@ -83,8 +118,13 @@ const MODULES: Module[] = [
     couleur: COULEURS_TOKEN.aviculture,
     route: '/budget',
     tag: 'Finance',
+    rolesAutorises: ['admin'],
+    vitrine: true,
   },
 ]
+
+// Nombres en toutes lettres pour le titre « … portes d'entrée ».
+const NOMBRES_LETTRES = ['zéro', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit']
 
 export default function EcranAccueil() {
   const utilisateur = useAuthStore((s) => s.utilisateur)
@@ -94,6 +134,20 @@ export default function EcranAccueil() {
   const filiereCouleur = utilisateur?.filiere
     ? COULEURS_FILIERES[utilisateur.filiere as Filiere]
     : COULEURS_TOKEN.earth
+
+  // Filtrage par rôle : l'admin garde l'organisation complète, les autres
+  // profils ne voient que Pointage, Tâches & opérations et Messagerie.
+  // Le visiteur non connecté garde la vitrine en lecture seule.
+  const modulesVisibles = MODULES.filter((m) => {
+    if (!utilisateur) return m.vitrine === true
+    if (utilisateur.role === 'admin') return true
+    if (!m.rolesAutorises) return true
+    return m.rolesAutorises.includes(utilisateur.role as RoleAutorise)
+  })
+
+  const nbModules = modulesVisibles.length
+  const motNombre = NOMBRES_LETTRES[nbModules] ?? String(nbModules)
+  const motPortes = nbModules > 1 ? "portes d'entrée" : "porte d'entrée"
 
   return (
     <SafeAreaView style={styles.conteneur} edges={['left', 'right', 'bottom']}>
@@ -137,12 +191,12 @@ export default function EcranAccueil() {
           <View style={styles.entete}>
             <Text style={styles.numero}>01 — MODULES</Text>
             <Text style={styles.titreSection}>
-              <Text style={styles.titreItalique}>Six</Text> portes d&apos;entrée
+              <Text style={styles.titreItalique}>{motNombre}</Text> {motPortes}
             </Text>
           </View>
 
           <View style={styles.grille}>
-            {MODULES.map((m) => (
+            {modulesVisibles.map((m) => (
               <Pressable
                 key={m.id}
                 onPress={() => router.push(m.route as never)}
