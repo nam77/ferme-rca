@@ -1202,10 +1202,13 @@
     .login-logo-img{max-height:55px}
 
     /* Pointage : sur mobile, on remplace la grille mensuelle par la saisie
-       « jour » (plus lisible, gros boutons), la grille reste sur le web. */
-    .cra-pointage-wrap{display:none}
-    .cra-legend{display:none}
-    .cra-jour-mobile{display:block}
+       « jour » (plus lisible, gros boutons), la grille reste sur le web.
+       !important nécessaire : les définitions de base de .cra-legend (plus bas
+       dans la feuille) et .cra-jour-mobile écrasent sinon ces règles, les media
+       queries n'ajoutant pas de spécificité (l'ordre source primerait). */
+    .cra-pointage-wrap{display:none !important}
+    .cra-legend{display:none !important}
+    .cra-jour-mobile{display:block !important}
 
     /* Barre d'outils Pointage empilée proprement sur mobile : champs pleine
        largeur, navigation et actions en boutons pleine largeur (usage terrain). */
@@ -1216,8 +1219,9 @@
     .cra-mois-nav{flex:1 1 100%}
     .cra-mois-nav .btn{flex:1;justify-content:center;min-height:44px}
     .cra-actions{width:100%}
-    .cra-actions > .btn,.cra-export-groupe{flex:1}
+    .cra-export-groupe{flex:1 1 100%}
     .cra-export-groupe .btn{flex:1;justify-content:center}
+    .cra-actions > .btn{flex:1 1 auto}
     .cra-actions .btn{min-height:44px}
   }
 
