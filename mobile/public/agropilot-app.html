@@ -1982,26 +1982,29 @@
     border: 1px solid rgba(92,61,30,0.20); background: #faf6ee; font-size: 18px; cursor: pointer;
   }
   .cra-jour-photo.a-photo { background: #4a8c3f; border-color: #4a8c3f; }
-  /* Saisie du jour : trois pastilles rondes color-codées (feu tricolore),
-     harmonisées avec la légende — rouge (0), jaune/amber (½), vert (1),
-     texte blanc. La valeur choisie est mise en avant, les autres estompées. */
-  .cra-seg { display: flex; justify-content: center; gap: 18px; padding: 2px 0; }
-  .cra-seg-btn {
-    width: 60px; height: 60px; border-radius: 50%; flex: 0 0 auto;
+  /* Saisie du jour : UNE pastille ronde color-codée qui cycle au clic
+     (0 → 1 → ½ → 0…). Couleurs harmonisées avec la légende : vert (1),
+     jaune/amber (½), rouge (0), texte blanc. Un libellé d'état l'accompagne. */
+  .cra-seg { display: flex; align-items: center; gap: 16px; padding: 2px 0; }
+  .cra-pastille {
+    width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto;
     border: 2px solid transparent; color: #fff;
-    font-family: 'DM Sans', sans-serif; font-size: 21px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; font-size: 24px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; opacity: 0.34;
-    transition: transform 0.14s, opacity 0.14s, box-shadow 0.14s;
+    cursor: pointer; box-shadow: 0 2px 8px rgba(45,31,14,0.18);
+    transition: transform 0.12s, background 0.15s, box-shadow 0.12s;
   }
-  .cra-seg-btn[data-jour-val="0"]   { background: #e74c3c; }
-  .cra-seg-btn[data-jour-val="0.5"] { background: #e8943a; }
-  .cra-seg-btn[data-jour-val="1"]   { background: #4a8c3f; }
-  .cra-seg-btn.actif {
-    opacity: 1; transform: scale(1.08);
-    box-shadow: 0 0 0 3px var(--cream, #faf6ee), 0 0 0 5px rgba(45,31,14,0.22);
+  .cra-pastille[data-etat="1"]   { background: #4a8c3f; }
+  .cra-pastille[data-etat="0.5"] { background: #e8943a; }
+  .cra-pastille[data-etat="0"]   { background: #e74c3c; }
+  .cra-pastille:active { transform: scale(0.94); }
+  .cra-pastille-info { display: flex; flex-direction: column; gap: 2px; }
+  .cra-pastille-etat {
+    font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: #2d1f0e;
   }
-  .cra-seg-btn:active { transform: scale(0.96); }
+  .cra-pastille-aide {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: #8b5e3c;
+  }
   .cra-jour-pied {
     /* collé au-dessus de la barre d'onglets fixe (≈58px + zone sûre) */
     position: sticky; bottom: calc(58px + env(safe-area-inset-bottom, 0px));
@@ -9879,7 +9882,15 @@ function ajusterJourCRA() {
   }
 }
 
-// ─── Vue « jour » mobile : une carte par salarié avec saisie 0 / ½ / 1 ───
+// Libellé + intitulé de l'état de présence d'une valeur (0 / 0,5 / 1).
+function infoEtatCRA(v) {
+  if (v === 1) return { lbl: '1', nom: 'Journée complète' };
+  if (v === 0.5) return { lbl: '½', nom: 'Demi-journée' };
+  return { lbl: '0', nom: 'Absent' };
+}
+
+// ─── Vue « jour » mobile : une carte par salarié avec une pastille de
+// présence qui cycle au clic (0 → 1 → ½ → 0…) ───
 function renderCRAJourMobile() {
   const wrap = document.getElementById('cra-jour-mobile');
   if (!wrap) return;
@@ -9922,13 +9933,7 @@ function renderCRAJourMobile() {
     if (valeur > 0) presents++;
     totalH += valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
     const aPhoto = !!(saisie?.photoDebut || saisie?.photoFin);
-    const seg = [
-      { v: 0,   lbl: '0', aria: 'Absent' },
-      { v: 0.5, lbl: '½', aria: 'Demi-journée' },
-      { v: 1,   lbl: '1', aria: 'Journée complète' },
-    ].map(o =>
-      `<button type="button" class="cra-seg-btn${valeur === o.v ? ' actif' : ''}" data-jour-uid="${u.id}" data-jour-val="${o.v}" aria-label="${o.aria}" title="${o.aria}">${o.lbl}</button>`
-    ).join('');
+    const et = infoEtatCRA(valeur);
     return `<div class="cra-jour-carte${modifie ? ' modifiee' : ''}">
       <div class="cra-jour-carte-tete">
         <div>
@@ -9937,7 +9942,13 @@ function renderCRAJourMobile() {
         </div>
         <button type="button" class="cra-jour-photo${aPhoto ? ' a-photo' : ''}" data-jour-photo="${u.id}" title="Photos preuve" aria-label="Photos preuve">📷</button>
       </div>
-      <div class="cra-seg">${seg}</div>
+      <div class="cra-seg">
+        <button type="button" class="cra-pastille" data-jour-uid="${u.id}" data-jour-val="${valeur}" data-etat="${valeur}" aria-label="${et.nom} — toucher pour changer">${et.lbl}</button>
+        <div class="cra-pastille-info">
+          <span class="cra-pastille-etat">${et.nom}</span>
+          <span class="cra-pastille-aide">Toucher pour changer</span>
+        </div>
+      </div>
     </div>`;
   }).join('');
 
@@ -9952,14 +9963,16 @@ function renderCRAJourMobile() {
     </div>`;
 
   cablerNavJourCRA();
-  // Boutons de présence
-  wrap.querySelectorAll('.cra-seg-btn[data-jour-uid]').forEach(btn => {
+  // Pastille de présence : un clic fait cycler la valeur 0 → 1 → ½ → 0…
+  // (1er clic « 1 » vert, 2e « ½ » jaune, 3e « 0 » rouge, puis on reboucle).
+  wrap.querySelectorAll('.cra-pastille[data-jour-uid]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (bloquerSiConsultatif()) return;
       const uid = btn.dataset.jourUid;
-      const val = parseFloat(btn.dataset.jourVal);
+      const courant = parseFloat(btn.dataset.jourVal);
+      const suivant = courant === 0 ? 1 : (courant === 1 ? 0.5 : 0);
       if (!state.craModifications[uid]) state.craModifications[uid] = {};
-      state.craModifications[uid][state.craJour] = val;
+      state.craModifications[uid][state.craJour] = suivant;
       renderCRAJourMobile();
     });
   });
