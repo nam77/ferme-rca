@@ -1201,15 +1201,6 @@
     .login-brand h1{font-size:22px}
     .login-logo-img{max-height:55px}
 
-    /* Pointage : sur mobile, on remplace la grille mensuelle par la saisie
-       « jour » (plus lisible, gros boutons), la grille reste sur le web.
-       !important nécessaire : les définitions de base de .cra-legend (plus bas
-       dans la feuille) et .cra-jour-mobile écrasent sinon ces règles, les media
-       queries n'ajoutant pas de spécificité (l'ordre source primerait). */
-    .cra-pointage-wrap{display:none !important}
-    .cra-legend{display:none !important}
-    .cra-jour-mobile{display:block !important}
-
     /* Barre d'outils Pointage empilée proprement sur mobile : champs pleine
        largeur, navigation et actions en boutons pleine largeur (usage terrain). */
     .cra-champ{flex:1 1 140px}
@@ -1948,7 +1939,13 @@
     .cra-photos-liste { grid-template-columns: 1fr; }
   }
   /* ===== Vue « jour » mobile du pointage (masquée sur desktop) ===== */
-  .cra-jour-mobile { display: none; }
+  /* Saisie « jour » à pastilles utilisée sur WEB comme sur MOBILE (versions
+     synchronisées) : la grille mensuelle et sa légende sont masquées partout,
+     la saisie se fait à la pastille cyclable. Sur grand écran, on centre la
+     colonne pour éviter des cartes trop étirées. */
+  .cra-pointage-wrap { display: none !important; }
+  .cra-legend { display: none !important; }
+  .cra-jour-mobile { display: block; max-width: 620px; margin-left: auto; margin-right: auto; }
   .cra-jour-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .cra-jour-fleche {
     flex: 0 0 auto; width: 48px; height: 48px; border-radius: 12px;
