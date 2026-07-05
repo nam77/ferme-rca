@@ -5441,7 +5441,7 @@ function renderActiviteCard(t) {
   const today = new Date(new Date().toDateString());
   const overdue = t.statut !== 'termine' && t.dateFin && new Date(t.dateFin) < today;
   const dateLbl = t.dateFin ? fmtDate(t.dateFin) : '—';
-  const zone = t.categorie ? ZONES.find(z => z.id === t.categorie) : null;
+  const cat = infoCategorie(t.categorie);
   const stMeta = STATUTS[t.statut] || { label: t.statut, color: '#9e9e9e' };
   return `
     <div class="parcelle-card" data-act-id="${t.id}" data-filiere="${t.filiere}" style="border-left-color:${fil.color};cursor:pointer">
@@ -5454,7 +5454,7 @@ function renderActiviteCard(t) {
         <div class="parcelle-titre"><span class="parcelle-icone">${filIcon}</span><span>${escapeHtml(t.titre)}</span></div>
         <div class="parcelle-tag" style="background:${stMeta.color}15;border:1px solid ${stMeta.color}60;color:${stMeta.color}">${stMeta.label}</div>
       </div>
-      <div class="parcelle-meta">${fil.label}${zone ? ' · 📍 ' + escapeHtml(zone.nom) : ''}</div>
+      <div class="parcelle-meta">${fil.label}${cat ? ' · ' + cat.icone + ' ' + escapeHtml(cat.nom) : ''}</div>
       ${t.description ? `<div class="parcelle-rows"><div style="font-size:13px;color:#5c3d1e;line-height:1.5">${escapeHtml(t.description)}</div></div>` : ''}
       <div class="parcelle-rows">
         <div class="parcelle-row"><span class="parcelle-label">Responsable</span><span class="parcelle-val">${escapeHtml(t.responsable || '—')}</span></div>
@@ -5547,11 +5547,19 @@ function renderActivityItem(t) {
   const dateVal = t.dateFin || '';
   const dateOverdueCls = overdue ? 'overdue' : '';
 
-  // Liste de zones pour le select inline
+  // Liste de zones + lignes budgétaires pour le select inline (catégorie).
   const zonesOptions = '<option value="">— Aucune —</option>'
     + ZONES.map(z =>
         `<option value="${z.id}" ${t.categorie === z.id ? 'selected' : ''}>${escapeHtml(z.nom)}</option>`
-      ).join('');
+      ).join('')
+    + ((state.budget || []).length
+        ? '<optgroup label="Lignes budgétaires">'
+          + state.budget.map(l => {
+              const val = 'budget:' + cleLigneBudget(l);
+              return `<option value="${val}" ${t.categorie === val ? 'selected' : ''}>💰 ${escapeHtml(l.categorie)}</option>`;
+            }).join('')
+          + '</optgroup>'
+        : '');
 
   // Statut select inline
   const statutsOptions = Object.entries(STATUTS).map(([k,v]) =>
@@ -6053,12 +6061,26 @@ function renderKanbanBoard() {
   });
 }
 
+// Résout la valeur du champ « Catégorie » d'une tâche : soit une zone de la
+// ferme (id ZONES), soit une ligne budgétaire (valeur préfixée « budget: »).
+// Renvoie { icone, nom } pour l'affichage, ou null si non résolue.
+function infoCategorie(cat) {
+  if (!cat) return null;
+  if (typeof cat === 'string' && cat.indexOf('budget:') === 0) {
+    const cle = cat.slice('budget:'.length);
+    const l = (state.budget || []).find(b => cleLigneBudget(b) === cle);
+    return l ? { icone: '💰', nom: l.categorie } : null;
+  }
+  const z = ZONES.find(z => z.id === cat);
+  return z ? { icone: '📍', nom: z.nom } : null;
+}
+
 function renderTaskCard(t) {
   const fil = FILIERES[t.filiere] || FILIERES.infrastructure;
   const overdue = t.dateFin && new Date(t.dateFin) < new Date(new Date().toDateString()) && t.statut !== 'termine';
   const dateLbl = t.dateFin ? fmtDate(t.dateFin) : '—';
-  const zone = t.categorie ? ZONES.find(z => z.id === t.categorie) : null;
-  const catLabel = zone ? zone.nom : null;
+  const cat = infoCategorie(t.categorie);
+  const catLabel = cat ? cat.nom : null;
   // Icône thématique grande (poulet, poisson, porc, chèvre, plante verte, etc.)
   const themeIcon = FILIERE_ICONS[t.filiere] || fil.icon;
   const consultatif = estModeConsultatif();
@@ -6075,7 +6097,7 @@ function renderTaskCard(t) {
     </div>
     <div class="task-title">${escapeHtml(t.titre)}</div>
     ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
-    ${catLabel ? `<div class="task-categorie"><span class="pin">📍</span>${escapeHtml(catLabel)}</div>` : ''}
+    ${catLabel ? `<div class="task-categorie"><span class="pin">${cat.icone}</span>${escapeHtml(catLabel)}</div>` : ''}
     ${renderTaskBudget(t)}
     <div class="task-foot">
       <div class="task-resp">
@@ -6153,6 +6175,15 @@ function setupTaskModal() {
   // Quand la filière change, on filtre les zones par filière + on garde "aucune"
   sel.addEventListener('change', () => populateCategorieSelect(sel.value, document.getElementById('f-categorie').value));
 
+  // Choisir une ligne budgétaire comme catégorie rattache aussi la tâche à ce
+  // budget parent (les deux champs partagent la même clé de ligne).
+  document.getElementById('f-categorie').addEventListener('change', (e) => {
+    const v = e.target.value;
+    if (v && v.indexOf('budget:') === 0) {
+      document.getElementById('f-budget-ligne').value = v.slice('budget:'.length);
+    }
+  });
+
   // Initial : remplir avec toutes les zones
   populateCategorieSelect();
 
@@ -6191,6 +6222,16 @@ function populateCategorieSelect(filiere, currentValue) {
   if (others.length) {
     html += `<optgroup label="Autres zones">`;
     html += others.map(z => `<option value="${z.id}">${z.nom}</option>`).join('');
+    html += '</optgroup>';
+  }
+  // Lignes budgétaires : permet de catégoriser une tâche/opération par budget
+  // directement. La valeur est préfixée « budget: » pour la distinguer d'une
+  // zone ; sélectionner une ligne rattache aussi la tâche à ce budget parent
+  // (voir le listener sur #f-categorie dans setupTaskModal).
+  const lignesBudget = state.budget || [];
+  if (lignesBudget.length) {
+    html += `<optgroup label="Lignes budgétaires">`;
+    html += lignesBudget.map(l => `<option value="budget:${cleLigneBudget(l)}">💰 ${escapeHtml(l.categorie)}</option>`).join('');
     html += '</optgroup>';
   }
   sel.innerHTML = html;
