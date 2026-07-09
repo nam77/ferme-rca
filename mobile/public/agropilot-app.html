@@ -3086,6 +3086,7 @@
       </div>
       <div class="modal-foot">
         <span id="cra-recap-total" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;color:#5c3d1e"></span>
+        <button class="btn btn-ghost" id="cra-recap-export" title="Télécharger le récapitulatif (feuilles « Par semaine » et « Par mois »)">⬇ Excel</button>
         <button class="btn btn-primary" data-close-modal>Fermer</button>
       </div>
     </div>
@@ -10887,6 +10888,59 @@ function renderCRARecap() {
   if (totalEl) totalEl.textContent = `Total à verser : ${formatXAF(data.totalGeneralMontant)} · ${fmtJ(data.totalGeneralHeures / 8)} j`;
 }
 
+// Exporte le récapitulatif dans un classeur Excel à deux feuilles :
+// « Par semaine » (une colonne de jours par semaine ISO) et « Par mois »
+// (jours / heures / montant par salarié). Reflète les modifications en cours.
+function exporterRecapExcel() {
+  if (typeof XLSX === 'undefined') { toast('Bibliothèque Excel non chargée (connexion requise)', 'error'); return; }
+  if (state.craUtilisateurs.length === 0) { toast('Aucun salarié à exporter', ''); return; }
+
+  const data = calculerRecapCRA();
+  const roleCol = u => u.role + (u.filiere ? ' · ' + u.filiere : '');
+  const jr = x => Math.round(x * 10) / 10;
+
+  // ── Feuille « Par semaine » ──
+  const enTeteSem = ['Salarié', 'Rôle'];
+  for (const s of data.semaines) {
+    const range = `${String(s.debut.getUTCDate()).padStart(2, '0')}-${String(s.fin.getUTCDate()).padStart(2, '0')}`;
+    enTeteSem.push(`S${s.iso} (${range}) — jours`);
+  }
+  enTeteSem.push('Total (jours)', 'Total (heures)', 'Montant (XAF)');
+
+  const lignesSem = [enTeteSem];
+  for (const r of data.parSalarie) {
+    const ligne = [`${r.u.prenom} ${r.u.nom}`, roleCol(r.u)];
+    for (const s of data.semaines) {
+      const v = r.parSemaine[s.key];
+      ligne.push(v.heures > 0 ? jr(v.jours) : '');
+    }
+    ligne.push(jr(r.totalJours), r.totalHeures, r.montant);
+    lignesSem.push(ligne);
+  }
+  const totauxSemParSemaine = data.semaines.map(s =>
+    jr(data.parSalarie.reduce((n, r) => n + r.parSemaine[s.key].jours, 0)));
+  lignesSem.push(['TOTAL', '', ...totauxSemParSemaine,
+    jr(data.totalGeneralHeures / 8), data.totalGeneralHeures, data.totalGeneralMontant]);
+
+  const wsSem = XLSX.utils.aoa_to_sheet(lignesSem);
+  wsSem['!cols'] = [{ wch: 22 }, { wch: 16 }, ...data.semaines.map(() => ({ wch: 16 })), { wch: 12 }, { wch: 13 }, { wch: 14 }];
+
+  // ── Feuille « Par mois » ──
+  const lignesMois = [['Salarié', 'Rôle', 'Jours', 'Heures', 'Montant (XAF)']];
+  for (const r of data.parSalarie) {
+    lignesMois.push([`${r.u.prenom} ${r.u.nom}`, roleCol(r.u), jr(r.totalJours), r.totalHeures, r.montant]);
+  }
+  lignesMois.push(['TOTAL', '', jr(data.totalGeneralHeures / 8), data.totalGeneralHeures, data.totalGeneralMontant]);
+  const wsMois = XLSX.utils.aoa_to_sheet(lignesMois);
+  wsMois['!cols'] = [{ wch: 22 }, { wch: 16 }, { wch: 8 }, { wch: 9 }, { wch: 14 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, wsSem, 'Par semaine');
+  XLSX.utils.book_append_sheet(wb, wsMois, 'Par mois');
+  XLSX.writeFile(wb, `recap-pointage-${state.craMois}.xlsx`);
+  toast('Récapitulatif Excel téléchargé', 'success');
+}
+
 function definirModeRecapCRA(mode) {
   state.craRecapMode = mode;
   document.querySelectorAll('.cra-recap-mode').forEach(b => b.classList.toggle('is-actif', b.dataset.mode === mode));
@@ -10955,6 +11009,8 @@ function setupCRA() {
   if (btnRecap) btnRecap.addEventListener('click', ouvrirModalRecapCRA);
   document.querySelectorAll('.cra-recap-mode').forEach(b =>
     b.addEventListener('click', () => definirModeRecapCRA(b.dataset.mode)));
+  const btnRecapExport = document.getElementById('cra-recap-export');
+  if (btnRecapExport) btnRecapExport.addEventListener('click', exporterRecapExcel);
 
   // Modal photo de pointage
   const btnPhotoPointage = document.getElementById('cra-photo-pointage');
