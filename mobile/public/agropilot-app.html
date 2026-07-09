@@ -2041,6 +2041,14 @@
   .cra-recap-semaine-table .cell-sem { text-align: center; }
   .cra-recap-semaine-table .cell-sem .nb-jrs { font-weight: 600; color: #2d1f0e; }
   .cra-recap-semaine-table .cell-sem .nb-h { font-size: 10.5px; color: #8b5e3c; display: block; }
+  .cra-recap-semaine-table .col-total-sal { text-align: center; background: #fbf7ef; }
+  .cra-recap-semaine-table .col-total-sal .mt { font-size: 10.5px; color: #4a8c3f; display: block; font-weight: 600; }
+  .cra-recap-semaine-table tr.total-general td { background: #f3ead8; font-weight: 700; color: #2d1f0e; }
+  /* Bascule de période du récapitulatif */
+  .cra-recap-mode.is-actif {
+    background: #4a8c3f; color: #fff; border-color: #4a8c3f;
+  }
+  .cra-recap-vide { padding: 24px; text-align: center; color: #8b5e3c; font-style: italic; }
 
   /* ===== Pointage CRA (nouveau) ===== */
   .cra-inscription {
@@ -3024,6 +3032,7 @@
           </label>
         </div>
         <button class="btn btn-ghost" id="cra-photo-pointage" title="Joindre une photo preuve de début/fin de travaux à plusieurs ouvriers">📷 Photo de pointage</button>
+        <button class="btn btn-ghost" id="cra-recap-btn" title="Voir la liste complète des ouvriers avec leurs totaux, par semaine ou par mois">📊 Récapitulatif</button>
         <button class="btn btn-primary" id="btn-new-salarie">＋ Ajouter un salarié</button>
       </div>
     </div>
@@ -3057,6 +3066,30 @@
       <span class="cra-legend-item" style="background:#fff;border:1px solid rgba(92,61,30,0.20)">📷 Photos preuve disponibles</span>
     </div>
   </section>
+
+  <!-- ===== MODAL CRA Récapitulatif des présences (par semaine / par mois) ===== -->
+  <div class="modal-backdrop" id="modal-cra-recap">
+    <div class="modal modal-task" style="max-width:760px">
+      <div class="modal-head">
+        <div>
+          <span class="modal-tag">CRA · RÉCAPITULATIF</span>
+          <h3 class="modal-title" id="cra-recap-titre">Récapitulatif des présences</h3>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Fermer">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="cra-recap-toggle" role="group" aria-label="Période du récapitulatif" style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-ghost btn-sm cra-recap-mode is-actif" id="cra-recap-mode-semaine" data-mode="semaine">Par semaine</button>
+          <button class="btn btn-ghost btn-sm cra-recap-mode" id="cra-recap-mode-mois" data-mode="mois">Par mois</button>
+        </div>
+        <div id="cra-recap-body"></div>
+      </div>
+      <div class="modal-foot">
+        <span id="cra-recap-total" style="flex:1;font-family:'DM Mono',monospace;font-size:12px;color:#5c3d1e"></span>
+        <button class="btn btn-primary" data-close-modal>Fermer</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== MODAL CRA Édition salarié ===== -->
   <div class="modal-backdrop" id="modal-cra-salarie">
@@ -9645,6 +9678,7 @@ state.craUtilisateurs = [];
 state.craSaisies = []; // toutes les saisies du mois, tous salariés confondus
 state.craModifications = {}; // { utilisateurId: { 'YYYY-MM-DD': 0|0.5|1 } }
 state.craJour = new Date().toISOString().slice(0,10); // jour sélectionné (vue mobile)
+state.craRecapMode = 'semaine'; // récapitulatif : 'semaine' | 'mois'
 // TJM (Taux Journalier Moyen) en XAF, persisté dans localStorage.
 // Valeur unique appliquée à tous les salariés.
 const CLE_TJM = 'cra_tjm_xaf';
@@ -10720,6 +10754,151 @@ async function importerPointageExcel(evt) {
   }
 }
 
+// ─── Récapitulatif des présences (par semaine / par mois) ───
+// Lundi (00:00 UTC) de la semaine ISO contenant `date`.
+function lundiSemaineCRA(date) {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dow = (d.getUTCDay() + 6) % 7; // Lundi = 0 … Dimanche = 6
+  d.setUTCDate(d.getUTCDate() - dow);
+  return d;
+}
+// Numéro de semaine ISO 8601 de `date`.
+function isoSemaineCRA(date) {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dow = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dow + 3); // jeudi de la semaine
+  const premierJeudi = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round((d - premierJeudi) / (7 * 86400000));
+}
+
+// Agrège les présences effectives du mois affiché (saisies BDD + modifications
+// locales non encore enregistrées), par salarié, par semaine ISO et au total.
+function calculerRecapCRA() {
+  const [y, m] = state.craMois.split('-').map(Number);
+  const dernier = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+  const idx = {};
+  for (const s of state.craSaisies) {
+    const dateK = s.date.split('T')[0];
+    if (!idx[s.utilisateurId]) idx[s.utilisateurId] = {};
+    idx[s.utilisateurId][dateK] = s;
+  }
+
+  // Semaines couvertes par le mois (clé = date du lundi), ordonnées.
+  const semainesMap = new Map();
+  for (let d = 1; d <= dernier; d++) {
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const lundi = lundiSemaineCRA(date);
+    const key = lundi.toISOString().slice(0, 10);
+    if (!semainesMap.has(key)) {
+      const fin = new Date(lundi); fin.setUTCDate(fin.getUTCDate() + 6);
+      semainesMap.set(key, { key, iso: isoSemaineCRA(date), debut: lundi, fin });
+    }
+  }
+  const semaines = [...semainesMap.values()].sort((a, b) => a.debut - b.debut);
+
+  const parSalarie = state.craUtilisateurs.map(u => {
+    const modifs = state.craModifications[u.id] || {};
+    const parSemaine = {};
+    semaines.forEach(s => { parSemaine[s.key] = { jours: 0, heures: 0 }; });
+    let totalHeures = 0;
+    for (let d = 1; d <= dernier; d++) {
+      const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const date = new Date(Date.UTC(y, m - 1, d));
+      const saisie = idx[u.id]?.[dateStr];
+      const valeur = (modifs[dateStr] !== undefined)
+        ? modifs[dateStr]
+        : (saisie ? heuresEnPresence(saisie.heures) : 0);
+      const h = valeur === 1 ? 8 : valeur === 0.5 ? 4 : 0;
+      if (h > 0) {
+        const key = lundiSemaineCRA(date).toISOString().slice(0, 10);
+        parSemaine[key].heures += h;
+        parSemaine[key].jours += h / 8;
+        totalHeures += h;
+      }
+    }
+    const totalJours = totalHeures / 8;
+    return { u, parSemaine, totalJours, totalHeures, montant: Math.round(totalJours * state.craTjm) };
+  });
+
+  return {
+    semaines, parSalarie,
+    totalGeneralHeures: parSalarie.reduce((n, r) => n + r.totalHeures, 0),
+    totalGeneralMontant: parSalarie.reduce((n, r) => n + r.montant, 0),
+  };
+}
+
+function renderCRARecap() {
+  const body = document.getElementById('cra-recap-body');
+  const totalEl = document.getElementById('cra-recap-total');
+  const titre = document.getElementById('cra-recap-titre');
+  if (!body) return;
+
+  const [y, m] = state.craMois.split('-').map(Number);
+  const nomMois = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  if (titre) titre.textContent = `Récapitulatif des présences — ${nomMois}`;
+
+  if (!state.craUtilisateurs.length) {
+    body.innerHTML = '<div class="cra-recap-vide">Aucun salarié inscrit.</div>';
+    if (totalEl) totalEl.textContent = '';
+    return;
+  }
+
+  const data = calculerRecapCRA();
+  const fmtJ = j => (Math.round(j * 10) / 10).toString();
+  const cellSal = u => `<td class="col-sal">${escapeHtml(u.prenom + ' ' + u.nom)}`
+    + `<div style="font-family:'DM Mono',monospace;font-size:10px;color:#8b5e3c">${escapeHtml(u.role)}${u.filiere ? ' · ' + escapeHtml(u.filiere) : ''}</div></td>`;
+
+  if (state.craRecapMode === 'mois') {
+    const lignes = data.parSalarie.map(r => `<tr>
+      ${cellSal(r.u)}
+      <td class="cell-sem"><span class="nb-jrs">${fmtJ(r.totalJours)} j</span><span class="nb-h">${r.totalHeures} h</span></td>
+      <td class="col-total-sal" style="font-weight:600">${formatXAF(r.montant)}</td>
+    </tr>`).join('');
+    body.innerHTML = `<table class="cra-recap-semaine-table">
+      <thead><tr><th class="col-sal">Salarié</th><th class="cell-sem">Présence du mois</th><th class="col-total-sal">Montant</th></tr></thead>
+      <tbody>${lignes}
+        <tr class="total-general"><td class="col-sal">TOTAL — ${data.parSalarie.length} salarié·s</td>
+          <td class="cell-sem">${fmtJ(data.totalGeneralHeures / 8)} j · ${data.totalGeneralHeures} h</td>
+          <td class="col-total-sal">${formatXAF(data.totalGeneralMontant)}</td></tr>
+      </tbody></table>`;
+  } else {
+    const th = data.semaines.map(s => {
+      const range = `${String(s.debut.getUTCDate()).padStart(2, '0')}–${String(s.fin.getUTCDate()).padStart(2, '0')}`;
+      const infobulle = `${s.debut.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', timeZone: 'UTC' })} → ${s.fin.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', timeZone: 'UTC' })}`;
+      return `<th class="cell-sem" title="${infobulle}">S${s.iso}<br><span style="font-weight:400;font-size:9px">${range}</span></th>`;
+    }).join('');
+    const lignes = data.parSalarie.map(r => {
+      const cells = data.semaines.map(s => {
+        const v = r.parSemaine[s.key];
+        return v.heures > 0
+          ? `<td class="cell-sem"><span class="nb-jrs">${fmtJ(v.jours)}</span><span class="nb-h">${v.heures} h</span></td>`
+          : '<td class="cell-sem" style="color:#c9bda8">—</td>';
+      }).join('');
+      return `<tr>${cellSal(r.u)}${cells}
+        <td class="col-total-sal"><span class="nb-jrs" style="font-weight:600">${fmtJ(r.totalJours)} j</span><span class="mt">${formatXAF(r.montant)}</span></td>
+      </tr>`;
+    }).join('');
+    body.innerHTML = `<div style="overflow-x:auto"><table class="cra-recap-semaine-table">
+      <thead><tr><th class="col-sal">Salarié</th>${th}<th class="col-total-sal">Total</th></tr></thead>
+      <tbody>${lignes}</tbody></table></div>`;
+  }
+
+  if (totalEl) totalEl.textContent = `Total à verser : ${formatXAF(data.totalGeneralMontant)} · ${fmtJ(data.totalGeneralHeures / 8)} j`;
+}
+
+function definirModeRecapCRA(mode) {
+  state.craRecapMode = mode;
+  document.querySelectorAll('.cra-recap-mode').forEach(b => b.classList.toggle('is-actif', b.dataset.mode === mode));
+  renderCRARecap();
+}
+
+function ouvrirModalRecapCRA() {
+  if (!state.craUtilisateurs.length) { toast('Aucun salarié inscrit', ''); return; }
+  definirModeRecapCRA(state.craRecapMode || 'semaine');
+  document.getElementById('modal-cra-recap').classList.add('show');
+}
+
 // ─── Initialisation ───
 function setupCRA() {
   const moisInput = document.getElementById('cra-mois');
@@ -10770,6 +10949,12 @@ function setupCRA() {
     cle: 'insc', input: 'insc-cni-input', statut: 'insc-cni-statut', preview: 'insc-cni-preview',
     prenom: 'insc-prenom', nom: 'insc-nom',
   }));
+
+  // Récapitulatif des présences (par semaine / par mois)
+  const btnRecap = document.getElementById('cra-recap-btn');
+  if (btnRecap) btnRecap.addEventListener('click', ouvrirModalRecapCRA);
+  document.querySelectorAll('.cra-recap-mode').forEach(b =>
+    b.addEventListener('click', () => definirModeRecapCRA(b.dataset.mode)));
 
   // Modal photo de pointage
   const btnPhotoPointage = document.getElementById('cra-photo-pointage');
