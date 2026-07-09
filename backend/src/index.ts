@@ -20,8 +20,36 @@ import { routeurNotifications } from './routes/notifications.js'
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
+const enProduction = process.env.NODE_ENV === 'production'
 
-app.use(cors())
+// Origines web autorisées à appeler l'API (whitelist CORS).
+// - Les domaines de production sont toujours acceptés.
+// - CORS_ORIGINS (liste séparée par des virgules) permet d'en ajouter sans
+//   toucher au code (ex : domaine de preview Cloudflare Pages).
+const originesAutorisees = new Set(
+  [
+    'https://agri-pilot.com',
+    'https://www.agri-pilot.com',
+    ...(process.env.CORS_ORIGINS ?? '').split(',').map((o) => o.trim()),
+  ].filter((o) => o.length > 0),
+)
+
+// En dev, on accepte librement localhost/127.0.0.1 (Expo web sur :8081, etc.).
+const estLocalhost = (origin: string): boolean =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Pas d'en-tête Origin : apps mobiles natives, curl, appels serveur.
+      if (!origin) return callback(null, true)
+      if (originesAutorisees.has(origin)) return callback(null, true)
+      if (!enProduction && estLocalhost(origin)) return callback(null, true)
+      return callback(new Error(`Origine non autorisée : ${origin}`))
+    },
+    credentials: true,
+  }),
+)
 app.use(express.json({ limit: '1mb' }))
 
 // Journalisation simple : méthode + URL + statut + durée + corps si erreur 4xx/5xx
