@@ -171,6 +171,10 @@ model Utilisateur {
   role            Role     @default(ouvrier)
   filiere         Filiere?
   actif           Boolean  @default(true)
+  // true = l'utilisateur doit (re)définir son mot de passe à la prochaine
+  // connexion. Positionné par une réinitialisation admin/break-glass ;
+  // remis à false dès que l'utilisateur change son mot de passe lui-même.
+  doitChangerMotDePasse Boolean @default(false)
   creeLe          DateTime @default(now())
   modifieLe       DateTime @updatedAt
 

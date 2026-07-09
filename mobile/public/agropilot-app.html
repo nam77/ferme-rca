@@ -3871,6 +3871,9 @@
       <button class="modal-close" data-close-modal>×</button>
     </div>
     <div class="modal-body">
+      <div id="chg-info-premiere" style="display:none;background:#fff6e6;border:1px solid #f0d089;color:#8a5a00;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:14px;line-height:1.45">
+        🔐 Votre mot de passe actuel est provisoire. Pour votre sécurité, définissez dès maintenant un mot de passe personnel.
+      </div>
       <div class="form-group">
         <label>Mot de passe actuel</label>
         <input type="password" id="chg-ancien" autocomplete="current-password" placeholder="Mot de passe actuel">
@@ -7785,13 +7788,22 @@ function setupLogin() {
 }
 
 // Ouvre la modale de changement de son propre mot de passe (utilisateur connecté).
-function ouvrirModalChangerMonMotDePasse() {
+// options.premiereConnexion : affiche un message d'invitation et pré-remplit
+// l'ancien mot de passe (provisoire) pour que l'utilisateur n'ait qu'à saisir
+// son nouveau mot de passe.
+function ouvrirModalChangerMonMotDePasse(options) {
   if (!state.user) { toast('Connectez-vous d\'abord', ''); return; }
-  document.getElementById('chg-ancien').value = '';
+  const opts = options || {};
+  document.getElementById('chg-ancien').value = opts.ancien || '';
   document.getElementById('chg-nouveau').value = '';
   document.getElementById('chg-confirme').value = '';
+  const info = document.getElementById('chg-info-premiere');
+  if (info) info.style.display = opts.premiereConnexion ? '' : 'none';
   document.getElementById('modal-changer-mdp').classList.add('show');
-  setTimeout(() => document.getElementById('chg-ancien').focus(), 100);
+  // En première connexion, l'ancien est pré-rempli : on met le focus sur le
+  // nouveau mot de passe pour aller droit au but.
+  const champFocus = opts.premiereConnexion ? 'chg-nouveau' : 'chg-ancien';
+  setTimeout(() => document.getElementById(champFocus).focus(), 100);
 }
 
 async function changerMonMotDePasse() {
@@ -7805,6 +7817,13 @@ async function changerMonMotDePasse() {
     await apiFetch('PATCH', '/auth/mon-mot-de-passe', { ancienMotDePasse: ancien, nouveauMotDePasse: nouveau });
     toast('Mot de passe changé avec succès', 'success');
     document.getElementById('modal-changer-mdp').classList.remove('show');
+    // Le mot de passe n'est plus provisoire : lever le drapeau et persister.
+    if (state.user && state.user.doitChangerMotDePasse) {
+      state.user.doitChangerMotDePasse = false;
+      saveSession();
+    }
+    const info = document.getElementById('chg-info-premiere');
+    if (info) info.style.display = 'none';
   } catch (e) {
     toast('Erreur : ' + e.message, 'error');
   }
@@ -7875,11 +7894,17 @@ async function tryLogin() {
       email: profil.email,
       name: `${profil.prenom} ${profil.nom}`.trim() || profil.email,
       role: profil.role,
+      doitChangerMotDePasse: !!profil.doitChangerMotDePasse,
     };
     saveSession();
     try { localStorage.setItem(JETON_KEY, jeton); } catch {}
     applyAuthState();
     toast(`Bienvenue ${state.user.name} !`, 'success');
+    // Première connexion après réinitialisation : proposer immédiatement de
+    // définir un mot de passe personnel (le mdp saisi est provisoire).
+    if (state.user.doitChangerMotDePasse) {
+      setTimeout(() => ouvrirModalChangerMonMotDePasse({ premiereConnexion: true, ancien: motDePasse }), 400);
+    }
   } catch (e) {
     showLoginError('Serveur injoignable : ' + (e.message || e));
   } finally {

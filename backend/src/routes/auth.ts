@@ -52,6 +52,7 @@ const profilPublic = (u: {
   nom: string
   role: Role
   filiere: Filiere | null
+  doitChangerMotDePasse: boolean
 }) => ({
   id: u.id,
   email: u.email,
@@ -59,6 +60,7 @@ const profilPublic = (u: {
   nom: u.nom,
   role: u.role,
   filiere: u.filiere,
+  doitChangerMotDePasse: u.doitChangerMotDePasse,
 })
 
 // Création de compte réservée à un administrateur authentifié.
@@ -438,7 +440,10 @@ routeurAuth.patch('/mon-mot-de-passe', verifierAuth, async (req: Request, res: R
       return
     }
     const motDePasseHash = await bcrypt.hash(parsed.data.nouveauMotDePasse, 10)
-    await prisma.utilisateur.update({ where: { id: moi.id }, data: { motDePasseHash } })
+    await prisma.utilisateur.update({
+      where: { id: moi.id },
+      data: { motDePasseHash, doitChangerMotDePasse: false },
+    })
     res.json({ succes: true, message: 'Mot de passe changé' })
   } catch (erreur) {
     console.error('Erreur changement mon mot de passe:', erreur)

@@ -47,10 +47,12 @@ async function main(): Promise<void> {
   if (existant) {
     await prisma.utilisateur.update({
       where: { email },
-      data: { motDePasseHash, actif: true, ...(role ? { role } : {}) },
+      // doitChangerMotDePasse: true → l'utilisateur devra définir son propre
+      // mot de passe à sa prochaine connexion (le mdp posé ici est provisoire).
+      data: { motDePasseHash, actif: true, doitChangerMotDePasse: true, ...(role ? { role } : {}) },
     })
     console.log(
-      `✓ Compte mis à jour : ${email} (rôle: ${role ?? existant.role}, mot de passe réinitialisé, compte actif)`,
+      `✓ Compte mis à jour : ${email} (rôle: ${role ?? existant.role}, mot de passe provisoire réinitialisé, changement requis à la connexion)`,
     )
   } else {
     const cree = await prisma.utilisateur.create({
@@ -61,9 +63,10 @@ async function main(): Promise<void> {
         nom,
         role: role ?? Role.ouvrier,
         actif: true,
+        doitChangerMotDePasse: true,
       },
     })
-    console.log(`✓ Compte créé : ${email} (rôle: ${cree.role})`)
+    console.log(`✓ Compte créé : ${email} (rôle: ${cree.role}, changement de mot de passe requis à la connexion)`)
   }
 }
 
